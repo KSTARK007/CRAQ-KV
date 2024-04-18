@@ -47,6 +47,8 @@
 #include <filesystem>
 #include <iomanip>
 #include <memory_resource>
+#include <string_view>
+#include <charconv>
 
 // Alias
 template <typename T, typename T2>
@@ -77,4 +79,15 @@ inline void assert_with_msg(bool cond, const char *msg)
     return false;
   }
   return true;
+}
+
+template<typename T>
+inline T convert_string(std::string_view sv)
+{
+  T t{};
+  auto result = std::from_chars(sv.data(), sv.data() + sv.size(), t);
+  if (result.ec == std::errc::invalid_argument) {
+    std::cout << "Could not convert " << sv << " to value" << std::endl;
+  }
+  return t;
 }

@@ -34,6 +34,8 @@ CAPNP_DECLARE_SCHEMA(d92927b00c6d5396);
 CAPNP_DECLARE_SCHEMA(9736b56e253cba13);
 CAPNP_DECLARE_SCHEMA(d74e917dbcd881cb);
 CAPNP_DECLARE_SCHEMA(f90a05fd026809ad);
+CAPNP_DECLARE_SCHEMA(fb62f49632f7d8be);
+CAPNP_DECLARE_SCHEMA(cd9e95393d3f997d);
 CAPNP_DECLARE_SCHEMA(b36ecfe36db7d4ef);
 CAPNP_DECLARE_SCHEMA(a9a1635b25f07a7b);
 CAPNP_DECLARE_SCHEMA(9cc4c008dd1d858e);
@@ -194,6 +196,36 @@ struct DeleteRequest {
   };
 };
 
+struct FallbackGetRequest {
+  FallbackGetRequest() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(fb62f49632f7d8be, 0, 1)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct FallbackGetResponse {
+  FallbackGetResponse() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(cd9e95393d3f997d, 3, 2)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
 struct Packet {
   Packet() = delete;
 
@@ -227,6 +259,8 @@ struct Packet::Data {
     CLIENT_SYNC_RESPONSE,
     SINGLETON_PUT_REQUEST,
     DELETE_REQUEST,
+    FALLBACK_GET_REQUEST,
+    FALLBACK_GET_RESPONSE,
   };
 
   struct _capnpPrivate {
@@ -1089,6 +1123,198 @@ private:
 };
 #endif  // !CAPNP_LITE
 
+class FallbackGetRequest::Reader {
+public:
+  typedef FallbackGetRequest Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline bool hasKey() const;
+  inline  ::capnp::Text::Reader getKey() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class FallbackGetRequest::Builder {
+public:
+  typedef FallbackGetRequest Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline bool hasKey();
+  inline  ::capnp::Text::Builder getKey();
+  inline void setKey( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initKey(unsigned int size);
+  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class FallbackGetRequest::Pipeline {
+public:
+  typedef FallbackGetRequest Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class FallbackGetResponse::Reader {
+public:
+  typedef FallbackGetResponse Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline  ::ResponseType getResponse() const;
+
+  inline bool hasKey() const;
+  inline  ::capnp::Text::Reader getKey() const;
+
+  inline bool hasValue() const;
+  inline  ::capnp::Text::Reader getValue() const;
+
+  inline  ::uint64_t getKeyValuePtrOffset() const;
+
+  inline bool getSingleton() const;
+
+  inline  ::uint64_t getForwardCount() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class FallbackGetResponse::Builder {
+public:
+  typedef FallbackGetResponse Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline  ::ResponseType getResponse();
+  inline void setResponse( ::ResponseType value);
+
+  inline bool hasKey();
+  inline  ::capnp::Text::Builder getKey();
+  inline void setKey( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initKey(unsigned int size);
+  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline bool hasValue();
+  inline  ::capnp::Text::Builder getValue();
+  inline void setValue( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initValue(unsigned int size);
+  inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownValue();
+
+  inline  ::uint64_t getKeyValuePtrOffset();
+  inline void setKeyValuePtrOffset( ::uint64_t value);
+
+  inline bool getSingleton();
+  inline void setSingleton(bool value);
+
+  inline  ::uint64_t getForwardCount();
+  inline void setForwardCount( ::uint64_t value);
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class FallbackGetResponse::Pipeline {
+public:
+  typedef FallbackGetResponse Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
 class Packet::Reader {
 public:
   typedef Packet Reads;
@@ -1224,6 +1450,14 @@ public:
   inline bool hasDeleteRequest() const;
   inline  ::DeleteRequest::Reader getDeleteRequest() const;
 
+  inline bool isFallbackGetRequest() const;
+  inline bool hasFallbackGetRequest() const;
+  inline  ::FallbackGetRequest::Reader getFallbackGetRequest() const;
+
+  inline bool isFallbackGetResponse() const;
+  inline bool hasFallbackGetResponse() const;
+  inline  ::FallbackGetResponse::Reader getFallbackGetResponse() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -1332,6 +1566,22 @@ public:
   inline  ::DeleteRequest::Builder initDeleteRequest();
   inline void adoptDeleteRequest(::capnp::Orphan< ::DeleteRequest>&& value);
   inline ::capnp::Orphan< ::DeleteRequest> disownDeleteRequest();
+
+  inline bool isFallbackGetRequest();
+  inline bool hasFallbackGetRequest();
+  inline  ::FallbackGetRequest::Builder getFallbackGetRequest();
+  inline void setFallbackGetRequest( ::FallbackGetRequest::Reader value);
+  inline  ::FallbackGetRequest::Builder initFallbackGetRequest();
+  inline void adoptFallbackGetRequest(::capnp::Orphan< ::FallbackGetRequest>&& value);
+  inline ::capnp::Orphan< ::FallbackGetRequest> disownFallbackGetRequest();
+
+  inline bool isFallbackGetResponse();
+  inline bool hasFallbackGetResponse();
+  inline  ::FallbackGetResponse::Builder getFallbackGetResponse();
+  inline void setFallbackGetResponse( ::FallbackGetResponse::Reader value);
+  inline  ::FallbackGetResponse::Builder initFallbackGetResponse();
+  inline void adoptFallbackGetResponse(::capnp::Orphan< ::FallbackGetResponse>&& value);
+  inline ::capnp::Orphan< ::FallbackGetResponse> disownFallbackGetResponse();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1832,6 +2082,164 @@ inline void DeleteRequest::Builder::adoptKey(
 inline ::capnp::Orphan< ::capnp::Text> DeleteRequest::Builder::disownKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool FallbackGetRequest::Reader::hasKey() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool FallbackGetRequest::Builder::hasKey() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader FallbackGetRequest::Reader::getKey() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder FallbackGetRequest::Builder::getKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void FallbackGetRequest::Builder::setKey( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder FallbackGetRequest::Builder::initKey(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void FallbackGetRequest::Builder::adoptKey(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> FallbackGetRequest::Builder::disownKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline  ::ResponseType FallbackGetResponse::Reader::getResponse() const {
+  return _reader.getDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+
+inline  ::ResponseType FallbackGetResponse::Builder::getResponse() {
+  return _builder.getDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+inline void FallbackGetResponse::Builder::setResponse( ::ResponseType value) {
+  _builder.setDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool FallbackGetResponse::Reader::hasKey() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool FallbackGetResponse::Builder::hasKey() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader FallbackGetResponse::Reader::getKey() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder FallbackGetResponse::Builder::getKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void FallbackGetResponse::Builder::setKey( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder FallbackGetResponse::Builder::initKey(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void FallbackGetResponse::Builder::adoptKey(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> FallbackGetResponse::Builder::disownKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool FallbackGetResponse::Reader::hasValue() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool FallbackGetResponse::Builder::hasValue() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader FallbackGetResponse::Reader::getValue() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder FallbackGetResponse::Builder::getValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void FallbackGetResponse::Builder::setValue( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder FallbackGetResponse::Builder::initValue(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void FallbackGetResponse::Builder::adoptValue(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> FallbackGetResponse::Builder::disownValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+
+inline  ::uint64_t FallbackGetResponse::Reader::getKeyValuePtrOffset() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t FallbackGetResponse::Builder::getKeyValuePtrOffset() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+inline void FallbackGetResponse::Builder::setKeyValuePtrOffset( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool FallbackGetResponse::Reader::getSingleton() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS);
+}
+
+inline bool FallbackGetResponse::Builder::getSingleton() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS);
+}
+inline void FallbackGetResponse::Builder::setSingleton(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint64_t FallbackGetResponse::Reader::getForwardCount() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t FallbackGetResponse::Builder::getForwardCount() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+inline void FallbackGetResponse::Builder::setForwardCount( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
 }
 
 inline typename Packet::Data::Reader Packet::Reader::getData() const {
@@ -2396,6 +2804,114 @@ inline ::capnp::Orphan< ::DeleteRequest> Packet::Data::Builder::disownDeleteRequ
   KJ_IREQUIRE((which() == Packet::Data::DELETE_REQUEST),
               "Must check which() before get()ing a union member.");
   return ::capnp::_::PointerHelpers< ::DeleteRequest>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Packet::Data::Reader::isFallbackGetRequest() const {
+  return which() == Packet::Data::FALLBACK_GET_REQUEST;
+}
+inline bool Packet::Data::Builder::isFallbackGetRequest() {
+  return which() == Packet::Data::FALLBACK_GET_REQUEST;
+}
+inline bool Packet::Data::Reader::hasFallbackGetRequest() const {
+  if (which() != Packet::Data::FALLBACK_GET_REQUEST) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Packet::Data::Builder::hasFallbackGetRequest() {
+  if (which() != Packet::Data::FALLBACK_GET_REQUEST) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::FallbackGetRequest::Reader Packet::Data::Reader::getFallbackGetRequest() const {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetRequest>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::FallbackGetRequest::Builder Packet::Data::Builder::getFallbackGetRequest() {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetRequest>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::setFallbackGetRequest( ::FallbackGetRequest::Reader value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_REQUEST);
+  ::capnp::_::PointerHelpers< ::FallbackGetRequest>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::FallbackGetRequest::Builder Packet::Data::Builder::initFallbackGetRequest() {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_REQUEST);
+  return ::capnp::_::PointerHelpers< ::FallbackGetRequest>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::adoptFallbackGetRequest(
+    ::capnp::Orphan< ::FallbackGetRequest>&& value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_REQUEST);
+  ::capnp::_::PointerHelpers< ::FallbackGetRequest>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::FallbackGetRequest> Packet::Data::Builder::disownFallbackGetRequest() {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetRequest>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Packet::Data::Reader::isFallbackGetResponse() const {
+  return which() == Packet::Data::FALLBACK_GET_RESPONSE;
+}
+inline bool Packet::Data::Builder::isFallbackGetResponse() {
+  return which() == Packet::Data::FALLBACK_GET_RESPONSE;
+}
+inline bool Packet::Data::Reader::hasFallbackGetResponse() const {
+  if (which() != Packet::Data::FALLBACK_GET_RESPONSE) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Packet::Data::Builder::hasFallbackGetResponse() {
+  if (which() != Packet::Data::FALLBACK_GET_RESPONSE) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::FallbackGetResponse::Reader Packet::Data::Reader::getFallbackGetResponse() const {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetResponse>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::FallbackGetResponse::Builder Packet::Data::Builder::getFallbackGetResponse() {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetResponse>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::setFallbackGetResponse( ::FallbackGetResponse::Reader value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_RESPONSE);
+  ::capnp::_::PointerHelpers< ::FallbackGetResponse>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::FallbackGetResponse::Builder Packet::Data::Builder::initFallbackGetResponse() {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_RESPONSE);
+  return ::capnp::_::PointerHelpers< ::FallbackGetResponse>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::adoptFallbackGetResponse(
+    ::capnp::Orphan< ::FallbackGetResponse>&& value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FALLBACK_GET_RESPONSE);
+  ::capnp::_::PointerHelpers< ::FallbackGetResponse>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::FallbackGetResponse> Packet::Data::Builder::disownFallbackGetResponse() {
+  KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::FallbackGetResponse>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 

@@ -490,6 +490,45 @@ void Server::delete_request(int index, int port, std::string_view key)
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
+void Server::fallback_get_request(int index, int port, std::string_view key)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  FallbackGetRequest::Builder request = data.initFallbackGetRequest();
+  request.setKey(std::string(key));
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] FallbackGetRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Server::fallback_get_response(int index, int port, std::string_view key, std::string_view value, uint64_t key_value_ptr_offset, bool singleton, uint64_t forward_count)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  FallbackGetResponse::Builder request = data.initFallbackGetResponse();
+  request.setResponse(ResponseType::OK);
+  request.setKey(std::string(key));
+  request.setValue(std::string(value));
+  request.setKeyValuePtrOffset(key_value_ptr_offset);
+  request.setSingleton(singleton);
+  request.setForwardCount(forward_count);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] FallbackGetResponse [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
 void Server::execute_pending_operations()
 {
   Connection::execute_pending_operations();

@@ -408,7 +408,8 @@ void server_worker(
                     {
                       remote_disk_access.fetch_add(1, std::memory_order::relaxed);
                       snapshot->update_remote_disk_access(expected_key);
-                      rdma_node.rdma_key_value_cache->update_local_key(expected_key, key_index, value);
+                      // rdma_node.rdma_key_value_cache->update_local_key(expected_key, key_index, value);
+                      server.fallback_get_request(remote_index, remote_port, key);
                       LOG_RDMA_DATA("[Read RDMA Callback] Fetching from disk instead key {} != expected {}", key_index, expected_key);
                       fetch_from_disk(false);
                     }
@@ -464,11 +465,58 @@ void server_worker(
                  keyStr, valueStr, p.getSingleton(), p.getForwardCount());
             block_cache->get_cache()->put_singleton(p.getKey().cStr(), p.getValue().cStr(), p.getSingleton(), p.getForwardCount());
             LOG_RDMA_DATA("[Server] Singleton put request done");
-            // server.singleton_put_response(remote_index, ResponseType::OK);
           }
           else if (data.isDeleteRequest())
           {
             auto p = data.getDeleteRequest();
+          }
+          else if (data.isFallbackGetRequest())
+          {
+            auto p = data.getFallbackGetRequest();
+            std::string_view key = p.getKey().cStr();
+
+            // Find cache index and return result to user
+            auto key_index = convert_string<uint64_t>(key);
+
+            auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
+            auto* cache_index_buffer = rdma_kv_storage->get_cache_index_buffer();
+            const auto& cache_index = cache_index_buffer[key_index];
+            const auto& [key_value_ptr_offset, singleton, forward_count] = cache_index;
+            auto value = std::string();
+            if (key_value_ptr_offset != KEY_VALUE_PTR_INVALID)
+            {
+              // Fetch from offset
+              auto key_value = rdma_kv_storage->get_key_value(key_index);
+              auto key_ptr = key_value.key;
+              std::copy(std::begin(key_value.value), std::end(key_value.value), std::back_inserter(value));
+            }
+
+            server.fallback_get_response(remote_index, remote_port, key, value, key_value_ptr_offset, singleton, forward_count);
+          }
+          else if (data.isFallbackGetResponse())
+          {
+            auto p = data.getFallbackGetResponse();
+            std::string_view key = p.getKey().cStr();
+            std::string_view value = p.getValue().cStr();
+            
+            uint64_t key_value_ptr_offset = p.getKeyValuePtrOffset();
+            bool singleton = p.getSingleton();
+            uint64_t forward_count = p.getForwardCount();
+
+            auto key_index = convert_string<uint64_t>(key);
+            auto remote_server_index = remote_index - server_start_index;
+            auto& rdma_node = std::begin(rdma_nodes)->second;
+
+            auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
+            auto* cache_index_buffer = rdma_kv_storage->get_cache_index_buffer_for(remote_server_index);
+            *cache_index_buffer = RDMACacheIndex{key_value_ptr_offset, singleton, forward_count};
+
+            // Return result to original client :), we need to save context here though...
+            if (!value.empty())
+            {
+              // Return result
+              // server.get_response()
+            }
           }
         });
   }

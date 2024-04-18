@@ -530,7 +530,7 @@ struct CacheIndexes : public RDMAData
 
   void write_remote(const std::string& key, const std::string& value)
   {
-    auto key_index = std::stoi(key);
+    auto key_index = convert_string<uint64_t>(key);
     for (auto i = 0; i < server_configs.size(); i++)
     {
       const auto& server_config = server_configs[i];
@@ -577,7 +577,7 @@ struct CacheIndexes : public RDMAData
 
   void dealloc_remote(const std::string& key)
   {
-    auto key_index = std::stoi(key);
+    auto key_index = convert_string<uint64_t>(key);
     for (auto i = 0; i < server_configs.size(); i++)
     {
       const auto& server_config = server_configs[i];
@@ -774,7 +774,7 @@ struct CacheIndexLogs : public RDMAData
 
   void append_entry_k(const std::string& key)
   {
-    auto key_index = std::stoi(key);
+    auto key_index = convert_string<uint64_t>(key);
     const auto& rdma_cache_index = cache_indexes->get_cache_index(machine_index);
     auto cache_index = rdma_cache_index[key_index];
     CacheIndexLogEntry entry{key_index, cache_index, true};

@@ -53,6 +53,19 @@ struct DeleteRequest {
   key @0 :Text;
 }
 
+struct FallbackGetRequest {
+  key @0 :Text;
+}
+
+struct FallbackGetResponse {
+  response @0 :ResponseType;
+  key @1: Text;
+  value @2: Text;
+  keyValuePtrOffset @3: UInt64;
+  singleton @4: Bool;
+  forwardCount @5: UInt64;
+}
+
 struct Packet {
   data :union {
     putRequest @0 :PutRequest;
@@ -65,6 +78,8 @@ struct Packet {
     clientSyncResponse @7: ClientSyncResponse;
     singletonPutRequest @8: SingletonPutRequest;
     deleteRequest @9: DeleteRequest;
+    fallbackGetRequest @10: FallbackGetRequest;
+    fallbackGetResponse @11: FallbackGetResponse;
   }
 }
 
