@@ -854,12 +854,13 @@ struct RDMAKeyValueCache : public RDMAData
     key_value_storage->read(rdma_index, {}, ci);
   }
 
-  bool read_callback(uint64_t key_index, DataWithRequestCallback<RDMACacheIndexKeyValue> callback)
+  std::pair<int, bool> read_callback(uint64_t key_index, DataWithRequestCallback<RDMACacheIndexKeyValue> callback)
   {
     bool found_remote_machine_with_possible_value = false;
+    int rdma_index = 0;
     for (auto i = 0; i < server_configs.size(); i++)
     {
-      auto rdma_index = i;
+      rdma_index = i;
       if (rdma_index == machine_index)
       {
         continue;
@@ -876,7 +877,7 @@ struct RDMAKeyValueCache : public RDMAData
       found_remote_machine_with_possible_value = true;
       break;
     }
-    return found_remote_machine_with_possible_value;
+    return std::make_pair(rdma_index, found_remote_machine_with_possible_value);
   }
 
   inline static void default_function()

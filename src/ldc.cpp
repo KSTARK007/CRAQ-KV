@@ -366,7 +366,8 @@ void server_worker(
                 if (config.baseline.use_cache_indexing)
                 {
                   auto& rdma_node = std::begin(rdma_nodes)->second;
-                  found_in_rdma = rdma_node.rdma_key_value_cache->read_callback(key_index, [=, expected_key=key_index](const RDMACacheIndexKeyValue& kv)
+                  auto port = config.remote_machine_configs[machine_index].port + thread_index;
+                  auto [rdma_server_index, found_in_rdma] = rdma_node.rdma_key_value_cache->read_callback(key_index, [=, expected_key=key_index](const RDMACacheIndexKeyValue& kv)
                   {
                     auto& server = *server_;
                     total_rdma_executed.fetch_add(1, std::memory_order::relaxed);
@@ -387,7 +388,6 @@ void server_worker(
                         if (tmp_ptr != nullptr){
                           LOG_RDMA_DATA("singleton forward to index {} from index {} key {} value {} to cache", remote_index_to_forward, base_index, key_index, value);
                           auto tmp_data = static_cast<EvictionCallbackData<std::string, std::string> *>(tmp_ptr);
-                          auto port = config.remote_machine_configs[machine_index].port + thread_index;
                           LOG_RDMA_DATA("Singleton put request key = {} singleton = {} forward_count = {} remote_port = {}",
                               tmp_data->key, tmp_data->singleton, tmp_data->forward_count, port);
 
@@ -409,7 +409,7 @@ void server_worker(
                       remote_disk_access.fetch_add(1, std::memory_order::relaxed);
                       snapshot->update_remote_disk_access(expected_key);
                       // rdma_node.rdma_key_value_cache->update_local_key(expected_key, key_index, value);
-                      server.fallback_get_request(remote_index, remote_port, key);
+                      server.fallback_get_request(rdma_server_index, port, key);
                       LOG_RDMA_DATA("[Read RDMA Callback] Fetching from disk instead key {} != expected {}", key_index, expected_key);
                       fetch_from_disk(false);
                     }
