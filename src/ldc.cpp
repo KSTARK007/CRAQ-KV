@@ -842,8 +842,8 @@ int main(int argc, char *argv[])
         auto diff_cache_misses = current_cache_misses - last_cache_misses;
 
         info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}]", 
-            current_rdma_executed, diff_rdma_executed,
             current_ops_executed, diff_ops_executed,
+            current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
             current_cache_reads, diff_cache_reads,
             current_cache_hits, diff_cache_hits,
