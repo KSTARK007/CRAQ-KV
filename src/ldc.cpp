@@ -510,7 +510,7 @@ void server_worker(
 
             auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
             auto* cache_index_buffer = rdma_kv_storage->get_cache_index_buffer_for(remote_server_index);
-            *cache_index_buffer = RDMACacheIndex{key_value_ptr_offset, singleton, forward_count};
+            cache_index_buffer[key_index] = RDMACacheIndex{key_value_ptr_offset, singleton, forward_count};
 
             // Return result to original client :), we need to save context here though...
             if (!value.empty())
