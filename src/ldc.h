@@ -361,7 +361,7 @@ struct RDMAData
 };
 
 template<typename T>
-using DataWithRequestCallback = std::function<void(const T&)>;
+using DataWithRequestCallback = std::function<void(int, const T&)>;
 
 template<typename T>
 struct RDMADataWithQueue : public RDMAData
@@ -408,7 +408,7 @@ struct RDMADataWithQueue : public RDMAData
       f(data_with_request_token);
       if (data_with_request_token.callback)
       {
-        data_with_request_token.callback(*data_with_request_token.data);
+        data_with_request_token.callback(data_with_request_token.remote_index, *data_with_request_token.data);
       }
       free_request_token(std::move(data_with_request_token.token));
       free_queue.enqueue(std::move(data_with_request_token));
@@ -854,13 +854,12 @@ struct RDMAKeyValueCache : public RDMAData
     key_value_storage->read(rdma_index, {}, ci);
   }
 
-  std::pair<int, bool> read_callback(uint64_t key_index, DataWithRequestCallback<RDMACacheIndexKeyValue> callback)
+  bool read_callback(uint64_t key_index, DataWithRequestCallback<RDMACacheIndexKeyValue> callback)
   {
     bool found_remote_machine_with_possible_value = false;
-    int rdma_index = 0;
     for (auto i = 0; i < server_configs.size(); i++)
     {
-      rdma_index = i;
+      auto rdma_index = i;
       if (rdma_index == machine_index)
       {
         continue;
@@ -877,7 +876,7 @@ struct RDMAKeyValueCache : public RDMAData
       found_remote_machine_with_possible_value = true;
       break;
     }
-    return std::make_pair(rdma_index, found_remote_machine_with_possible_value);
+    return found_remote_machine_with_possible_value;
   }
 
   inline static void default_function()
