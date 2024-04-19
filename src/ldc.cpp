@@ -721,7 +721,7 @@ int main(int argc, char *argv[])
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        while (count_expected != count_finished)
+        while (count_expected > count_finished)
         {
           count_finished = rdma_node.rdma_key_value_cache->get_writes();
           std::this_thread::yield();
