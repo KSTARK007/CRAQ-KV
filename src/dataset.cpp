@@ -250,5 +250,6 @@ Configuration parseConfigFile(const std::string &configFile)
   config.dump_snapshot_period_ms = jsonData["dump_snapshot_period_ms"];
   config.dump_snapshot_file = jsonData["dump_snapshot_file"];
   config.enable_fallback_rpc = jsonData["enable_fallback_rpc"];
+  config.fallback_rpc_broadcast = jsonData["fallback_rpc_broadcast"];
   return config;
 }

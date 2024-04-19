@@ -412,7 +412,22 @@ void server_worker(
                       // server.fallback_get_request(rdma_index + server_start_index, port, std::to_string(expected_key));
                       if (ops_config.enable_fallback_rpc)
                       {
-                        server.append_fallback_get_request(rdma_index + server_start_index, port, std::to_string(expected_key));
+                        auto expected_key_str = std::to_string(expected_key);
+                        if (ops_config.fallback_rpc_broadcast)
+                        {
+                          for (auto i = 0; i < num_servers; i++)
+                          {
+                            if (i == machine_index - server_start_index)
+                            {
+                              continue;
+                            }
+                            server.append_fallback_get_request(rdma_index + i, port, expected_key_str);
+                          }
+                        }
+                        else
+                        {
+                          server.append_fallback_get_request(rdma_index + server_start_index, port, expected_key_str);
+                        }
                       }
                       LOG_RDMA_DATA("[Read RDMA Callback] Fetching from disk instead key {} != expected {}", key_index, expected_key);
                       fetch_from_disk(false);

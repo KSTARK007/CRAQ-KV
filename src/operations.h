@@ -53,6 +53,7 @@ struct Configuration
   int dump_snapshot_period_ms;
   std::string dump_snapshot_file;
   bool enable_fallback_rpc;
+  bool fallback_rpc_broadcast;
 };
 
 struct Operation
