@@ -36,6 +36,7 @@ CAPNP_DECLARE_SCHEMA(d74e917dbcd881cb);
 CAPNP_DECLARE_SCHEMA(f90a05fd026809ad);
 CAPNP_DECLARE_SCHEMA(fb62f49632f7d8be);
 CAPNP_DECLARE_SCHEMA(cd9e95393d3f997d);
+CAPNP_DECLARE_SCHEMA(8cc68251f3279f3f);
 CAPNP_DECLARE_SCHEMA(b36ecfe36db7d4ef);
 CAPNP_DECLARE_SCHEMA(a9a1635b25f07a7b);
 CAPNP_DECLARE_SCHEMA(9cc4c008dd1d858e);
@@ -226,6 +227,21 @@ struct FallbackGetResponse {
   };
 };
 
+struct ForwardPutRequest {
+  ForwardPutRequest() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(8cc68251f3279f3f, 0, 2)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
 struct Packet {
   Packet() = delete;
 
@@ -261,6 +277,7 @@ struct Packet::Data {
     DELETE_REQUEST,
     FALLBACK_GET_REQUEST,
     FALLBACK_GET_RESPONSE,
+    FORWARD_PUT_REQUEST,
   };
 
   struct _capnpPrivate {
@@ -1315,6 +1332,97 @@ private:
 };
 #endif  // !CAPNP_LITE
 
+class ForwardPutRequest::Reader {
+public:
+  typedef ForwardPutRequest Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline bool hasKey() const;
+  inline  ::capnp::Text::Reader getKey() const;
+
+  inline bool hasValue() const;
+  inline  ::capnp::Text::Reader getValue() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class ForwardPutRequest::Builder {
+public:
+  typedef ForwardPutRequest Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline bool hasKey();
+  inline  ::capnp::Text::Builder getKey();
+  inline void setKey( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initKey(unsigned int size);
+  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline bool hasValue();
+  inline  ::capnp::Text::Builder getValue();
+  inline void setValue( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initValue(unsigned int size);
+  inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownValue();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class ForwardPutRequest::Pipeline {
+public:
+  typedef ForwardPutRequest Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
 class Packet::Reader {
 public:
   typedef Packet Reads;
@@ -1458,6 +1566,10 @@ public:
   inline bool hasFallbackGetResponse() const;
   inline  ::FallbackGetResponse::Reader getFallbackGetResponse() const;
 
+  inline bool isForwardPutRequest() const;
+  inline bool hasForwardPutRequest() const;
+  inline  ::ForwardPutRequest::Reader getForwardPutRequest() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -1582,6 +1694,14 @@ public:
   inline  ::FallbackGetResponse::Builder initFallbackGetResponse();
   inline void adoptFallbackGetResponse(::capnp::Orphan< ::FallbackGetResponse>&& value);
   inline ::capnp::Orphan< ::FallbackGetResponse> disownFallbackGetResponse();
+
+  inline bool isForwardPutRequest();
+  inline bool hasForwardPutRequest();
+  inline  ::ForwardPutRequest::Builder getForwardPutRequest();
+  inline void setForwardPutRequest( ::ForwardPutRequest::Reader value);
+  inline  ::ForwardPutRequest::Builder initForwardPutRequest();
+  inline void adoptForwardPutRequest(::capnp::Orphan< ::ForwardPutRequest>&& value);
+  inline ::capnp::Orphan< ::ForwardPutRequest> disownForwardPutRequest();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -2240,6 +2360,74 @@ inline  ::uint64_t FallbackGetResponse::Builder::getForwardCount() {
 inline void FallbackGetResponse::Builder::setForwardCount( ::uint64_t value) {
   _builder.setDataField< ::uint64_t>(
       ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool ForwardPutRequest::Reader::hasKey() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool ForwardPutRequest::Builder::hasKey() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader ForwardPutRequest::Reader::getKey() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder ForwardPutRequest::Builder::getKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void ForwardPutRequest::Builder::setKey( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder ForwardPutRequest::Builder::initKey(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void ForwardPutRequest::Builder::adoptKey(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> ForwardPutRequest::Builder::disownKey() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool ForwardPutRequest::Reader::hasValue() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool ForwardPutRequest::Builder::hasValue() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader ForwardPutRequest::Reader::getValue() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder ForwardPutRequest::Builder::getValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void ForwardPutRequest::Builder::setValue( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder ForwardPutRequest::Builder::initValue(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void ForwardPutRequest::Builder::adoptValue(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> ForwardPutRequest::Builder::disownValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline typename Packet::Data::Reader Packet::Reader::getData() const {
@@ -2912,6 +3100,60 @@ inline ::capnp::Orphan< ::FallbackGetResponse> Packet::Data::Builder::disownFall
   KJ_IREQUIRE((which() == Packet::Data::FALLBACK_GET_RESPONSE),
               "Must check which() before get()ing a union member.");
   return ::capnp::_::PointerHelpers< ::FallbackGetResponse>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Packet::Data::Reader::isForwardPutRequest() const {
+  return which() == Packet::Data::FORWARD_PUT_REQUEST;
+}
+inline bool Packet::Data::Builder::isForwardPutRequest() {
+  return which() == Packet::Data::FORWARD_PUT_REQUEST;
+}
+inline bool Packet::Data::Reader::hasForwardPutRequest() const {
+  if (which() != Packet::Data::FORWARD_PUT_REQUEST) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Packet::Data::Builder::hasForwardPutRequest() {
+  if (which() != Packet::Data::FORWARD_PUT_REQUEST) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::ForwardPutRequest::Reader Packet::Data::Reader::getForwardPutRequest() const {
+  KJ_IREQUIRE((which() == Packet::Data::FORWARD_PUT_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::ForwardPutRequest>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::ForwardPutRequest::Builder Packet::Data::Builder::getForwardPutRequest() {
+  KJ_IREQUIRE((which() == Packet::Data::FORWARD_PUT_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::ForwardPutRequest>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::setForwardPutRequest( ::ForwardPutRequest::Reader value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FORWARD_PUT_REQUEST);
+  ::capnp::_::PointerHelpers< ::ForwardPutRequest>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::ForwardPutRequest::Builder Packet::Data::Builder::initForwardPutRequest() {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FORWARD_PUT_REQUEST);
+  return ::capnp::_::PointerHelpers< ::ForwardPutRequest>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::adoptForwardPutRequest(
+    ::capnp::Orphan< ::ForwardPutRequest>&& value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::FORWARD_PUT_REQUEST);
+  ::capnp::_::PointerHelpers< ::ForwardPutRequest>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::ForwardPutRequest> Packet::Data::Builder::disownForwardPutRequest() {
+  KJ_IREQUIRE((which() == Packet::Data::FORWARD_PUT_REQUEST),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::ForwardPutRequest>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 

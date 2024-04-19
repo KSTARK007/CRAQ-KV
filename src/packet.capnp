@@ -66,6 +66,11 @@ struct FallbackGetResponse {
   forwardCount @5: UInt64;
 }
 
+struct ForwardPutRequest {
+  key @0 :Text;
+  value @1 :Text;
+}
+
 struct Packet {
   data :union {
     putRequest @0 :PutRequest;
@@ -80,6 +85,7 @@ struct Packet {
     deleteRequest @9: DeleteRequest;
     fallbackGetRequest @10: FallbackGetRequest;
     fallbackGetResponse @11: FallbackGetResponse;
+    forwardPutRequest @12: ForwardPutRequest;
   }
 }
 

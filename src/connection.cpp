@@ -529,6 +529,24 @@ void Server::fallback_get_response(int index, int port, std::string_view key, st
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
+void Server::forward_put_request(int index, int port, std::string_view key, std::string_view value)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  ForwardPutRequest::Builder request = data.initForwardPutRequest();
+  request.setKey(std::string(key));
+  request.setValue(std::string(value));
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] ForwardPutRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
 void Server::execute_pending_operations()
 {
   Connection::execute_pending_operations();
