@@ -200,6 +200,8 @@ struct Server : public Connection
                                                 std::string_view key, std::string_view value);
   void append_singleton_put_request(int index, int port, std::string_view key,
                                     std::string_view value, bool singleton, uint64_t forward_count);
+  void append_fallback_get_request(int index, int port, std::string_view key);
+
   void increment_async_disk_requests() { async_disk_requests++; }
 
   auto get_block_cache() { return block_cache; }
@@ -233,6 +235,13 @@ public:
     uint64_t forward_count;
   };
 
+  struct AppendFallbackGetRequest
+  {
+    int index;
+    int port;
+    std::string key;
+  };
+
 private:
   MPMCQueue<RDMAGetResponse> rdma_get_response_queue;
   uint64_t remote_rdma_cache_hits{};
@@ -242,4 +251,5 @@ private:
   uint64_t async_disk_requests{};
 
   MPMCQueue<AppendSingletonPutRequest> singleton_put_request_queue;
+  MPMCQueue<AppendFallbackGetRequest> fallback_get_request_queue;
 };

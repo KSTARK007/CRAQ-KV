@@ -559,16 +559,27 @@ void Server::execute_pending_operations()
     }
   }
 
-  AppendSingletonPutRequest request;
-  while (singleton_put_request_queue.try_dequeue(request))
   {
-    auto [index, port, response_type, key, value, singleton, forward_count] = request;
-    if (response_type != ResponseType::OK)
+    AppendSingletonPutRequest request;
+    while (singleton_put_request_queue.try_dequeue(request))
     {
-      panic("Singleton put failed");
+      auto [index, port, response_type, key, value, singleton, forward_count] = request;
+      if (response_type != ResponseType::OK)
+      {
+        panic("Singleton put failed");
+      }
+      LOG_STATE("[{}-{}] Execute pending operation [{}]", machine_index, index, value);
+      singleton_put_request(index, port, key, value, singleton, forward_count);
     }
-    LOG_STATE("[{}-{}] Execute pending operation [{}]", machine_index, index, value);
-    singleton_put_request(index, port, key, value, singleton, forward_count);
+  }
+
+  {
+    AppendFallbackGetRequest request;
+    while (fallback_get_request_queue.try_dequeue(request))
+    {
+      auto [index, port, key] = request;
+      fallback_get_request(index, port, key);
+    }
   }
 }
 
@@ -603,3 +614,10 @@ void Server::append_singleton_put_request(int index, int port, std::string_view 
   auto request = Server::AppendSingletonPutRequest{index, port, ResponseType::OK, std::string(key), std::string(value), singleton, forward_count};
   singleton_put_request_queue.enqueue(request);
 }
+
+void Server::append_fallback_get_request(int index, int port, std::string_view key)
+{
+  auto request = Server::AppendFallbackGetRequest{index, port, std::string(key)};
+  fallback_get_request_queue.enqueue(request);
+}
+
