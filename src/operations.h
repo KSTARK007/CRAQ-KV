@@ -52,6 +52,7 @@ struct Configuration
   int cache_log_sync_every_x_operations;
   int dump_snapshot_period_ms;
   std::string dump_snapshot_file;
+  bool enable_fallback_rpc;
 };
 
 struct Operation

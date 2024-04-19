@@ -249,5 +249,6 @@ Configuration parseConfigFile(const std::string &configFile)
   config.cache_log_sync_every_x_operations = jsonData["cache_log_sync_every_x_operations"];
   config.dump_snapshot_period_ms = jsonData["dump_snapshot_period_ms"];
   config.dump_snapshot_file = jsonData["dump_snapshot_file"];
+  config.enable_fallback_rpc = jsonData["enable_fallback_rpc"];
   return config;
 }
