@@ -367,7 +367,6 @@ void server_worker(
                 {
                   auto& rdma_node = std::begin(rdma_nodes)->second;
                   auto port = config.remote_machine_configs[machine_index].port + thread_index;
-                  // TODO: need callback to know who is the caller
                   found_in_rdma = rdma_node.rdma_key_value_cache->read_callback(key_index, [=, expected_key=key_index](int rdma_index, const RDMACacheIndexKeyValue& kv)
                   {
                     auto& server = *server_;
@@ -403,7 +402,7 @@ void server_worker(
                           snapshot->update_access_rate(key_index);
                         }
                       }
-                      server.append_to_rdma_get_response_queue(rdma_index, remote_port, ResponseType::OK, value);
+                      server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                     }
                     else
                     {
