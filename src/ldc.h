@@ -818,30 +818,70 @@ struct RDMAKeyValueCache : public RDMAData
     cache->add_callback_on_write([this, ops_config](const std::string& key, const std::string& value){
       // Update the cache_indexes on remote nodes
       LOG_RDMA_DATA("[RDMAKeyValueCache] Writing callback on cache index {} {}", key, value);
-      if (ops_config.use_cache_logs)
-      {
-        cache_index_logs->append_entry_k(key);
-      }
-      else
-      {
-        cache_indexes->write_remote(key, value);
-      }
+      // if (ops_config.use_cache_logs)
+      // {
+      //   cache_index_logs->append_entry_k(key);
+      // }
+      // else
+      // {
+      //   cache_indexes->write_remote(key, value);
+      // }
+      EvictionCallbackData<std::string, std::string> data{key, value};
+      cache_index_write_queue.enqueue(data);
+      write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
     cache->add_callback_on_eviction([this, ops_config](EvictionCallbackData<std::string, std::string> data){
       LOG_RDMA_DATA("Evicted {}", data.key);
       snapshot->update_evicted(std::stoi(data.key));
-      if (ops_config.use_cache_logs)
-      {
-        cache_index_logs->append_entry_k(data.key);
-      }
-      else
-      {
-        cache_indexes->dealloc_remote(data.key);
-      }
+      // if (ops_config.use_cache_logs)
+      // {
+      //   cache_index_logs->append_entry_k(data.key);
+      // }
+      // else
+      // {
+      //   cache_indexes->dealloc_remote(data.key);
+      // }
+      cache_index_eviction_queue.enqueue(data);
+      write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
+
+    static std::thread background_worker([this, ops_config]()
+    {
+      while (!g_stop)
+      {
+        std::unique_lock lk(write_cache_index_m);
+        write_cache_index_cv.wait_for(lk, std::chrono::milliseconds(1));
+        write_cache_index_m.unlock();
+        EvictionCallbackData<std::string, std::string> data;
+        while (cache_index_write_queue.try_dequeue(data))
+        {
+          if (ops_config.use_cache_logs)
+          {
+            cache_index_logs->append_entry_k(data.key);
+          }
+          else
+          {
+            cache_indexes->write_remote(data.key, data.value);
+          }
+        }
+
+        while (cache_index_eviction_queue.try_dequeue(data))
+        {
+          if (ops_config.use_cache_logs)
+          {
+            cache_index_logs->append_entry_k(data.key);
+          }
+          else
+          {
+            cache_indexes->dealloc_remote(data.key);
+          }
+        }
+      }
+    });
+    background_worker.detach();
   }
 
   void read(int remote_index, uint64_t key_index)
@@ -905,6 +945,11 @@ private:
   std::unique_ptr<CacheIndexLogs> cache_index_logs;
   std::unique_ptr<KeyValueStorage> key_value_storage;
   CopyableAtomic<uint64_t> writes;
+
+  std::mutex write_cache_index_m;
+  std::condition_variable write_cache_index_cv;
+  MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_write_queue;
+  MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_eviction_queue;
 };
 
 struct RDMA_connect
