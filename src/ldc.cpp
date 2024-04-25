@@ -194,6 +194,14 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
 #endif
 }
 
+void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
+{
+  while (!g_stop)
+  {
+    
+  }
+}
+
 void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Configuration ops_config,
                    int machine_index, int thread_index, Operations ops,
                    int client_index_per_thread)
@@ -563,6 +571,7 @@ int main(int argc, char *argv[])
   int machine_index = FLAGS_machine_index;
   auto machine_config = config.remote_machine_configs[machine_index];
   auto is_server = machine_config.server;
+  auto is_shared_log = machine_config.shared_log;
 
   if (FLAGS_dump_operations)
   {
@@ -575,231 +584,234 @@ int main(int argc, char *argv[])
 
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache = nullptr;
   HashMap<uint64_t, RDMA_connect> rdma_nodes;
-  if (is_server)
+  if (!shared_log)
   {
-    block_cache =
-        std::make_shared<BlockCache<std::string, std::string>>(config);
-
-    snapshot = std::make_shared<Snapshot>(config, ops_config);
-
-    // Load the database and operations
-    // load the cache with part of database
-    auto start_client_index = 0;
-    for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+    if (is_server)
     {
-      auto remote_machine_config = config.remote_machine_configs[i];
-      if (remote_machine_config.server)
-      {
-        break;
-      }
-      start_client_index++;
-    }
-    auto server_index = FLAGS_machine_index - start_client_index;
-    auto start_keys = server_index * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
-    auto end_keys = (server_index + 1) * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
+      block_cache =
+          std::make_shared<BlockCache<std::string, std::string>>(config);
 
-    info("[{}] Loading database for server index {} starting at key {} and ending at {}", machine_index, server_index, start_keys, end_keys);
-    std::vector<std::string> keys = readKeysFromFile(ops_config.DATASET_FILE);
-    if (keys.empty())
-    {
-      panic("Dataset keys are empty");
-    }
-    default_value = std::string(ops_config.VALUE_SIZE, 'A');
-    auto value = default_value;
-  
-    if(!config.baseline.one_sided_rdma_enabled){
-      for (const auto &k : keys)
-      {
-        auto key_index = std::stoi(k);
-        if (key_index >= start_keys && key_index < end_keys)
-        {
-          block_cache->put(k, value);
-        }
-        else
-        {
-          block_cache->get_db()->put(k, value);
-        }
-      }
-    }
+      snapshot = std::make_shared<Snapshot>(config, ops_config);
 
-    // Connect to one sided RDMA
-    if (config.baseline.one_sided_rdma_enabled)
-    {
-      int server_start_index;
+      // Load the database and operations
+      // load the cache with part of database
+      auto start_client_index = 0;
       for (auto i = 0; i < config.remote_machine_configs.size(); i++)
       {
-        if (config.remote_machine_configs[i].server)
+        auto remote_machine_config = config.remote_machine_configs[i];
+        if (remote_machine_config.server)
         {
-          server_start_index = config.remote_machine_configs[i].index;
           break;
         }
+        start_client_index++;
       }
-      auto result = std::async(std::launch::async, RDMA_Server_Init, RDMA_PORT, 1 * GB_TO_BYTES, FLAGS_machine_index, ops_config);
+      auto server_index = FLAGS_machine_index - start_client_index;
+      auto start_keys = server_index * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
+      auto end_keys = (server_index + 1) * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
 
-      sleep(10);
-
-      rdma_nodes = connect_to_servers(config, FLAGS_machine_index, ops_config.VALUE_SIZE, ops_config, block_cache);
-      void *local_memory = result.get();
-
-      rdma_nodes[machine_index].local_memory_region = local_memory;
-
-      for (auto &t : rdma_nodes)
+      info("[{}] Loading database for server index {} starting at key {} and ending at {}", machine_index, server_index, start_keys, end_keys);
+      std::vector<std::string> keys = readKeysFromFile(ops_config.DATASET_FILE);
+      if (keys.empty())
       {
-        printRDMAConnect(t.second);
+        panic("Dataset keys are empty");
       }
-      info("print RDMA Connect completed"); 
-
-
-      if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
-      {
-        info("if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)");
-        auto device_name = find_nic_containing(ops_config.infinity_bound_nic);
-        auto *context1 = new infinity::core::Context(*device_name, ops_config.infinity_bound_device_port);
-        infinity::memory::Buffer *buffer_to_receive1 = new infinity::memory::Buffer(context1, 4096 * sizeof(char));
-        context1->postReceiveBuffer(buffer_to_receive1);
-
-        auto *qpf1 = new infinity::queues::QueuePairFactory(context1);
-
-        auto *context2 = new infinity::core::Context(*device_name, ops_config.infinity_bound_device_port);
-        infinity::memory::Buffer *buffer_to_receive2 = new infinity::memory::Buffer(context2, 4096 * sizeof(char));
-        context2->postReceiveBuffer(buffer_to_receive2);
-
-        auto *qpf2 = new infinity::queues::QueuePairFactory(context2);
-
-        auto start_client_index = 0;
-        for (auto i = 0; i < config.remote_machine_configs.size(); i++)
-        {
-          auto remote_machine_config = config.remote_machine_configs[i];
-          if (remote_machine_config.server)
-          {
-            break;
-          }
-          start_client_index++;
-        }
-
-        auto rdma_key_value_cache = std::make_shared<RDMAKeyValueCache>(config, ops_config, machine_index - start_client_index, context1, qpf1,
-          block_cache->get_rdma_key_value_storage(), block_cache);
-        for (auto &[t, node] : rdma_nodes) {
-          node.rdma_key_value_cache = rdma_key_value_cache;
-        }
-
-        bool finished_running_keys = false;
-        auto& rdma_node = std::begin(rdma_nodes)->second;
-        auto count_expected = 0;
-        auto count_finished = 0;
-        std::thread t([&](){
-          while (!finished_running_keys)
-          {
-            rdma_node.rdma_key_value_cache->execute_pending([&](const auto& v)
-            {
-              const auto& [kv, _, remote_index, __] = v;
-              auto key_index = kv->key_index;
-              auto value = std::string_view((const char*)kv->data, ops_config.VALUE_SIZE);
-              info("[Execute pending for RDMA] [{}] key {} value {}", remote_index, key_index, value);
-            }, [&](){
-            });
-          }
-        });
-
-        info("adding keys to the blockcache");
+      default_value = std::string(ops_config.VALUE_SIZE, 'A');
+      auto value = default_value;
+    
+      if(!config.baseline.one_sided_rdma_enabled){
         for (const auto &k : keys)
         {
           auto key_index = std::stoi(k);
           if (key_index >= start_keys && key_index < end_keys)
           {
             block_cache->put(k, value);
-            count_expected++;
           }
           else
           {
             block_cache->get_db()->put(k, value);
           }
         }
+      }
 
-        if (0)
+      // Connect to one sided RDMA
+      if (config.baseline.one_sided_rdma_enabled)
+      {
+        int server_start_index;
+        for (auto i = 0; i < config.remote_machine_configs.size(); i++)
         {
-          auto count = 0;
+          if (config.remote_machine_configs[i].server)
+          {
+            server_start_index = config.remote_machine_configs[i].index;
+            break;
+          }
+        }
+        auto result = std::async(std::launch::async, RDMA_Server_Init, RDMA_PORT, 1 * GB_TO_BYTES, FLAGS_machine_index, ops_config);
+
+        sleep(10);
+
+        rdma_nodes = connect_to_servers(config, FLAGS_machine_index, ops_config.VALUE_SIZE, ops_config, block_cache);
+        void *local_memory = result.get();
+
+        rdma_nodes[machine_index].local_memory_region = local_memory;
+
+        for (auto &t : rdma_nodes)
+        {
+          printRDMAConnect(t.second);
+        }
+        info("print RDMA Connect completed"); 
+
+
+        if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
+        {
+          info("if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)");
+          auto device_name = find_nic_containing(ops_config.infinity_bound_nic);
+          auto *context1 = new infinity::core::Context(*device_name, ops_config.infinity_bound_device_port);
+          infinity::memory::Buffer *buffer_to_receive1 = new infinity::memory::Buffer(context1, 4096 * sizeof(char));
+          context1->postReceiveBuffer(buffer_to_receive1);
+
+          auto *qpf1 = new infinity::queues::QueuePairFactory(context1);
+
+          auto *context2 = new infinity::core::Context(*device_name, ops_config.infinity_bound_device_port);
+          infinity::memory::Buffer *buffer_to_receive2 = new infinity::memory::Buffer(context2, 4096 * sizeof(char));
+          context2->postReceiveBuffer(buffer_to_receive2);
+
+          auto *qpf2 = new infinity::queues::QueuePairFactory(context2);
+
+          auto start_client_index = 0;
+          for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+          {
+            auto remote_machine_config = config.remote_machine_configs[i];
+            if (remote_machine_config.server)
+            {
+              break;
+            }
+            start_client_index++;
+          }
+
+          auto rdma_key_value_cache = std::make_shared<RDMAKeyValueCache>(config, ops_config, machine_index - start_client_index, context1, qpf1,
+            block_cache->get_rdma_key_value_storage(), block_cache);
+          for (auto &[t, node] : rdma_nodes) {
+            node.rdma_key_value_cache = rdma_key_value_cache;
+          }
+
+          bool finished_running_keys = false;
+          auto& rdma_node = std::begin(rdma_nodes)->second;
+          auto count_expected = 0;
+          auto count_finished = 0;
+          std::thread t([&](){
+            while (!finished_running_keys)
+            {
+              rdma_node.rdma_key_value_cache->execute_pending([&](const auto& v)
+              {
+                const auto& [kv, _, remote_index, __] = v;
+                auto key_index = kv->key_index;
+                auto value = std::string_view((const char*)kv->data, ops_config.VALUE_SIZE);
+                info("[Execute pending for RDMA] [{}] key {} value {}", remote_index, key_index, value);
+              }, [&](){
+              });
+            }
+          });
+
+          info("adding keys to the blockcache");
           for (const auto &k : keys)
           {
             auto key_index = std::stoi(k);
-            if (!(key_index >= start_keys && key_index < end_keys))
+            if (key_index >= start_keys && key_index < end_keys)
             {
-              // if (machine_index - 1 != 0)
+              block_cache->put(k, value);
+              count_expected++;
+            }
+            else
+            {
+              block_cache->get_db()->put(k, value);
+            }
+          }
+
+          if (0)
+          {
+            auto count = 0;
+            for (const auto &k : keys)
+            {
+              auto key_index = std::stoi(k);
+              if (!(key_index >= start_keys && key_index < end_keys))
               {
-                info("Request read {}", k);
-                rdma_node.rdma_key_value_cache->read(1, key_index);
+                // if (machine_index - 1 != 0)
+                {
+                  info("Request read {}", k);
+                  rdma_node.rdma_key_value_cache->read(1, key_index);
+                }
+                if (count > 1000)
+                {
+                  break;
+                }
+                count++;
               }
-              if (count > 1000)
-              {
-                break;
-              }
-              count++;
+            }
+          }
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+          while (count_expected > count_finished)
+          {
+            count_finished = rdma_node.rdma_key_value_cache->get_writes();
+            std::this_thread::yield();
+          }
+          finished_running_keys = true;
+          t.join();
+        }
+        else
+        {
+          info("adding keys to the blockcache in the else part");
+          for (const auto &k : keys)
+          {
+            auto key_index = std::stoi(k);
+            if (key_index >= start_keys && key_index < end_keys)
+            {
+              block_cache->put(k, value);
+            }
+            else
+            {
+              block_cache->get_db()->put(k, value);
             }
           }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        while (count_expected > count_finished)
+        // Fill in each buffer with value
+        std::array<uint8_t, BLKSZ> write_buffer;
+        std::fill(write_buffer.begin(), write_buffer.end(), 0);
+        std::copy(value.begin(), value.end(), write_buffer.begin());
+
+        // write the value into buffer
+        if (!config.baseline.use_cache_indexing)
         {
-          count_finished = rdma_node.rdma_key_value_cache->get_writes();
-          std::this_thread::yield();
-        }
-        finished_running_keys = true;
-        t.join();
-      }
-      else
-      {
-        info("adding keys to the blockcache in the else part");
-        for (const auto &k : keys)
-        {
-          auto key_index = std::stoi(k);
-          if (key_index >= start_keys && key_index < end_keys)
+          info("writing keys");
+          for (const auto &k : keys)
           {
-            block_cache->put(k, value);
-          }
-          else
-          {
-            block_cache->get_db()->put(k, value);
+            auto key_index = std::stoi(k);
+            if (key_index >= start_keys && key_index < end_keys)
+            {
+              write_correct_node(ops_config, rdma_nodes, server_start_index, key_index, write_buffer);
+            }
           }
         }
+
+        // {
+        //   auto& node = rdma_nodes[1];
+        //   for (auto& [t, node] : rdma_nodes)
+        //   {
+        //     info("{} {}", t, machine_index);
+        //   }
+        //   for (auto i = 0; i < 500; i++)
+        //   {
+        //     node.rdma_key_value_cache->read(0, std::to_string(i));
+        //   }
+        // }
       }
-
-      // Fill in each buffer with value
-      std::array<uint8_t, BLKSZ> write_buffer;
-      std::fill(write_buffer.begin(), write_buffer.end(), 0);
-      std::copy(value.begin(), value.end(), write_buffer.begin());
-
-      // write the value into buffer
-      if (!config.baseline.use_cache_indexing)
-      {
-        info("writing keys");
-        for (const auto &k : keys)
-        {
-          auto key_index = std::stoi(k);
-          if (key_index >= start_keys && key_index < end_keys)
-          {
-            write_correct_node(ops_config, rdma_nodes, server_start_index, key_index, write_buffer);
-          }
-        }
-      }
-
-      // {
-      //   auto& node = rdma_nodes[1];
-      //   for (auto& [t, node] : rdma_nodes)
-      //   {
-      //     info("{} {}", t, machine_index);
-      //   }
-      //   for (auto i = 0; i < 500; i++)
-      //   {
-      //     node.rdma_key_value_cache->read(0, std::to_string(i));
-      //   }
-      // }
+      info("Running server");
     }
-    info("Running server");
-  }
-  else
-  {
-    info("Running client");
+    else
+    {
+      info("Running client");
+    }
   }
 
   // Launch machnet now
@@ -817,6 +829,12 @@ int main(int argc, char *argv[])
   assert_with_msg(ret == 0, "machnet_init() failed");
 
   Operations ops = loadOperationSetFromFile(ops_config.OP_FILE);
+
+  if (is_shared_log)
+  {
+    shared_log_server(config, ops_config);
+    return;
+  }
 
   std::vector<std::thread> worker_threads;
   std::vector<std::thread> RDMA_Server_threads;
