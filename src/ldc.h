@@ -664,42 +664,109 @@ struct CacheIndexLogs : public RDMAData
     }
     LOG_RDMA_DATA("[CacheIndexLogs] Initialized");
 
-    static std::thread background_worker([this, machine_index]()
+    if (ops_config.cache_logs_push_entries)
     {
-      while (!g_stop)
+      static std::thread background_worker([this, machine_index]()
       {
-        // Apply to states
-        for (auto i = 0; i < server_configs.size(); i++)
+        while (!g_stop)
         {
-          const auto& server_config = server_configs[i];
-          if (machine_index == i)
+          // Apply to states
+          for (auto i = 0; i < server_configs.size(); i++)
           {
-            continue;
-          }
-          auto& cache_indexes = this->cache_indexes->get_cache_index(i);
-          auto& [cache_index_log_entries, log_index] = machine_cache_index_logs[i];
-          for (auto j = 0; j < max_cache_log_index; j++)
-          {
-            auto& cache_index_log_entry = cache_index_log_entries[j];
-            if (!cache_index_log_entry.filled)
+            const auto& server_config = server_configs[i];
+            if (machine_index == i)
             {
               continue;
             }
-            auto key_index = cache_index_log_entry.key;
-            auto cache_index = cache_index_log_entry.cache_index;
-            cache_index_log_entry.filled = false;
-            if (key_index == KEY_VALUE_PTR_INVALID)
+            auto& cache_indexes = this->cache_indexes->get_cache_index(i);
+            auto& [cache_index_log_entries, log_index] = machine_cache_index_logs[i];
+            for (auto j = 0; j < max_cache_log_index; j++)
             {
-              continue;
+              auto& cache_index_log_entry = cache_index_log_entries[j];
+              if (!cache_index_log_entry.filled)
+              {
+                continue;
+              }
+              auto key_index = cache_index_log_entry.key;
+              auto cache_index = cache_index_log_entry.cache_index;
+              cache_index_log_entry.filled = false;
+              if (key_index == KEY_VALUE_PTR_INVALID)
+              {
+                continue;
+              }
+              LOG_RDMA_DATA("[CacheIndexLogs] [{}] Applied key {} with ptr {}", i, key_index, cache_index.key_value_ptr_offset);
+              cache_indexes[key_index] = cache_index;
             }
-            LOG_RDMA_DATA("[CacheIndexLogs] [{}] Applied key {} with ptr {}", i, key_index, cache_index.key_value_ptr_offset);
-            cache_indexes[key_index] = cache_index;
+            cache_index_log_entries[max_cache_log_index].filled = false;
           }
-          cache_index_log_entries[max_cache_log_index].filled = false;
         }
-      }
-    });
-    background_worker.detach();
+      });
+      background_worker.detach();
+    }
+    else
+    {
+      static std::thread background_worker([this, machine_index]()
+      {
+        uint64_t NUM_CACHE_INDEXES = 1000;
+        struct ServerInfo
+        {
+          uint64_t counter = 0;
+          uint64_t index = 0;
+        };
+        std::vector<ServerInfo> infos(server_configs.size());
+        while (!g_stop)
+        {
+          // Apply to states
+          for (auto i = 0; i < server_configs.size(); i++)
+          {
+            const auto& server_config = server_configs[i];
+            if (machine_index == i)
+            {
+              continue;
+            }
+            auto& cache_indexes = this->cache_indexes->get_cache_index(i);
+            auto& [cache_index_log_entries, log_index] = machine_cache_index_logs[i];
+
+            auto rdma_index = (i * server_configs.size()) + machine_index;
+
+            auto& [counter, index] = infos[i];
+
+            // Check if first entry is not set
+            auto local_offset = 0;
+            auto remote_offset = (counter % max_cache_log_index) * NUM_CACHE_INDEXES * sizeof(CacheIndexLogEntry);
+            auto token = RDMAData::read(rdma_index, cache_index_log_entries.data(), cache_index_log_entries_size, local_offset, remote_offset, NUM_CACHE_INDEXES * sizeof(CacheIndexLogEntry));
+            token->waitUntilCompleted();
+            free_request_token(token);
+
+            bool finished_block = true;
+            for (; index < NUM_CACHE_INDEXES; index++)
+            {
+              auto& cache_index_log_entry = cache_index_log_entries[index];
+              if (!cache_index_log_entry.filled)
+              {
+                finished_block = false;
+                break;
+              }
+              auto key_index = cache_index_log_entry.key;
+              auto cache_index = cache_index_log_entry.cache_index;
+              cache_index_log_entry.filled = false;
+              if (key_index == KEY_VALUE_PTR_INVALID)
+              {
+                continue;
+              }
+              LOG_RDMA_DATA("[CacheIndexLogs] [{}] Applied key {} with ptr {}", i, key_index, cache_index.key_value_ptr_offset);
+              cache_indexes[key_index] = cache_index;
+            }
+            if (finished_block)
+            {
+              index = 0;
+              counter++;
+            }
+          }
+        }
+      });
+      background_worker.detach();
+    }
   }
 
   void append_entry(CacheIndexLogEntry entry)
@@ -712,42 +779,14 @@ struct CacheIndexLogs : public RDMAData
     cache_index_log_entry = entry;
     LOG_RDMA_DATA("[CacheIndexLogs] {} Writing keys to {}", current_log_index, entry.key);
 
-    if (current_log_index == 0)
+    if (ops_config.cache_logs_push_entries)
     {
-      bool done = false;
-      while (!done)
+      if (current_log_index == 0)
       {
-        auto machines_ready = 0;
-        for (auto i = 0; i < server_configs.size(); i++)
+        bool done = false;
+        while (!done)
         {
-          const auto& server_config = server_configs[i];
-          if (machine_index == i)
-          {
-            continue;
-          }
-          auto rdma_index = (i * server_configs.size()) + machine_index;
-
-          // Check if first entry is not set
-          LOG_RDMA_DATA("[CacheIndexLogs] Checking if remote [{}] is done {}", i, current_log_index);
-          auto local_offset = max_cache_log_index * sizeof(CacheIndexLogEntry);
-          auto token = RDMAData::read(rdma_index, cache_index_log_entries.data(), cache_index_log_entries_size, local_offset, 0, sizeof(CacheIndexLogEntry));
-          token->waitUntilCompleted();
-          free_request_token(token);
-
-          auto& last_entry = cache_index_log_entries[max_cache_log_index];
-          LOG_RDMA_DATA("[CacheIndexLogs] Checked if remote [{}] is done {} | {}", i, current_log_index, last_entry.filled);
-          if (!last_entry.filled)
-          {
-            machines_ready++;
-          }
-        }
-
-        if (machines_ready == server_configs.size() - 1)
-        {
-          auto& last_entry = cache_index_log_entries[max_cache_log_index];
-          last_entry.filled = true;
-
-          // Write to remote machines
+          auto machines_ready = 0;
           for (auto i = 0; i < server_configs.size(); i++)
           {
             const auto& server_config = server_configs[i];
@@ -755,20 +794,55 @@ struct CacheIndexLogs : public RDMAData
             {
               continue;
             }
-            auto rdma_index = (machine_index * server_configs.size()) + i;
-            LOG_RDMA_DATA("[CacheIndexLogs] Wrote all keys to {}", i);
-            auto request_token = RDMAData::write(rdma_index, cache_index_log_entries.data(), cache_index_log_entries_size, 0, 0, cache_index_log_entries_size);
-            request_token->waitUntilCompleted();
-            free_request_token(std::move(request_token));
-            // pending_write_queue.enqueue(request_token);
+            auto rdma_index = (i * server_configs.size()) + machine_index;
+
+            // Check if first entry is not set
+            LOG_RDMA_DATA("[CacheIndexLogs] Checking if remote [{}] is done {}", i, current_log_index);
+            auto local_offset = max_cache_log_index * sizeof(CacheIndexLogEntry);
+            auto token = RDMAData::read(rdma_index, cache_index_log_entries.data(), cache_index_log_entries_size, local_offset, 0, sizeof(CacheIndexLogEntry));
+            token->waitUntilCompleted();
+            free_request_token(token);
+
+            auto& last_entry = cache_index_log_entries[max_cache_log_index];
+            LOG_RDMA_DATA("[CacheIndexLogs] Checked if remote [{}] is done {} | {}", i, current_log_index, last_entry.filled);
+            if (!last_entry.filled)
+            {
+              machines_ready++;
+            }
           }
-          done = true;
-        }
-        else
-        {
-          info("[CacheIndexLogs] Unable to sync! Other nodes are not ready");
+
+          if (machines_ready == server_configs.size() - 1)
+          {
+            auto& last_entry = cache_index_log_entries[max_cache_log_index];
+            last_entry.filled = true;
+
+            // Write to remote machines
+            for (auto i = 0; i < server_configs.size(); i++)
+            {
+              const auto& server_config = server_configs[i];
+              if (machine_index == i)
+              {
+                continue;
+              }
+              auto rdma_index = (machine_index * server_configs.size()) + i;
+              LOG_RDMA_DATA("[CacheIndexLogs] Wrote all keys to {}", i);
+              auto request_token = RDMAData::write(rdma_index, cache_index_log_entries.data(), cache_index_log_entries_size, 0, 0, cache_index_log_entries_size);
+              request_token->waitUntilCompleted();
+              free_request_token(std::move(request_token));
+              // pending_write_queue.enqueue(request_token);
+            }
+            done = true;
+          }
+          else
+          {
+            info("[CacheIndexLogs] Unable to sync! Other nodes are not ready");
+          }
         }
       }
+    }
+    else
+    {
+      
     }
   }
 
