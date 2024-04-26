@@ -196,9 +196,36 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
 
 void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 {
+  const auto& remote_machine_configs = config.remote_machine_configs;
+  auto machine_index = remote_machine_configs.size() - 1;
+  const auto& shared_log_machine_config = remote_machine_configs[machine_index];
+  
+  int server_start_index;
+  for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+  {
+    if (config.remote_machine_configs[i].server)
+    {
+      server_start_index = config.remote_machine_configs[i].index;
+      break;
+    }
+  }
+
+  int thread_index = 0;
+  auto connection = Connection(config, ops_config, machine_index, thread_index);
+  connection.listen();
+  for (auto i = 0; i < remote_machine_configs.size(); i++)
+  {
+    const auto& remote_machine_config = remote_machine_configs[i]; 
+    const auto& ip = remote_machine_config.ip;
+    if (remote_machine_config.server)
+    {
+      connection.connect_to_remote_machine(i);
+    }
+  }
+
   while (!g_stop)
   {
-    
+
   }
 }
 
@@ -247,6 +274,13 @@ void server_worker(
 {
   bind_this_thread_to_core(thread_index);
   auto &server = *server_;
+
+  auto shared_log_machine_index = config.remote_machine_configs.size() - 1;
+  auto shared_log_config = config.remote_machine_configs[shared_log_machine_index];
+  if (shared_log_config.shared_log)
+  {
+    server.connect_to_remote_machine(shared_log_machine_index);
+  }
 
   void *read_buffer = malloc(BLKSZ);
   int num_servers = 0;
@@ -584,7 +618,7 @@ int main(int argc, char *argv[])
 
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache = nullptr;
   HashMap<uint64_t, RDMA_connect> rdma_nodes;
-  if (!shared_log)
+  if (!is_shared_log)
   {
     if (is_server)
     {
@@ -832,8 +866,8 @@ int main(int argc, char *argv[])
 
   if (is_shared_log)
   {
-    shared_log_server(config, ops_config);
-    return;
+    shared_log_worker(config, ops_config);
+    return 0;
   }
 
   std::vector<std::thread> worker_threads;
