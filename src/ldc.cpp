@@ -253,7 +253,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         {
           auto p = data.getSharedLogPutRequest();
           std::string_view key = p.getKey().cStr();
-          std::string_view value = p.getKey().cStr();
+          std::string_view value = p.getValue().cStr();
 
           // Put this in our list of keys
           shared_log.append(key, value);
