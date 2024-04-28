@@ -100,7 +100,7 @@ struct Connection
     MachnetFlow rx_flow;
 
     int ret = -1;
-    while (ret <= 0)
+    while (ret < 0)
     {
       ret = machnet_recv(channel, buf.data(), buf.size(), &rx_flow);
       // if (ret <= 0)

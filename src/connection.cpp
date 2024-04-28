@@ -120,7 +120,7 @@ void Connection::send(int index, int port, std::string_view data)
   LOG_STATE("[{}-{}:{}] {} Sending size {}", machine_index, index, port,
             flow_to_string(flow), data.size());
   auto ret = -1; 
-  while (ret <= 0)
+  while (ret < 0)
   {
     ret = machnet_send(channel, flow, data.data(), data.size());
     // if (ret <= 0)
