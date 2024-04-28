@@ -276,9 +276,12 @@ void server_worker(
   bind_this_thread_to_core(thread_index);
   auto &server = *server_;
 
-  if (shared_log_config.shared_log)
+  if (thread_index == 0)
   {
-    server.connect_to_remote_machine(shared_log_config.index);
+    if (shared_log_config.shared_log)
+    {
+      server.connect_to_remote_machine(shared_log_config.index);
+    }
   }
 
   void *read_buffer = malloc(BLKSZ);
