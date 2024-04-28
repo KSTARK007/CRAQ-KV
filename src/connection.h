@@ -99,7 +99,11 @@ struct Connection
 
     MachnetFlow rx_flow;
 
-    auto ret = machnet_recv(channel, buf.data(), buf.size(), &rx_flow);
+    int ret = -1;
+    while (ret < 0)
+    {
+      ret = machnet_recv(channel, buf.data(), buf.size(), &rx_flow);
+    }
     assert_with_msg(ret >= 0, "machnet_recvmsg() failed");
     if (ret == 0)
     {
