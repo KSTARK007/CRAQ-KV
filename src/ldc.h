@@ -6,8 +6,6 @@
 #include "heap.h"
 #include "async_rdma.h"
 
-
-
 struct SnapshotEntry
 {
   uint64_t key_index;
@@ -1198,4 +1196,30 @@ struct CacheLayerData
     bool singleton;
     uint64_t forward_count;
     int replica_count;
+};
+
+struct SimpleSharedLog
+{
+  SimpleSharedLog(std::size_t capacity_) : capacity(capacity_)
+  {
+    key_values.resize(capacity);
+  }
+
+  uint64_t append(std::string_view key, std::string_view value)
+  {
+    auto current_index = index.fetch_add(1, std::memory_order::relaxed);
+    key_values[current_index % capacity] = KeyValueEntry{std::string(key), std::string(value)};
+    return current_index;
+  }
+
+  KeyValueEntry get(uint64_t current_index)
+  {
+    return key_values[current_index % capacity];
+  }
+
+  uint64_t get_tail() const { return index.load(std::memory_order::relaxed); }
+
+  std::size_t capacity;
+  std::vector<KeyValueEntry> key_values;
+  std::atomic<uint64_t> index;
 };

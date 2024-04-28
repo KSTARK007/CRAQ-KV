@@ -276,13 +276,27 @@ void server_worker(
   bind_this_thread_to_core(thread_index);
   auto &server = *server_;
 
-  if (thread_index == 0)
+  auto has_shared_log = shared_log_config.shared_log;
+  if (has_shared_log)
   {
-    if (shared_log_config.shared_log)
+    if (thread_index == 0)
     {
       server.connect_to_remote_machine(shared_log_config.index);
     }
   }
+
+  std::vector<RemoteMachineConfig> server_configs;
+  for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+  {
+    auto remote_machine_config = config.remote_machine_configs[i];
+    if (remote_machine_config.server)
+    {
+      server_configs.push_back(remote_machine_config);
+    }
+  }
+
+  SimpleSharedLog shared_log(1 * 1000 * 1000);
+  uint64_t shared_log_index = 0;
 
   void *read_buffer = malloc(BLKSZ);
   int num_servers = 0;
@@ -315,9 +329,28 @@ void server_worker(
           if (data.isPutRequest())
           {
             auto p = data.getPutRequest();
-            block_cache->put(p.getKey().cStr(), p.getValue().cStr());
+            auto key_ = p.getKey();
+            auto value_ = p.getValue();
+            auto key_cstr = key_.cStr();
+            auto value_cstr = value_.cStr();
+            block_cache->put(key_cstr, value_cstr);
 
             server.put_response(remote_index, ResponseType::OK);
+            
+            if (has_shared_log)
+            {
+              // Send to shared log
+              server.shared_log_put_request(shared_log_config.index, shared_log_config.port, key_cstr, value_cstr);
+
+              // Send to other server nodes (to cache)
+              for (auto i = 0; i < server_configs.size(); i++)
+              {
+                auto& server_config = server_configs[i];
+                auto index = server_config.index;
+                auto port = server_config.port;
+                server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
+              }
+            }
           }
           else if (data.isGetRequest())
           {
@@ -579,6 +612,51 @@ void server_worker(
             {
               // Return result
               // server.get_response()
+            }
+          }
+          else if (data.isSharedLogForwardRequest())
+          {
+            auto p = data.getSharedLogForwardRequest();
+            std::string_view key = p.getKey().cStr();
+
+            // Put this in our list of unapplied keys
+          }
+          else if (data.isSharedLogPutRequest())
+          {
+            auto p = data.getSharedLogPutRequest();
+            std::string_view key = p.getKey().cStr();
+            std::string_view value = p.getKey().cStr();
+
+            // Put this in our list of keys
+            shared_log.append(key, value);
+          }
+          else if (data.isSharedLogGetRequest())
+          {
+            auto p = data.getSharedLogGetRequest();
+            uint64_t index = p.getIndex();
+
+            // Respond with all entries
+            auto tail = shared_log.get_tail();
+            std::vector<KeyValueEntry> key_values;
+            key_values.reserve(tail - index);
+            for (auto i = index; i < tail; i++)
+            {
+              auto kv = shared_log.get(i);
+              key_values.emplace_back(kv);
+            }
+
+            server.shared_log_get_response(remote_index, remote_port, tail, key_values);
+          }
+          else if (data.isSharedLogGetResponse())
+          {
+            auto p = data.getSharedLogGetResponse();
+            shared_log_index = p.getIndex();
+            auto entries = p.getE();
+
+            // Set the shared log entries to be put in our db
+            for (const auto& e : entries)
+            {
+              block_cache->get_db()->put(e.getKey().cStr(), e.getValue().cStr());
             }
           }
         });

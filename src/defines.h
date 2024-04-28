@@ -91,3 +91,9 @@ inline T convert_string(std::string_view sv)
   }
   return t;
 }
+
+struct KeyValueEntry
+{
+  std::string key;
+  std::string value;
+};

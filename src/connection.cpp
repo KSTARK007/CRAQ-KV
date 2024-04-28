@@ -529,19 +529,81 @@ void Server::fallback_get_response(int index, int port, std::string_view key, st
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Server::forward_put_request(int index, int port, std::string_view key, std::string_view value)
+void Server::shared_log_forward_request(int index, int port, std::string_view key)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
-  ForwardPutRequest::Builder request = data.initForwardPutRequest();
+  SharedLogForwardRequest::Builder request = data.initSharedLogForwardRequest();
+  request.setKey(std::string(key));
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] SharedLogForwardRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Server::shared_log_put_request(int index, int port, std::string_view key, std::string_view value)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  SharedLogPutRequest::Builder request = data.initSharedLogPutRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  LOG_STATE("[{}-{}] ForwardPutRequest [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] SharedLogPutRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Server::shared_log_get_request(int index, int port, uint64_t shared_log_index)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  SharedLogGetRequest::Builder request = data.initSharedLogGetRequest();
+  request.setIndex(shared_log_index);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] SharedLogGetRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Server::shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  SharedLogGetResponse::Builder request = data.initSharedLogGetResponse();
+  request.setIndex(shared_log_index);
+
+  ::capnp::List<SharedLogEntry>::Builder shared_log_entries = request.initE(entries.size());
+  for (auto i = 0; i < entries.size(); i++)
+  {
+    SharedLogEntry::Builder shared_log_entry = shared_log_entries[i];
+    const auto& e = entries[i];
+
+    shared_log_entry.setKey(e.key);
+    shared_log_entry.setValue(e.value);
+  }
+
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] SharedLogGetResponse [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 

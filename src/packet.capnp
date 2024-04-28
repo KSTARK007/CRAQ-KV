@@ -66,9 +66,31 @@ struct FallbackGetResponse {
   forwardCount @5: UInt64;
 }
 
-struct ForwardPutRequest {
+struct SharedLogForwardRequest {
   key @0 :Text;
-  value @1 :Text;
+}
+
+struct SharedLogPutRequest {
+  key @0 :Text;
+  value @1 : Text;
+}
+
+struct SharedLogPutResponse {
+  index @0 :UInt64;
+}
+
+struct SharedLogEntry {
+  key @0 :Text;
+  value @1 : Text;
+}
+
+struct SharedLogGetRequest {
+  index @0 : UInt64;
+}
+
+struct SharedLogGetResponse {
+  index @0 : UInt64;
+  e @1: List(SharedLogEntry);
 }
 
 struct Packet {
@@ -85,7 +107,11 @@ struct Packet {
     deleteRequest @9: DeleteRequest;
     fallbackGetRequest @10: FallbackGetRequest;
     fallbackGetResponse @11: FallbackGetResponse;
-    forwardPutRequest @12: ForwardPutRequest;
+    sharedLogForwardRequest @12: SharedLogForwardRequest;
+    sharedLogPutRequest @13: SharedLogPutRequest;
+    sharedLogPutResponse @14: SharedLogPutResponse;
+    sharedLogGetRequest @15: SharedLogGetRequest;
+    sharedLogGetResponse @16: SharedLogGetResponse;
   }
 }
 
