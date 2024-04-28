@@ -771,7 +771,7 @@ void server_worker(
           else if (data.isSharedLogGetResponse())
           {
             auto p = data.getSharedLogGetResponse();
-            shared_log_index = p.getIndex();
+            shared_log_index = std::max(p.getIndex(), shared_log_index);
             auto entries = p.getE();
 
             // Set the shared log entries to be put in our db
@@ -780,7 +780,7 @@ void server_worker(
               std::string_view key = e.getKey().cStr();
               std::string_view value = e.getValue().cStr();
 
-              LOG_STATE("Putting entry {} {}", key, value);
+              LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
 
               block_cache->get_db()->put(std::string(key), std::string(value));
             }
