@@ -866,6 +866,15 @@ int main(int argc, char *argv[])
 
   Operations ops = loadOperationSetFromFile(ops_config.OP_FILE);
 
+  auto shared_log_machine_index = config.remote_machine_configs.size() - 1;
+  auto shared_log_config = config.remote_machine_configs[shared_log_machine_index];
+  auto client_server_config = config;
+  if (shared_log_config.shared_log)
+  {
+    // remove from server config
+    client_server_config.remote_machine_configs.erase(std::begin(client_server_config.remote_machine_configs) + client_server_config.remote_machine_configs.size() - 1);
+  }
+
   if (is_shared_log)
   {
     shared_log_worker(config, ops_config);
@@ -940,7 +949,7 @@ int main(int argc, char *argv[])
 
     for (auto i = 0; i < FLAGS_threads; i++)
     {
-      auto server = std::make_shared<Server>(config, ops_config, FLAGS_machine_index, i, block_cache);
+      auto server = std::make_shared<Server>(client_server_config, ops_config, FLAGS_machine_index, i, block_cache);
       servers.emplace_back(server);
     }
     info("Setup server done");
@@ -986,8 +995,8 @@ int main(int argc, char *argv[])
     {
       for (auto j = 0; j < FLAGS_clients_per_threads; j++)
       {
-        client_futures.emplace_back(std::async(std::launch::async, [&config, &ops_config, machine_index, i]
-                                             { return std::make_shared<Client>(config, ops_config, FLAGS_machine_index, i); }));
+        client_futures.emplace_back(std::async(std::launch::async, [&client_server_config, &ops_config, machine_index, i]
+                                             { return std::make_shared<Client>(client_server_config, ops_config, FLAGS_machine_index, i); }));
       }
     }
     for (auto &f : client_futures)
@@ -999,7 +1008,7 @@ int main(int argc, char *argv[])
     {
       for (auto j = 0; j < FLAGS_clients_per_threads; j++)
       {
-        auto client = std::make_shared<Client>(config, ops_config, FLAGS_machine_index, i);
+        auto client = std::make_shared<Client>(client_server_config, ops_config, FLAGS_machine_index, i);
         clients.emplace_back(client);
       }
     }
@@ -1040,16 +1049,7 @@ int main(int argc, char *argv[])
         rdma_key_value_cache_workers.emplace_back(std::move(t));
       }
     }
-  }
-
-  auto shared_log_machine_index = config.remote_machine_configs.size() - 1;
-  auto shared_log_config = config.remote_machine_configs[shared_log_machine_index];
-  auto client_server_config = config;
-  if (shared_log_config.shared_log)
-  {
-    // remove from server config
-    client_server_config.remote_machine_configs.erase(std::begin(client_server_config.remote_machine_configs) + client_server_config.remote_machine_configs.size() - 1);
-  }
+  }  
 
   for (auto i = 0; i < FLAGS_threads; i++)
   {
