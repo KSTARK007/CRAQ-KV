@@ -270,13 +270,12 @@ void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
     int thread_index,
     std::shared_ptr<BlockCache<std::string, std::string>> block_cache,
-    HashMap<uint64_t, RDMA_connect> rdma_nodes)
+    HashMap<uint64_t, RDMA_connect> rdma_nodes,
+    RemoteMachineConfig shared_log_config)
 {
   bind_this_thread_to_core(thread_index);
   auto &server = *server_;
 
-  auto shared_log_machine_index = config.remote_machine_configs.size() - 1;
-  auto shared_log_config = config.remote_machine_configs[shared_log_machine_index];
   if (shared_log_config.shared_log)
   {
     server.connect_to_remote_machine(shared_log_machine_index);
@@ -863,7 +862,6 @@ int main(int argc, char *argv[])
   assert_with_msg(ret == 0, "machnet_init() failed");
 
   Operations ops = loadOperationSetFromFile(ops_config.OP_FILE);
-  info("SHARED LOG??? {}", is_shared_log);
 
   if (is_shared_log)
   {
@@ -1041,14 +1039,23 @@ int main(int argc, char *argv[])
     }
   }
 
+  auto shared_log_machine_index = config.remote_machine_configs.size() - 1;
+  auto shared_log_config = config.remote_machine_configs[shared_log_machine_index];
+  auto client_server_config = config;
+  if (shared_log_config.shared_log)
+  {
+    // remove from server config
+    client_server_config.remote_machine_configs.erase(std::begin(client_server_config.remote_machine_configs) + client_server_config.remote_machine_configs.size() - 1);
+  }
+
   for (auto i = 0; i < FLAGS_threads; i++)
   {
     info("Running {} thread {}", i, i);
     if (is_server)
     {
       auto server = servers[i];
-      std::thread t(server_worker, server, config, ops_config, machine_index, i,
-                    block_cache, rdma_nodes);
+      std::thread t(server_worker, server, client_server_config, ops_config, machine_index, i,
+                    block_cache, rdma_nodes, shared_log_config);
       worker_threads.emplace_back(std::move(t));
     }
     else
@@ -1056,7 +1063,7 @@ int main(int argc, char *argv[])
       for (auto j = 0; j < FLAGS_clients_per_threads; j++)
       {
         auto client = clients[i * FLAGS_clients_per_threads + j];
-        std::thread t(client_worker, client, config, ops_config, FLAGS_machine_index, i, ops, j);
+        std::thread t(client_worker, client, client_server_config, ops_config, FLAGS_machine_index, i, ops, j);
         worker_threads.emplace_back(std::move(t));
       }
     }
