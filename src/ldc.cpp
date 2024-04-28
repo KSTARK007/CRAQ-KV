@@ -750,7 +750,7 @@ int main(int argc, char *argv[])
           for (const auto &k : keys)
           {
             auto key_index = std::stoi(k);
-            if (key_index >= start_keys && key_index < end_keys)
+            if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
             {
               block_cache->put(k, value);
               count_expected++;
@@ -863,6 +863,7 @@ int main(int argc, char *argv[])
   assert_with_msg(ret == 0, "machnet_init() failed");
 
   Operations ops = loadOperationSetFromFile(ops_config.OP_FILE);
+  info("SHARED LOG??? {}", is_shared_log);
 
   if (is_shared_log)
   {
