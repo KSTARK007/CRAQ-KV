@@ -147,9 +147,17 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
         panic("Invalid node number {}", index);
       }
       LOG_STATE("[{}] [{}] Client executing [{}] [{}]", machine_index, client_index, key, index);
-      std::string v = client.get(index + client_start_index, thread_index, key);
+      std::string v;
+      if (op == READ_OP)
+      {
+        v = client.get(index + client_start_index, thread_index, key);
+      }
+      else if (op == INSERT_OP || op == UPDATE_OP)
+      {
+        client.put(index + client_start_index, thread_index, key, value);
+      }
       LOG_STATE("[{}] [{}] Client received [{}] [{}]", machine_index, client_index, key, v);
-      if (v != value)
+      if (op == READ_OP && v != value)
       {
         wrong_value++;
         LOG_STATE("[{}] unexpected data {} {} for key {} wrong_values till now {}", index, v, value, key, wrong_value);
