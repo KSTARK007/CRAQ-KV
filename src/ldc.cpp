@@ -278,7 +278,7 @@ void server_worker(
 
   if (shared_log_config.shared_log)
   {
-    server.connect_to_remote_machine(shared_log_machine_index);
+    server.connect_to_remote_machine(shared_log_config.index);
   }
 
   void *read_buffer = malloc(BLKSZ);
