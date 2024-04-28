@@ -328,11 +328,22 @@ void server_worker(
   auto &server = *server_;
 
   auto has_shared_log = shared_log_config.shared_log;
+  uint64_t shared_log_index = 0;
   if (has_shared_log)
   {
     if (thread_index == 0)
     {
       server.connect_to_remote_machine(shared_log_config.index);
+
+      static std::thread background_thread([&]()
+      {
+        while (!g_stop)
+        {
+          server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+      });
+      background_thread.detach();
     }
   }
 
@@ -345,8 +356,6 @@ void server_worker(
       server_configs.push_back(remote_machine_config);
     }
   }
-
-  uint64_t shared_log_index = 0;
 
   void *read_buffer = malloc(BLKSZ);
   int num_servers = 0;
@@ -768,7 +777,12 @@ void server_worker(
             // Set the shared log entries to be put in our db
             for (const auto& e : entries)
             {
-              block_cache->get_db()->put(e.getKey().cStr(), e.getValue().cStr());
+              std::string_view key = e.getKey().cStr();
+              std::string_view value = e.getValue().cStr();
+
+              LOG_STATE("Putting entry {} {}", key, value);
+
+              block_cache->get_db()->put(std::string(key), std::string(value));
             }
           }
         });

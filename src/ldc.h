@@ -1240,13 +1240,15 @@ public:
     end_time = std::chrono::high_resolution_clock::now();
   }
 
+  template<typename T = std::nano>
   auto time_elapsed() const {
     auto end = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration<uint64_t, std::nano>(end - start_time).count();
+    return std::chrono::duration<uint64_t, T>(end - start_time).count();
   }
 
+  template<typename T = std::nano>
   auto elapsed() const {
-    return std::chrono::duration<uint64_t, std::nano>(end_time - start_time).count();
+    return std::chrono::duration<uint64_t, T>(end_time - start_time).count();
   }
 
 private:

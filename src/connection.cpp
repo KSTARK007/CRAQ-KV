@@ -661,6 +661,7 @@ void Server::execute_pending_operations()
       fallback_get_request(index, port, key);
     }
   }
+
   {
     AppendDeleteRequest request;
     while (delete_request_queue.try_dequeue(request))
@@ -668,6 +669,15 @@ void Server::execute_pending_operations()
       auto [index, port, key] = request;
       // LOG_STATE("[{}-{}] Execute pending operation [{}]", machine_index, index);
       delete_request(index, port, key);
+    }
+  }
+
+  {
+    SharedLogGetRequest request;
+    while (shared_log_get_request_queue.try_dequeue(request))
+    {
+      auto [index, port, shared_log_index] = request;
+      shared_log_get_request(index, port, shared_log_index);
     }
   }
 }
@@ -712,6 +722,12 @@ void Server::append_fallback_get_request(int index, int port, std::string_view k
 
 void Server::append_delete_request(int index, int port, std::string_view key)
 {
-  auto request = Server::AppendDeleteRequest{index, port,std::string(key)};
+  auto request = Server::AppendDeleteRequest{index, port, std::string(key)};
   delete_request_queue.enqueue(request);
+}
+
+void Server::append_shared_log_get_request(int index, int port, uint64_t shared_log_index)
+{
+  auto request = Server::SharedLogGetRequest{index, port, shared_log_index};
+  shared_log_get_request_queue.enqueue(request);
 }
