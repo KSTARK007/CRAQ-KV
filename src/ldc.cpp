@@ -374,7 +374,7 @@ void server_worker(
             auto value_cstr = value_.cStr();
             block_cache->put(key_cstr, value_cstr);
 
-            server.put_response(remote_index, ResponseType::OK);
+            server.put_response(remote_index, remote_port, ResponseType::OK);
             
             if (has_shared_log)
             {
