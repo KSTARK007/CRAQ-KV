@@ -949,7 +949,7 @@ int main(int argc, char *argv[])
 
     for (auto i = 0; i < FLAGS_threads; i++)
     {
-      auto server = std::make_shared<Server>(client_server_config, ops_config, FLAGS_machine_index, i, block_cache);
+      auto server = std::make_shared<Server>(config, ops_config, FLAGS_machine_index, i, block_cache);
       servers.emplace_back(server);
     }
     info("Setup server done");
