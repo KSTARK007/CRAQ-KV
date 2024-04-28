@@ -529,7 +529,7 @@ void Server::fallback_get_response(int index, int port, std::string_view key, st
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Server::shared_log_forward_request(int index, int port, std::string_view key)
+void Connection::shared_log_forward_request(int index, int port, std::string_view key)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -546,7 +546,7 @@ void Server::shared_log_forward_request(int index, int port, std::string_view ke
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Server::shared_log_put_request(int index, int port, std::string_view key, std::string_view value)
+void Connection::shared_log_put_request(int index, int port, std::string_view key, std::string_view value)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -564,7 +564,7 @@ void Server::shared_log_put_request(int index, int port, std::string_view key, s
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Server::shared_log_get_request(int index, int port, uint64_t shared_log_index)
+void Connection::shared_log_get_request(int index, int port, uint64_t shared_log_index)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -581,7 +581,7 @@ void Server::shared_log_get_request(int index, int port, uint64_t shared_log_ind
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Server::shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries)
+void Connection::shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();

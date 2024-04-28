@@ -223,9 +223,41 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
+  SimpleSharedLog shared_log(1 * 1000 * 1000);
+
   while (!g_stop)
   {
+    connection.loop(
+      [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
+      {
+        if (data.isSharedLogPutRequest())
+        {
+          auto p = data.getSharedLogPutRequest();
+          std::string_view key = p.getKey().cStr();
+          std::string_view value = p.getKey().cStr();
 
+          // Put this in our list of keys
+          shared_log.append(key, value);
+        }
+        else if (data.isSharedLogGetRequest())
+        {
+          auto p = data.getSharedLogGetRequest();
+          uint64_t index = p.getIndex();
+
+          // Respond with all entries
+          auto tail = shared_log.get_tail();
+          std::vector<KeyValueEntry> key_values;
+          key_values.reserve(tail - index);
+          for (auto i = index; i < tail; i++)
+          {
+            auto kv = shared_log.get(i);
+            key_values.emplace_back(kv);
+          }
+
+          connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
+        }
+      }
+    );
   }
 }
 
@@ -295,7 +327,6 @@ void server_worker(
     }
   }
 
-  SimpleSharedLog shared_log(1 * 1000 * 1000);
   uint64_t shared_log_index = 0;
 
   void *read_buffer = malloc(BLKSZ);
@@ -343,13 +374,13 @@ void server_worker(
               server.shared_log_put_request(shared_log_config.index, shared_log_config.port, key_cstr, value_cstr);
 
               // Send to other server nodes (to cache)
-              for (auto i = 0; i < server_configs.size(); i++)
-              {
-                auto& server_config = server_configs[i];
-                auto index = server_config.index;
-                auto port = server_config.port;
-                server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
-              }
+              // for (auto i = 0; i < server_configs.size(); i++)
+              // {
+              //   auto& server_config = server_configs[i];
+              //   auto index = server_config.index;
+              //   auto port = server_config.port;
+              //   server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
+              // }
             }
           }
           else if (data.isGetRequest())
@@ -621,32 +652,32 @@ void server_worker(
 
             // Put this in our list of unapplied keys
           }
-          else if (data.isSharedLogPutRequest())
-          {
-            auto p = data.getSharedLogPutRequest();
-            std::string_view key = p.getKey().cStr();
-            std::string_view value = p.getKey().cStr();
+          // else if (data.isSharedLogPutRequest())
+          // {
+          //   auto p = data.getSharedLogPutRequest();
+          //   std::string_view key = p.getKey().cStr();
+          //   std::string_view value = p.getKey().cStr();
 
-            // Put this in our list of keys
-            shared_log.append(key, value);
-          }
-          else if (data.isSharedLogGetRequest())
-          {
-            auto p = data.getSharedLogGetRequest();
-            uint64_t index = p.getIndex();
+          //   // Put this in our list of keys
+          //   shared_log.append(key, value);
+          // }
+          // else if (data.isSharedLogGetRequest())
+          // {
+          //   auto p = data.getSharedLogGetRequest();
+          //   uint64_t index = p.getIndex();
 
-            // Respond with all entries
-            auto tail = shared_log.get_tail();
-            std::vector<KeyValueEntry> key_values;
-            key_values.reserve(tail - index);
-            for (auto i = index; i < tail; i++)
-            {
-              auto kv = shared_log.get(i);
-              key_values.emplace_back(kv);
-            }
+          //   // Respond with all entries
+          //   auto tail = shared_log.get_tail();
+          //   std::vector<KeyValueEntry> key_values;
+          //   key_values.reserve(tail - index);
+          //   for (auto i = index; i < tail; i++)
+          //   {
+          //     auto kv = shared_log.get(i);
+          //     key_values.emplace_back(kv);
+          //   }
 
-            server.shared_log_get_response(remote_index, remote_port, tail, key_values);
-          }
+          //   server.shared_log_get_response(remote_index, remote_port, tail, key_values);
+          // }
           else if (data.isSharedLogGetResponse())
           {
             auto p = data.getSharedLogGetResponse();

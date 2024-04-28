@@ -134,6 +134,11 @@ struct Connection
     return true;
   }
 
+  void shared_log_forward_request(int index, int port, std::string_view key);
+  void shared_log_put_request(int index, int port, std::string_view key, std::string_view value);
+  void shared_log_get_request(int index, int port, uint64_t shared_log_index);
+  void shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries);
+
   int use_next_port();
 
   int get_machine_index() const { return machine_index; }
@@ -191,10 +196,6 @@ struct Server : public Connection
   void delete_request(int index, int port, std::string_view key);
   void fallback_get_request(int index, int port, std::string_view key);
   void fallback_get_response(int index, int port, std::string_view key, std::string_view value, uint64_t key_value_ptr_offset, bool singleton, uint64_t forward_count);
-  void shared_log_forward_request(int index, int port, std::string_view key);
-  void shared_log_put_request(int index, int port, std::string_view key, std::string_view value);
-  void shared_log_get_request(int index, int port, uint64_t shared_log_index);
-  void shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries);
 
   void execute_pending_operations() override;
   void append_to_rdma_get_response_queue(int index, int port, ResponseType response_type,
