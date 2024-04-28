@@ -119,13 +119,18 @@ void Connection::send(int index, int port, std::string_view data)
   auto &[flow] = connection_data;
   LOG_STATE("[{}-{}:{}] {} Sending size {}", machine_index, index, port,
             flow_to_string(flow), data.size());
-  auto ret = machnet_send(channel, flow, data.data(), data.size());
-  LOG_STATE("[{}-{}:{}] {} Sent size {}", machine_index, index, port, flow_to_string(flow),
-            data.size());
-  if (ret == -1)
+  auto ret = -1; 
+  while (ret < 0)
+  {
+    ret = machnet_send(channel, flow, data.data(), data.size());
+  }
+  if (ret < 0)
   {
     panic("machnet_send() failed");
   }
+
+  LOG_STATE("[{}-{}:{}] {} Sent size {}", machine_index, index, port, flow_to_string(flow),
+          data.size());
 }
 
 void Connection::send(int index, std::string_view data)
