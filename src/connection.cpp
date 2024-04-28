@@ -158,7 +158,7 @@ void Connection::put(int index, int thread_index, std::string_view key, std::str
       auto p = data.getPutResponse();
       LOG_STATE("[{}-{}:{}] Put response", machine_index, index, remote_port);
     } else {
-      panic("Unexpected response");
+      info("Unexpected response");
     }
   });
 }
@@ -189,7 +189,7 @@ std::string Connection::get(int index, int thread_index, std::string_view key)
       LOG_STATE("[{}-{}:{}] Get response [key = {}, value = {}]", machine_index,
             index, remote_port, key, value);
     } else {
-      panic("Unexpected response");
+      info("Unexpected response");
     }
   });
   return value;
@@ -661,6 +661,15 @@ void Server::execute_pending_operations()
       fallback_get_request(index, port, key);
     }
   }
+  {
+    AppendDeleteRequest request;
+    while (delete_request_queue.try_dequeue(request))
+    {
+      auto [index, port, key] = request;
+      // LOG_STATE("[{}-{}] Execute pending operation [{}]", machine_index, index);
+      delete_request(index, port, key);
+    }
+  }
 }
 
 void Server::append_to_rdma_get_response_queue(int index, int port, ResponseType response_type,
@@ -701,3 +710,8 @@ void Server::append_fallback_get_request(int index, int port, std::string_view k
   fallback_get_request_queue.enqueue(request);
 }
 
+void Server::append_delete_request(int index, int port, std::string_view key)
+{
+  auto request = Server::AppendDeleteRequest{index, port,std::string(key)};
+  delete_request_queue.enqueue(request);
+}

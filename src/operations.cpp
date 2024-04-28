@@ -457,7 +457,7 @@ Operations loadOperationSetFromFile(std::string p) {
   std::ifstream file(p);
   if (!file.is_open()) {
     std::cerr << "Failed to open operation set file: "
-              << "operations.txt" << std::endl;
+              << p << std::endl;
     return operationSet;
   }
 

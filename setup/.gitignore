@@ -1,2 +1,4 @@
 *.json
 results
+backup
+__pycache__

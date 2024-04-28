@@ -595,6 +595,7 @@ struct CacheIndexes : public RDMAData
   }
 
   auto& get_cache_index(int index) { return rdma_cache_indexes[index]; }
+  auto& get_cache_indexes() { return rdma_cache_indexes; }
 
   template<typename F>
   void execute_pending(F&& f)
@@ -1009,6 +1010,7 @@ struct RDMAKeyValueCache : public RDMAData
   }
 
   uint64_t get_writes() const { return writes.load(std::memory_order::relaxed); }
+  auto get_cache_indexes() { return cache_indexes; }
 
 private:
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache;
@@ -1222,4 +1224,32 @@ struct SimpleSharedLog
   std::size_t capacity;
   std::vector<KeyValueEntry> key_values;
   std::atomic<uint64_t> index;
+};
+
+class LDCTimer {
+public:
+  LDCTimer() {
+    start();
+  }
+
+  void start() {
+    start_time = std::chrono::high_resolution_clock::now();
+  }
+
+  void stop() {
+    end_time = std::chrono::high_resolution_clock::now();
+  }
+
+  auto time_elapsed() const {
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration<uint64_t, std::nano>(end - start_time).count();
+  }
+
+  auto elapsed() const {
+    return std::chrono::duration<uint64_t, std::nano>(end_time - start_time).count();
+  }
+
+private:
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
 };

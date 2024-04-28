@@ -12,12 +12,15 @@ def process_file(file_path):
 
         average_latency_us = total_time_ns / len(latencies) / 1000
         tail_latency_us = np.percentile(latencies, 99) / 1000
+        p50 = np.percentile(latencies, 50) / 1000
+
         
         return {
             'file': os.path.basename(file_path),
             'average_latency_us': average_latency_us,
             'throughput': throughput,
-            'tail_latency_us': tail_latency_us
+            'p99': tail_latency_us,
+            'p50': p50
         }
 
 def process_directory(directory_path):
@@ -25,6 +28,7 @@ def process_directory(directory_path):
     total_throughput = 0
     median_latency_list = []
     tail_latency_list = []
+    p50_latency_list = []
     
     for root, dirs, files in os.walk(directory_path):
         for file in files:
@@ -36,7 +40,8 @@ def process_directory(directory_path):
                 # Accumulate metrics
                 total_throughput += result['throughput']
                 median_latency_list.append(result['average_latency_us'])
-                tail_latency_list.append(result['tail_latency_us'])
+                tail_latency_list.append(result['p99'])
+                p50_latency_list.append(result['p50'])
     
     # Calculate averages of the 50th and 99th percentiles
     total_median_latency_us = np.mean(median_latency_list) if median_latency_list else 0
@@ -46,7 +51,8 @@ def process_directory(directory_path):
     total_metrics = {
         'total_throughput': total_throughput,
         'average_latency_us': total_median_latency_us,
-        'average_tail_latency_us': total_tail_latency_us
+        'p99': total_tail_latency_us,
+        'p50_latency_us': np.mean(p50_latency_list) if p50_latency_list else 0
     }
     
     return results, total_metrics
