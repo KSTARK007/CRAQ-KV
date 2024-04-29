@@ -840,7 +840,23 @@ void server_worker(
 
               LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
 
-              block_cache->get_db()->put(std::string(key), std::string(value));
+              static const auto& write_policy = ops_config.write_policy;
+              if (write_policy == "write_through")
+              {
+                block_cache->put(std::string(key), std::string(value));
+              }
+              else if (write_policy == "write_back")
+              {
+                block_cache->get_db()->put(std::string(key), std::string(value));
+              }
+              else if (write_policy == "write_cache")
+              {
+                // allocate write buffer
+              }
+              else
+              {
+                panic("Unsupported write policy {}", write_policy);
+              }
             }
           }
         });
