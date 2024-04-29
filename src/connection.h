@@ -108,7 +108,7 @@ struct Connection
         info("machnet_recv() {}", ret);
       }
     }
-    while (ret < 0)
+    while (ret < 0);
     assert_with_msg(ret >= 0, "machnet_recv() failed");
     if (ret == 0)
     {
