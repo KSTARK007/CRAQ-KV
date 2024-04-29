@@ -55,6 +55,7 @@ struct Configuration
   bool enable_fallback_rpc;
   bool fallback_rpc_broadcast;
   bool cache_logs_push_entries;
+  bool write_policy;
 };
 
 struct Operation

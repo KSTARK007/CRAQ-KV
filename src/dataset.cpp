@@ -252,5 +252,6 @@ Configuration parseConfigFile(const std::string &configFile)
   config.enable_fallback_rpc = jsonData["enable_fallback_rpc"];
   config.fallback_rpc_broadcast = jsonData["fallback_rpc_broadcast"];
   config.cache_logs_push_entries = jsonData["cache_logs_push_entries"];
+  config.write_policy = jsonData["write_policy"];
   return config;
 }
