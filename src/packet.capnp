@@ -70,6 +70,10 @@ struct SharedLogForwardRequest {
   key @0 :Text;
 }
 
+struct SharedLogForwardResponse {
+  response @0 :ResponseType;
+}
+
 struct SharedLogPutRequest {
   key @0 :Text;
   value @1 : Text;
@@ -108,10 +112,11 @@ struct Packet {
     fallbackGetRequest @10: FallbackGetRequest;
     fallbackGetResponse @11: FallbackGetResponse;
     sharedLogForwardRequest @12: SharedLogForwardRequest;
-    sharedLogPutRequest @13: SharedLogPutRequest;
-    sharedLogPutResponse @14: SharedLogPutResponse;
-    sharedLogGetRequest @15: SharedLogGetRequest;
-    sharedLogGetResponse @16: SharedLogGetResponse;
+    sharedLogForwardResponse @13: SharedLogForwardResponse;
+    sharedLogPutRequest @14: SharedLogPutRequest;
+    sharedLogPutResponse @15: SharedLogPutResponse;
+    sharedLogGetRequest @16: SharedLogGetRequest;
+    sharedLogGetResponse @17: SharedLogGetResponse;
   }
 }
 

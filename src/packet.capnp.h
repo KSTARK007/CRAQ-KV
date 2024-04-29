@@ -37,6 +37,7 @@ CAPNP_DECLARE_SCHEMA(f90a05fd026809ad);
 CAPNP_DECLARE_SCHEMA(fb62f49632f7d8be);
 CAPNP_DECLARE_SCHEMA(cd9e95393d3f997d);
 CAPNP_DECLARE_SCHEMA(ea4ba10b167d66a7);
+CAPNP_DECLARE_SCHEMA(dc828176e706e6f6);
 CAPNP_DECLARE_SCHEMA(ff39fc1686c4831e);
 CAPNP_DECLARE_SCHEMA(867987e2b2e8dc81);
 CAPNP_DECLARE_SCHEMA(a95322c67cbf4d00);
@@ -247,6 +248,21 @@ struct SharedLogForwardRequest {
   };
 };
 
+struct SharedLogForwardResponse {
+  SharedLogForwardResponse() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(dc828176e706e6f6, 1, 0)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
 struct SharedLogPutRequest {
   SharedLogPutRequest() = delete;
 
@@ -358,6 +374,7 @@ struct Packet::Data {
     FALLBACK_GET_REQUEST,
     FALLBACK_GET_RESPONSE,
     SHARED_LOG_FORWARD_REQUEST,
+    SHARED_LOG_FORWARD_RESPONSE,
     SHARED_LOG_PUT_REQUEST,
     SHARED_LOG_PUT_RESPONSE,
     SHARED_LOG_GET_REQUEST,
@@ -1497,6 +1514,82 @@ private:
 };
 #endif  // !CAPNP_LITE
 
+class SharedLogForwardResponse::Reader {
+public:
+  typedef SharedLogForwardResponse Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline  ::ResponseType getResponse() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class SharedLogForwardResponse::Builder {
+public:
+  typedef SharedLogForwardResponse Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline  ::ResponseType getResponse();
+  inline void setResponse( ::ResponseType value);
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class SharedLogForwardResponse::Pipeline {
+public:
+  typedef SharedLogForwardResponse Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
 class SharedLogPutRequest::Reader {
 public:
   typedef SharedLogPutRequest Reads;
@@ -2064,6 +2157,10 @@ public:
   inline bool hasSharedLogForwardRequest() const;
   inline  ::SharedLogForwardRequest::Reader getSharedLogForwardRequest() const;
 
+  inline bool isSharedLogForwardResponse() const;
+  inline bool hasSharedLogForwardResponse() const;
+  inline  ::SharedLogForwardResponse::Reader getSharedLogForwardResponse() const;
+
   inline bool isSharedLogPutRequest() const;
   inline bool hasSharedLogPutRequest() const;
   inline  ::SharedLogPutRequest::Reader getSharedLogPutRequest() const;
@@ -2212,6 +2309,14 @@ public:
   inline  ::SharedLogForwardRequest::Builder initSharedLogForwardRequest();
   inline void adoptSharedLogForwardRequest(::capnp::Orphan< ::SharedLogForwardRequest>&& value);
   inline ::capnp::Orphan< ::SharedLogForwardRequest> disownSharedLogForwardRequest();
+
+  inline bool isSharedLogForwardResponse();
+  inline bool hasSharedLogForwardResponse();
+  inline  ::SharedLogForwardResponse::Builder getSharedLogForwardResponse();
+  inline void setSharedLogForwardResponse( ::SharedLogForwardResponse::Reader value);
+  inline  ::SharedLogForwardResponse::Builder initSharedLogForwardResponse();
+  inline void adoptSharedLogForwardResponse(::capnp::Orphan< ::SharedLogForwardResponse>&& value);
+  inline ::capnp::Orphan< ::SharedLogForwardResponse> disownSharedLogForwardResponse();
 
   inline bool isSharedLogPutRequest();
   inline bool hasSharedLogPutRequest();
@@ -2936,6 +3041,20 @@ inline void SharedLogForwardRequest::Builder::adoptKey(
 inline ::capnp::Orphan< ::capnp::Text> SharedLogForwardRequest::Builder::disownKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline  ::ResponseType SharedLogForwardResponse::Reader::getResponse() const {
+  return _reader.getDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+
+inline  ::ResponseType SharedLogForwardResponse::Builder::getResponse() {
+  return _builder.getDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+inline void SharedLogForwardResponse::Builder::setResponse( ::ResponseType value) {
+  _builder.setDataField< ::ResponseType>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool SharedLogPutRequest::Reader::hasKey() const {
@@ -3874,6 +3993,60 @@ inline ::capnp::Orphan< ::SharedLogForwardRequest> Packet::Data::Builder::disown
   KJ_IREQUIRE((which() == Packet::Data::SHARED_LOG_FORWARD_REQUEST),
               "Must check which() before get()ing a union member.");
   return ::capnp::_::PointerHelpers< ::SharedLogForwardRequest>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Packet::Data::Reader::isSharedLogForwardResponse() const {
+  return which() == Packet::Data::SHARED_LOG_FORWARD_RESPONSE;
+}
+inline bool Packet::Data::Builder::isSharedLogForwardResponse() {
+  return which() == Packet::Data::SHARED_LOG_FORWARD_RESPONSE;
+}
+inline bool Packet::Data::Reader::hasSharedLogForwardResponse() const {
+  if (which() != Packet::Data::SHARED_LOG_FORWARD_RESPONSE) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Packet::Data::Builder::hasSharedLogForwardResponse() {
+  if (which() != Packet::Data::SHARED_LOG_FORWARD_RESPONSE) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::SharedLogForwardResponse::Reader Packet::Data::Reader::getSharedLogForwardResponse() const {
+  KJ_IREQUIRE((which() == Packet::Data::SHARED_LOG_FORWARD_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::SharedLogForwardResponse::Builder Packet::Data::Builder::getSharedLogForwardResponse() {
+  KJ_IREQUIRE((which() == Packet::Data::SHARED_LOG_FORWARD_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::setSharedLogForwardResponse( ::SharedLogForwardResponse::Reader value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::SHARED_LOG_FORWARD_RESPONSE);
+  ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::SharedLogForwardResponse::Builder Packet::Data::Builder::initSharedLogForwardResponse() {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::SHARED_LOG_FORWARD_RESPONSE);
+  return ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Packet::Data::Builder::adoptSharedLogForwardResponse(
+    ::capnp::Orphan< ::SharedLogForwardResponse>&& value) {
+  _builder.setDataField<Packet::Data::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::SHARED_LOG_FORWARD_RESPONSE);
+  ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::SharedLogForwardResponse> Packet::Data::Builder::disownSharedLogForwardResponse() {
+  KJ_IREQUIRE((which() == Packet::Data::SHARED_LOG_FORWARD_RESPONSE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::SharedLogForwardResponse>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 

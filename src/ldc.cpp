@@ -257,6 +257,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
           // Put this in our list of keys
           shared_log.append(key, value);
+
+          auto tail = shared_log.get_tail();
+          connection.shared_log_put_response(remote_index, remote_port, tail);
         }
         else if (data.isSharedLogGetRequest())
         {
@@ -416,11 +419,38 @@ void server_worker(
 
   auto start_time = std::chrono::high_resolution_clock::now();
 
+  struct WriteResponse
+  {
+    void reset()
+    {
+      server_responses = 0;
+      shared_log_responses = 0;
+    }
+    
+    bool ready(int num_servers)
+    {
+      if (server_responses >= num_servers - 1 && shared_log_responses > 0)
+      {
+        return true;
+      }
+      return false;
+    }
+    int server_responses = 0;
+    int shared_log_responses = 0;
+    int remote_index = 0;
+    int remote_port = 0;
+  } write_response;
+
   while (!g_stop)
   {
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
+          if (write_response.ready(num_servers))
+          {
+            server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
+            write_response.reset();
+          }
           if (data.isPutRequest())
           {
             auto p = data.getPutRequest();
@@ -434,17 +464,29 @@ void server_worker(
             
             if (has_shared_log)
             {
+              write_response.reset();
+              write_response.remote_index = remote_index;
+              write_response.remote_port = remote_port;
+
               // Send to shared log
               server.shared_log_put_request(shared_log_config.index, shared_log_config.port, key_cstr, value_cstr);
 
               // Send to other server nodes (to cache)
-              // for (auto i = 0; i < server_configs.size(); i++)
-              // {
-              //   auto& server_config = server_configs[i];
-              //   auto index = server_config.index;
-              //   auto port = server_config.port;
-              //   server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
-              // }
+              for (auto i = 0; i < server_configs.size(); i++)
+              {
+                auto& server_config = server_configs[i];
+                if (i == machine_index)
+                {
+                  continue;
+                }
+                auto index = server_config.index;
+                auto port = server_config.port;
+                server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
+              }
+            }
+            else
+            {
+              server.put_response(remote_index, remote_port, ResponseType::OK);
             }
           }
           else if (data.isGetRequest())
@@ -741,6 +783,22 @@ void server_worker(
             std::string_view key = p.getKey().cStr();
 
             // Put this in our list of unapplied keys
+
+            server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK);
+          }
+          else if (data.isSharedLogForwardResponse())
+          {
+            auto p = data.getSharedLogForwardRequest();
+            std::string_view key = p.getKey().cStr();
+
+            write_response.server_responses++;
+          }
+          else if (data.isSharedLogPutResponse())
+          {
+            auto p = data.getSharedLogPutResponse();
+            auto index = p.getIndex();
+
+            write_response.shared_log_responses++;
           }
           // else if (data.isSharedLogPutRequest())
           // {

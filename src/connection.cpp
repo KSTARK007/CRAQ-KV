@@ -555,6 +555,23 @@ void Connection::shared_log_forward_request(int index, int port, std::string_vie
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
+void Connection::shared_log_forward_response(int index, int port, ResponseType response_type)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  SharedLogForwardResponse::Builder request = data.initSharedLogForwardResponse();
+  request.setResponse(response_type);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] SharedLogForwardResponse [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
 void Connection::shared_log_put_request(int index, int port, std::string_view key, std::string_view value)
 {
   ::capnp::MallocMessageBuilder message;
@@ -568,6 +585,23 @@ void Connection::shared_log_put_request(int index, int port, std::string_view ke
   auto p = m.asChars();
 
   LOG_STATE("[{}-{}] SharedLogPutRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Connection::shared_log_put_response(int index, int port, uint64_t shared_log_index)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  SharedLogPutResponse::Builder request = data.initSharedLogPutResponse();
+  request.setIndex(shared_log_index);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  LOG_STATE("[{}-{}] SharedLogPutResponse [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 
