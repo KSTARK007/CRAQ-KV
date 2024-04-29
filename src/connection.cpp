@@ -123,10 +123,10 @@ void Connection::send(int index, int port, std::string_view data)
   while (ret < 0)
   {
     ret = machnet_send(channel, flow, data.data(), data.size());
-    // if (ret <= 0)
-    // {
-    //   info("machnet_send() {}", ret);
-    // }
+    if (ret < 0)
+    {
+      info("machnet_send() {}", ret);
+    }
   }
   if (ret < 0)
   {
