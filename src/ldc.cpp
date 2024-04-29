@@ -995,10 +995,10 @@ int main(int argc, char *argv[])
       }
     }
 
-    block_cache->get_cache()->add_callback_on_clear_frequency([&](std::vector<std::string>& keys)
-    {
-      info("Clearing freq for len(keys) {}", keys.size());
-    });
+    // block_cache->get_cache()->add_callback_on_clear_frequency([&](std::vector<std::string>& keys)
+    // {
+    //   info("Clearing freq for len(keys) {}", keys.size());
+    // });
   }
 
   for (auto i = 0; i < FLAGS_threads; i++)
