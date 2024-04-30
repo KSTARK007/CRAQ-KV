@@ -492,7 +492,7 @@ void server_worker(
                 }
                 auto index = server_config.index;
                 auto port = server_config.port;
-                server.shared_log_forward_request(shared_log_config.index, shared_log_config.port, key_cstr);
+                server.shared_log_forward_request(index, port, key_cstr);
               }
             }
             else
