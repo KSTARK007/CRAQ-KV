@@ -342,8 +342,8 @@ void server_worker(
       {
         while (!g_stop)
         {
-          server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          // server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+          // std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
       });
       background_thread.detach();
