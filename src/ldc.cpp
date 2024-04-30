@@ -460,8 +460,6 @@ void server_worker(
             auto value_cstr = value_.cStr();
             block_cache->put(key_cstr, value_cstr);
 
-            server.put_response(remote_index, remote_port, ResponseType::OK);
-            
             if (has_shared_log)
             {
               write_response.reset();
@@ -852,6 +850,9 @@ void server_worker(
               else if (write_policy == "write_cache")
               {
                 // allocate write buffer
+                block_cache =
+                    std::make_shared<BlockCache<std::string, std::string>>(config);
+
               }
               else
               {
