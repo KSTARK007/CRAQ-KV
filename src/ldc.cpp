@@ -453,7 +453,7 @@ void server_worker(
             auto& [k, write_response] = *it;
             if (write_response.ready(num_servers))
             {
-              LOG_STATE("Write response ready {} {}", write_response.remote_index, write_response.remote_port);
+              LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
               key_to_write_response.erase(it++);
