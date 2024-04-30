@@ -451,7 +451,7 @@ void server_worker(
     int shared_log_responses = 0;
     int remote_index = 0;
     int remote_port = 0;
-    std::mutex m;
+    CopyableAtomic<uint64_t> is_writing = false;
   };
 
   HashMap<uint64_t, WriteResponse> hash_to_write_response;
@@ -464,7 +464,10 @@ void server_worker(
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
           {
             auto& [k, write_response] = *it;
-            std::lock_guard<std::mutex> l(write_response.m);
+            while (write_response.is_writing)
+            {
+            }
+            write_response.is_writing = true;
             if (write_response.ready(num_servers))
             {
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
@@ -476,6 +479,7 @@ void server_worker(
             {
               ++it;
             }
+            write_response.is_writing = false;
           }
           if (data.isPutRequest())
           {
@@ -488,7 +492,7 @@ void server_worker(
 
             if (has_shared_log)
             {
-              auto hash = std::hash<uint64_t>(remote_index) ^ std::hash<uint64_t>(remote_port);
+              uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
               auto& write_response = hash_to_write_response[hash];
               write_response.reset();
               write_response.remote_index = remote_index;
