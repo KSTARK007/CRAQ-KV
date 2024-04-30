@@ -335,8 +335,8 @@ void server_worker(
   uint64_t shared_log_index = 0;
   if (has_shared_log)
   {
-    if (thread_index == 0)
-    {
+    // if (thread_index == 0)
+    // {
       server.connect_to_remote_machine(shared_log_config.index);
 
       static std::thread background_thread([&]()
@@ -348,7 +348,7 @@ void server_worker(
         }
       });
       background_thread.detach();
-    }
+    // }
   }
 
   std::vector<RemoteMachineConfig> server_configs;
