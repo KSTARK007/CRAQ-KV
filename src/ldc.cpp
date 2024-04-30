@@ -273,6 +273,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               // Respond with all entries
               auto tail = shared_log.get_tail();
+              tail = std::min(tail, index + 32);
               std::vector<KeyValueEntry> key_values;
               key_values.reserve(tail - index);
               for (auto i = index; i < tail; i++)
