@@ -35,7 +35,6 @@ uint64_t cache_ns;
 uint64_t disk_ns;
 uint64_t rdma_ns;
 
-#undef CLIENT_SYNC_WITH_OTHER_CLIENTS
 #ifdef CLIENT_SYNC_WITH_OTHER_CLIENTS
 // Total clients ready/done for syncing clients with workloads
 std::atomic<uint64_t> total_clients_ready{};
