@@ -794,7 +794,7 @@ void server_worker(
             std::string_view key = p.getKey().cStr();
 
             // Put this in our list of unapplied keys
-
+            LOG_STATE("[SharedLogForwardRequest] Got request for {}", key);
             server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK, key);
           }
           else if (data.isSharedLogForwardResponse())
@@ -802,7 +802,7 @@ void server_worker(
             auto p = data.getSharedLogForwardResponse();
             std::string_view key = p.getKey().cStr();
             auto& write_response = key_to_write_response[std::string(key)];
-            LOG_STATE("[SharedLogForwardResponse] Got response {} + 1", write_response.server_responses);
+            LOG_STATE("[SharedLogForwardResponse] Got response for {} [{} + 1]", key, write_response.server_responses);
 
             write_response.server_responses++;
           }
@@ -812,7 +812,7 @@ void server_worker(
             auto index = p.getIndex();
             std::string_view key = p.getKey().cStr();
             auto& write_response = key_to_write_response[std::string(key)];
-            LOG_STATE("[SharedLogPutResponse] Got response {} + 1", write_response.shared_log_responses);
+            LOG_STATE("[SharedLogPutResponse] Got response for {} [{} + 1]", key, write_response.shared_log_responses);
 
             write_response.shared_log_responses++;
           }
