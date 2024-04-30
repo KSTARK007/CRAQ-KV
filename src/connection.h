@@ -103,10 +103,10 @@ struct Connection
     do
     {
       ret = machnet_recv(channel, buf.data(), buf.size(), &rx_flow);
-      // if (ret < 0)
-      // {
-      //   info("machnet_recv() {}", ret);
-      // }
+      if (ret < 0)
+      {
+        info("machnet_recv() {}", ret);
+      }
     }
     while (ret < 0);
     assert_with_msg(ret >= 0, "machnet_recv() failed");
