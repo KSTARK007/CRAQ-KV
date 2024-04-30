@@ -72,6 +72,7 @@ struct SharedLogForwardRequest {
 
 struct SharedLogForwardResponse {
   response @0 :ResponseType;
+  key @1 :Text;
 }
 
 struct SharedLogPutRequest {
@@ -81,6 +82,7 @@ struct SharedLogPutRequest {
 
 struct SharedLogPutResponse {
   index @0 :UInt64;
+  key @1 :Text;
 }
 
 struct SharedLogEntry {

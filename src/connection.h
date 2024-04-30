@@ -144,9 +144,9 @@ struct Connection
   }
 
   void shared_log_forward_request(int index, int port, std::string_view key);
-  void shared_log_forward_response(int index, int port, ResponseType response_type);
+  void shared_log_forward_response(int index, int port, ResponseType response_type, std::string_view key);
   void shared_log_put_request(int index, int port, std::string_view key, std::string_view value);
-  void shared_log_put_response(int index, int port, uint64_t shared_log_index);
+  void shared_log_put_response(int index, int port, uint64_t shared_log_index, std::string_view value);
   void shared_log_get_request(int index, int port, uint64_t shared_log_index);
   void shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries);
 

@@ -555,7 +555,7 @@ void Connection::shared_log_forward_request(int index, int port, std::string_vie
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::shared_log_forward_response(int index, int port, ResponseType response_type)
+void Connection::shared_log_forward_response(int index, int port, ResponseType response_type, std::string_view key)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -563,6 +563,7 @@ void Connection::shared_log_forward_response(int index, int port, ResponseType r
   Packet::Data::Builder data = packet[0].initData();
   SharedLogForwardResponse::Builder request = data.initSharedLogForwardResponse();
   request.setResponse(response_type);
+  request.setKey(std::string(key));
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
@@ -590,7 +591,7 @@ void Connection::shared_log_put_request(int index, int port, std::string_view ke
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::shared_log_put_response(int index, int port, uint64_t shared_log_index)
+void Connection::shared_log_put_response(int index, int port, uint64_t shared_log_index, std::string_view key)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -598,6 +599,7 @@ void Connection::shared_log_put_response(int index, int port, uint64_t shared_lo
   Packet::Data::Builder data = packet[0].initData();
   SharedLogPutResponse::Builder request = data.initSharedLogPutResponse();
   request.setIndex(shared_log_index);
+  request.setKey(std::string(key));
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 

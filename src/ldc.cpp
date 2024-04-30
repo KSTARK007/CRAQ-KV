@@ -259,7 +259,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           shared_log.append(key, value);
 
           auto tail = shared_log.get_tail();
-          connection.shared_log_put_response(remote_index, remote_port, tail);
+          connection.shared_log_put_response(remote_index, remote_port, tail, key);
         }
         else if (data.isSharedLogGetRequest())
         {
@@ -439,17 +439,29 @@ void server_worker(
     int shared_log_responses = 0;
     int remote_index = 0;
     int remote_port = 0;
-  } write_response;
+  };
+
+  std::map<std::string, WriteResponse> key_to_write_response;
 
   while (!g_stop)
   {
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
-          if (write_response.ready(num_servers))
+          for (auto it = key_to_write_response.begin(); it != key_to_write_response.end();)
           {
-            server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
-            write_response.reset();
+            auto& [k, write_response] = *it;
+            if (write_response.ready(num_servers))
+            {
+              LOG_STATE("Write response ready {} {}", write_response.remote_index, write_response.remote_port);
+              server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
+              write_response.reset();
+              key_to_write_response.erase(it++);
+            }
+            else
+            {
+              ++it;
+            }
           }
           if (data.isPutRequest())
           {
@@ -462,6 +474,7 @@ void server_worker(
 
             if (has_shared_log)
             {
+              auto& write_response = key_to_write_response[key_cstr];
               write_response.reset();
               write_response.remote_index = remote_index;
               write_response.remote_port = remote_port;
@@ -782,12 +795,14 @@ void server_worker(
 
             // Put this in our list of unapplied keys
 
-            server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK);
+            server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK, key);
           }
           else if (data.isSharedLogForwardResponse())
           {
-            auto p = data.getSharedLogForwardRequest();
+            auto p = data.getSharedLogForwardResponse();
             std::string_view key = p.getKey().cStr();
+            auto& write_response = key_to_write_response[std::string(key)];
+            LOG_STATE("[SharedLogForwardResponse] Got response {} + 1", write_response.server_responses);
 
             write_response.server_responses++;
           }
@@ -795,6 +810,9 @@ void server_worker(
           {
             auto p = data.getSharedLogPutResponse();
             auto index = p.getIndex();
+            std::string_view key = p.getKey().cStr();
+            auto& write_response = key_to_write_response[std::string(key)];
+            LOG_STATE("[SharedLogPutResponse] Got response {} + 1", write_response.shared_log_responses);
 
             write_response.shared_log_responses++;
           }
