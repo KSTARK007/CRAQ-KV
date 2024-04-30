@@ -254,12 +254,13 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           auto p = data.getSharedLogPutRequest();
           std::string_view key = p.getKey().cStr();
           std::string_view value = p.getValue().cStr();
+          auto hash = p.getHash();
 
           // Put this in our list of keys
           shared_log.append(key, value);
 
           auto tail = shared_log.get_tail();
-          connection.shared_log_put_response(remote_index, remote_port, tail, key);
+          connection.shared_log_put_response(remote_index, remote_port, tail, hash);
         }
         else if (data.isSharedLogGetRequest())
         {
@@ -441,14 +442,14 @@ void server_worker(
     int remote_port = 0;
   };
 
-  std::map<std::string, WriteResponse> key_to_write_response;
+  HashMap<int, WriteResponse> hash_to_write_response;
 
   while (!g_stop)
   {
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
-          for (auto it = key_to_write_response.begin(); it != key_to_write_response.end();)
+          for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
           {
             auto& [k, write_response] = *it;
             if (write_response.ready(num_servers))
@@ -456,7 +457,7 @@ void server_worker(
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
-              key_to_write_response.erase(it++);
+              hash_to_write_response.erase(it++);
             }
             else
             {
@@ -474,13 +475,14 @@ void server_worker(
 
             if (has_shared_log)
             {
-              auto& write_response = key_to_write_response[key_cstr];
+              auto hash = remote_port;
+              auto& write_response = hash_to_write_response[hash];
               write_response.reset();
               write_response.remote_index = remote_index;
               write_response.remote_port = remote_port;
 
               // Send to shared log
-              server.shared_log_put_request(shared_log_config.index, shared_log_config.port, key_cstr, value_cstr);
+              server.shared_log_put_request(shared_log_config.index, shared_log_config.port, key_cstr, value_cstr, hash);
 
               // Send to other server nodes (to cache)
               for (auto i = 0; i < server_configs.size(); i++)
@@ -492,7 +494,7 @@ void server_worker(
                 }
                 auto index = server_config.index;
                 auto port = server_config.port;
-                server.shared_log_forward_request(index, port, key_cstr);
+                server.shared_log_forward_request(index, port, key_cstr, hash);
               }
             }
             else
@@ -792,17 +794,18 @@ void server_worker(
           {
             auto p = data.getSharedLogForwardRequest();
             std::string_view key = p.getKey().cStr();
+            auto hash = p.getHash();
 
             // Put this in our list of unapplied keys
             LOG_STATE("[SharedLogForwardRequest] Got request for {}", key);
-            server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK, key);
+            server.shared_log_forward_response(remote_index, remote_port, ResponseType::OK, hash);
           }
           else if (data.isSharedLogForwardResponse())
           {
             auto p = data.getSharedLogForwardResponse();
-            std::string_view key = p.getKey().cStr();
-            auto& write_response = key_to_write_response[std::string(key)];
-            LOG_STATE("[SharedLogForwardResponse] Got response for {} [{} + 1]", key, write_response.server_responses);
+            auto hash = p.getHash();
+            auto& write_response = hash_to_write_response[hash];
+            LOG_STATE("[SharedLogForwardResponse] Got response for {} [{} + 1]", hash, write_response.server_responses);
 
             write_response.server_responses++;
           }
@@ -810,9 +813,9 @@ void server_worker(
           {
             auto p = data.getSharedLogPutResponse();
             auto index = p.getIndex();
-            std::string_view key = p.getKey().cStr();
-            auto& write_response = key_to_write_response[std::string(key)];
-            LOG_STATE("[SharedLogPutResponse] Got response for {} [{} + 1]", key, write_response.shared_log_responses);
+            auto hash = p.getHash();
+            auto& write_response = hash_to_write_response[hash];
+            LOG_STATE("[SharedLogPutResponse] Got response for {} [{} + 1]", hash, write_response.shared_log_responses);
 
             write_response.shared_log_responses++;
           }

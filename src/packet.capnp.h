@@ -241,7 +241,7 @@ struct SharedLogForwardRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(ea4ba10b167d66a7, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(ea4ba10b167d66a7, 1, 1)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -256,7 +256,7 @@ struct SharedLogForwardResponse {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(dc828176e706e6f6, 1, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(dc828176e706e6f6, 2, 0)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -271,7 +271,7 @@ struct SharedLogPutRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(ff39fc1686c4831e, 0, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(ff39fc1686c4831e, 1, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -286,7 +286,7 @@ struct SharedLogPutResponse {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(867987e2b2e8dc81, 1, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(867987e2b2e8dc81, 2, 0)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -1453,6 +1453,8 @@ public:
   inline bool hasKey() const;
   inline  ::capnp::Text::Reader getKey() const;
 
+  inline  ::uint64_t getHash() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -1487,6 +1489,9 @@ public:
   inline  ::capnp::Text::Builder initKey(unsigned int size);
   inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline  ::uint64_t getHash();
+  inline void setHash( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1533,8 +1538,7 @@ public:
 
   inline  ::ResponseType getResponse() const;
 
-  inline bool hasKey() const;
-  inline  ::capnp::Text::Reader getKey() const;
+  inline  ::uint64_t getHash() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1567,12 +1571,8 @@ public:
   inline  ::ResponseType getResponse();
   inline void setResponse( ::ResponseType value);
 
-  inline bool hasKey();
-  inline  ::capnp::Text::Builder getKey();
-  inline void setKey( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initKey(unsigned int size);
-  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+  inline  ::uint64_t getHash();
+  inline void setHash( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1623,6 +1623,8 @@ public:
   inline bool hasValue() const;
   inline  ::capnp::Text::Reader getValue() const;
 
+  inline  ::uint64_t getHash() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -1664,6 +1666,9 @@ public:
   inline  ::capnp::Text::Builder initValue(unsigned int size);
   inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownValue();
+
+  inline  ::uint64_t getHash();
+  inline void setHash( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1710,8 +1715,7 @@ public:
 
   inline  ::uint64_t getIndex() const;
 
-  inline bool hasKey() const;
-  inline  ::capnp::Text::Reader getKey() const;
+  inline  ::uint64_t getHash() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1744,12 +1748,8 @@ public:
   inline  ::uint64_t getIndex();
   inline void setIndex( ::uint64_t value);
 
-  inline bool hasKey();
-  inline  ::capnp::Text::Builder getKey();
-  inline void setKey( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initKey(unsigned int size);
-  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+  inline  ::uint64_t getHash();
+  inline void setHash( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -3063,6 +3063,20 @@ inline ::capnp::Orphan< ::capnp::Text> SharedLogForwardRequest::Builder::disownK
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
+inline  ::uint64_t SharedLogForwardRequest::Reader::getHash() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t SharedLogForwardRequest::Builder::getHash() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+inline void SharedLogForwardRequest::Builder::setHash( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
 inline  ::ResponseType SharedLogForwardResponse::Reader::getResponse() const {
   return _reader.getDataField< ::ResponseType>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS);
@@ -3077,38 +3091,18 @@ inline void SharedLogForwardResponse::Builder::setResponse( ::ResponseType value
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
-inline bool SharedLogForwardResponse::Reader::hasKey() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline  ::uint64_t SharedLogForwardResponse::Reader::getHash() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
-inline bool SharedLogForwardResponse::Builder::hasKey() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+
+inline  ::uint64_t SharedLogForwardResponse::Builder::getHash() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
-inline  ::capnp::Text::Reader SharedLogForwardResponse::Reader::getKey() const {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::capnp::Text::Builder SharedLogForwardResponse::Builder::getKey() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void SharedLogForwardResponse::Builder::setKey( ::capnp::Text::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::Text::Builder SharedLogForwardResponse::Builder::initKey(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
-}
-inline void SharedLogForwardResponse::Builder::adoptKey(
-    ::capnp::Orphan< ::capnp::Text>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::Text> SharedLogForwardResponse::Builder::disownKey() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline void SharedLogForwardResponse::Builder::setHash( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool SharedLogPutRequest::Reader::hasKey() const {
@@ -3179,6 +3173,20 @@ inline ::capnp::Orphan< ::capnp::Text> SharedLogPutRequest::Builder::disownValue
       ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
+inline  ::uint64_t SharedLogPutRequest::Reader::getHash() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t SharedLogPutRequest::Builder::getHash() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+inline void SharedLogPutRequest::Builder::setHash( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
 inline  ::uint64_t SharedLogPutResponse::Reader::getIndex() const {
   return _reader.getDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS);
@@ -3193,38 +3201,18 @@ inline void SharedLogPutResponse::Builder::setIndex( ::uint64_t value) {
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
-inline bool SharedLogPutResponse::Reader::hasKey() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline  ::uint64_t SharedLogPutResponse::Reader::getHash() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
-inline bool SharedLogPutResponse::Builder::hasKey() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+
+inline  ::uint64_t SharedLogPutResponse::Builder::getHash() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
-inline  ::capnp::Text::Reader SharedLogPutResponse::Reader::getKey() const {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::capnp::Text::Builder SharedLogPutResponse::Builder::getKey() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void SharedLogPutResponse::Builder::setKey( ::capnp::Text::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::Text::Builder SharedLogPutResponse::Builder::initKey(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
-}
-inline void SharedLogPutResponse::Builder::adoptKey(
-    ::capnp::Orphan< ::capnp::Text>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::Text> SharedLogPutResponse::Builder::disownKey() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline void SharedLogPutResponse::Builder::setHash( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool SharedLogEntry::Reader::hasKey() const {

@@ -68,21 +68,23 @@ struct FallbackGetResponse {
 
 struct SharedLogForwardRequest {
   key @0 :Text;
+  hash @1 :UInt64;
 }
 
 struct SharedLogForwardResponse {
   response @0 :ResponseType;
-  key @1 :Text;
+  hash @1 :UInt64;
 }
 
 struct SharedLogPutRequest {
   key @0 :Text;
   value @1 : Text;
+  hash @2 :UInt64;
 }
 
 struct SharedLogPutResponse {
   index @0 :UInt64;
-  key @1 :Text;
+  hash @1 :UInt64;
 }
 
 struct SharedLogEntry {
