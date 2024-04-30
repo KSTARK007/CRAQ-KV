@@ -886,7 +886,7 @@ void server_worker(
               {
                 block_cache->put(std::string(key), std::string(value));
               }
-              else if (write_policy == "write_back")
+              else if (write_policy == "write_around")
               {
                 block_cache->get_db()->put(std::string(key), std::string(value));
               }
