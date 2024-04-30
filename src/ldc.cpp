@@ -493,19 +493,22 @@ void server_worker(
               write_response.remote_port = remote_port;
 
               // Send to shared log
-              server.shared_log_put_request(shared_log_config.index, shared_log_config.port + thread_index, key_cstr, value_cstr, hash);
+              auto shared_config_port = shared_log_config.port + thread_index;
+              info("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
+              server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
 
               // Send to other server nodes (to cache)
               for (auto i = 0; i < server_configs.size(); i++)
               {
                 auto& server_config = server_configs[i];
-                if (i == machine_index)
+                auto index = server_config.index;
+                auto port = server_config.port + thread_index;
+                info("[PutRequest - shared_log_forward_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, index, port);
+                if (index == machine_index)
                 {
                   continue;
                 }
-                auto index = server_config.index;
-                auto port = server_config.port;
-                server.shared_log_forward_request(index, port + thread_index, key_cstr, hash);
+                server.shared_log_forward_request(index, port, key_cstr, hash);
               }
             }
             else
