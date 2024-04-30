@@ -273,6 +273,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               // Respond with all entries
               auto tail = shared_log.get_tail();
+              // Can't add all entries
               tail = std::min(tail, index + 32);
               std::vector<KeyValueEntry> key_values;
               key_values.reserve(tail - index);
@@ -356,7 +357,7 @@ void server_worker(
         while (!g_stop)
         {
           server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
       });
       background_thread.detach();
