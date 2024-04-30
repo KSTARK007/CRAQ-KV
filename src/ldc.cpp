@@ -229,58 +229,69 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
-  int thread_index = 0;
-  auto connection = Connection(config, ops_config, machine_index, thread_index);
-  connection.listen();
-  for (auto i = 0; i < remote_machine_configs.size(); i++)
-  {
-    const auto& remote_machine_config = remote_machine_configs[i]; 
-    const auto& ip = remote_machine_config.ip;
-    if (remote_machine_config.server)
-    {
-      connection.connect_to_remote_machine(i);
-    }
-  }
-
   SimpleSharedLog shared_log(1 * 1000 * 1000);
-
-  while (!g_stop)
+  std::vector<std::thread> ts;
+  for (auto i = 0; i < FLAGS_threads; i++)
   {
-    connection.loop(
-      [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
+    int thread_index = i;
+    std::thread t([&, i, thread_index]()
+    {
+      auto connection = Connection(config, ops_config, machine_index, thread_index);
+      connection.listen();
+      for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
-        if (data.isSharedLogPutRequest())
+        const auto& remote_machine_config = remote_machine_configs[i]; 
+        const auto& ip = remote_machine_config.ip;
+        if (remote_machine_config.server)
         {
-          auto p = data.getSharedLogPutRequest();
-          std::string_view key = p.getKey().cStr();
-          std::string_view value = p.getValue().cStr();
-          auto hash = p.getHash();
-
-          // Put this in our list of keys
-          shared_log.append(key, value);
-
-          auto tail = shared_log.get_tail();
-          connection.shared_log_put_response(remote_index, remote_port, tail, hash);
-        }
-        else if (data.isSharedLogGetRequest())
-        {
-          auto p = data.getSharedLogGetRequest();
-          uint64_t index = p.getIndex();
-
-          // Respond with all entries
-          auto tail = shared_log.get_tail();
-          std::vector<KeyValueEntry> key_values;
-          key_values.reserve(tail - index);
-          for (auto i = index; i < tail; i++)
-          {
-            auto kv = shared_log.get(i);
-            key_values.emplace_back(kv);
-          }
-
-          connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
+          connection.connect_to_remote_machine(i);
         }
       }
-    );
+
+      while (!g_stop)
+      {
+        connection.loop(
+          [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
+          {
+            if (data.isSharedLogPutRequest())
+            {
+              auto p = data.getSharedLogPutRequest();
+              std::string_view key = p.getKey().cStr();
+              std::string_view value = p.getValue().cStr();
+              auto hash = p.getHash();
+
+              // Put this in our list of keys
+              shared_log.append(key, value);
+
+              auto tail = shared_log.get_tail();
+              connection.shared_log_put_response(remote_index, remote_port, tail, hash);
+            }
+            else if (data.isSharedLogGetRequest())
+            {
+              auto p = data.getSharedLogGetRequest();
+              uint64_t index = p.getIndex();
+
+              // Respond with all entries
+              auto tail = shared_log.get_tail();
+              std::vector<KeyValueEntry> key_values;
+              key_values.reserve(tail - index);
+              for (auto i = index; i < tail; i++)
+              {
+                auto kv = shared_log.get(i);
+                key_values.emplace_back(kv);
+              }
+
+              connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
+            }
+          }
+        );
+      }
+    });
+    ts.emplace_back(std::move(t));
+  }
+  for (auto& t : ts)
+  {
+    t.join();
   }
 }
 
@@ -335,20 +346,20 @@ void server_worker(
   uint64_t shared_log_index = 0;
   if (has_shared_log)
   {
-    // if (thread_index == 0)
-    // {
-      server.connect_to_remote_machine(shared_log_config.index);
+    server.connect_to_remote_machine(shared_log_config.index);
 
+    if (thread_index == 0)
+    {
       static std::thread background_thread([&]()
       {
         while (!g_stop)
         {
-          // server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-          // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
       });
       background_thread.detach();
-    // }
+    }
   }
 
   std::vector<RemoteMachineConfig> server_configs;
