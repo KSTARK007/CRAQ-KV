@@ -502,7 +502,7 @@ void server_worker(
 
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
-              info("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
+              LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
               server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
 
               // Send to other server nodes (to cache)
@@ -511,7 +511,7 @@ void server_worker(
                 auto& server_config = server_configs[i];
                 auto index = server_config.index;
                 auto port = server_config.port + thread_index;
-                info("[PutRequest - shared_log_forward_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, index, port);
+                LOG_STATE("[PutRequest - shared_log_forward_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, index, port);
                 if (index == machine_index)
                 {
                   continue;
