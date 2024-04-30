@@ -901,8 +901,11 @@ void server_worker(
               else if (write_policy == "write_cache")
               {
                 // allocate write buffer
-                block_cache =
-                    std::make_shared<BlockCache<std::string, std::string>>(config);
+                // block_cache =
+                //     std::make_shared<BlockCache<std::string, std::string>>(config);
+                BlockCacheConfig write_cache_config = config;
+                auto write_cache_config_size = 1000;
+                auto write_cache = LRUCache<std::string, std::string>(write_cache_config, nullptr, write_cache_config_size);
 
               }
               else
