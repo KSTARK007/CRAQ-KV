@@ -56,6 +56,7 @@ struct Configuration
   bool fallback_rpc_broadcast;
   bool cache_logs_push_entries;
   std::string write_policy;
+  bool writes_linearizable;
 };
 
 struct Operation
