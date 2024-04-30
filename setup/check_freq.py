@@ -1,51 +1,66 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
+from tqdm import tqdm
 
+def process_file(filepath):
+    keys = []
+    with open(filepath, 'r') as file:
+        for line in file:
+            key, _, _ = line.split()
+            keys.append(int(key))
+    unique, counts = np.unique(keys, return_counts=True)
+    return unique, counts
+
+def update_unique_counts(unique_counts, new_unique, new_counts):
+    unique, counts = unique_counts
+    unique_combined = np.union1d(unique, new_unique)
+    counts_combined = np.zeros_like(unique_combined)
+    
+    unique_index = np.searchsorted(unique_combined, unique)
+    counts_combined[unique_index] = counts
+    
+    new_unique_index = np.searchsorted(unique_combined, new_unique)
+    counts_combined[new_unique_index] += new_counts
+    
+    return unique_combined, counts_combined
 
 def plot_cdf_graph(directory):
-    keys = []
+    pool = Pool()
+    file_list = [os.path.join(directory, filename) for filename in os.listdir(directory) if filename.startswith("client_") and filename.endswith(".txt")]
+    unique_counts = (np.array([]), np.array([]))
+    
+    with tqdm(total=len(file_list), desc="Processing files", unit="file") as pbar:
+        for result in pool.imap_unordered(process_file, file_list):
+            new_unique, new_counts = result
+            unique_counts = update_unique_counts(unique_counts, new_unique, new_counts)
+            pbar.update(1)
+    
+    pool.close()
+    pool.join()
 
-    # Iterate over each file in the directory
-    for filename in os.listdir(directory):
-        if filename.startswith("client_") and filename.endswith(".txt"):
-            filepath = os.path.join(directory, filename)
-            with open(filepath, 'r') as file:
-                for line in file:
-                    # print(line)
-                    key, _ = line.split()
-                    keys.append(int(key))
-                    # _, key = line.split()
-                    # keys.append(int(key.replace('user', '')))
+    unique_sorted, counts_sorted = unique_counts
+    sorted_indices = np.argsort(-counts_sorted)
+    unique_sorted = unique_sorted[sorted_indices]
+    counts_sorted = counts_sorted[sorted_indices]
 
-    data_sorted = np.sort(keys)
-    # x = np.array(data_sorted)
-    unique, counts = np.unique(data_sorted, return_counts=True)
-    # count_sort_ind = np.argsort(-counts)
-    sorted_indices = np.argsort(-counts)
-    unique_sorted = unique[sorted_indices]
-    counts_sorted = counts[sorted_indices]
-
-    # Writing to a file
     with open(f'{directory}/unique_counts_reversed.txt', "w") as file:
         for u, c in zip(unique_sorted, counts_sorted):
-            file.write(f"{u}: {c}\n")
+            file.write(f"{int(u)}:{int(c)}\n")
 
-    # p = 1. * np.arange(len(data_sorted)) / (len(data_sorted) - 1)
-    cumsum =  0 
-    c = []
-    for i in counts_sorted:
-        cumsum += i
-        c.append(cumsum)
-    c = c / cumsum
+    cumsum = np.cumsum(counts_sorted)
+    c = cumsum / cumsum[-1]
 
-    # Plot the CDF
     fig = plt.figure(figsize=(12, 6))
     ax1 = fig.add_subplot(121)
     ax1.plot(c)
     ax1.set_xlabel('$p$')
     ax1.set_ylabel('$x$')
     ax1.set_title('CDF of Keys')
-
     plt.tight_layout()
-    plt.savefig(f'{directory}/cdf_grap.png')
+    plt.savefig(f'{directory}/cdf_graph.png')
+
+if __name__ == "__main__":
+    # plot_cdf_graph('/mydata/ycsb_workloads/hotspot_95_5/')
+    plot_cdf_graph('/mydata/ycsb/hotspot_95_5/')

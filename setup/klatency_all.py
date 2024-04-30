@@ -141,6 +141,8 @@ for subdirectory in base_directory.iterdir():
         if(total_reads == 0):
             total_reads = -1
         miss_rate = misses / total_reads
+        if(misses == 0):
+            misses = -1
         remote_hit_rate = (misses - disk_accesses - remote_disk_accesses) / misses
         local_hit_rate = local_hits / total_reads
         disk_accesses = disk_accesses / total_reads
