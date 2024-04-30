@@ -442,7 +442,7 @@ void server_worker(
     int remote_port = 0;
   };
 
-  HashMap<int, WriteResponse> hash_to_write_response;
+  HashMap<uint64_t, WriteResponse> hash_to_write_response;
 
   while (!g_stop)
   {
