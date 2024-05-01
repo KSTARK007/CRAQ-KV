@@ -205,7 +205,6 @@ extern std::shared_ptr<Snapshot> snapshot;
 #define KEY_VALUE_STORAGE_PORT 50200
 #define CACHE_INDEXES_PORT 50300
 
-constexpr auto RDMA_CACHE_INDEX_KEY_VALUE_SIZE = 100;
 constexpr auto FreeRequestTokenQueueSize = 50000;
 constexpr auto CacheIndexValueQueueSize = 50000;
 constexpr auto RDMA_SETUP_SYNC_SLEEP_MS = 1000;
@@ -433,12 +432,6 @@ struct RDMACacheIndex2
 {
   RDMACacheIndex* cache_index;
   bool is_local = false;
-};
-
-struct RDMACacheIndexKeyValue
-{
-  uint64_t key_index;
-  uint8_t data[RDMA_CACHE_INDEX_KEY_VALUE_SIZE];
 };
 
 // This index storage maintains a cache index for each remote machine
