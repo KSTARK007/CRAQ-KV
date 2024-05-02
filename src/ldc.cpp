@@ -346,6 +346,7 @@ void server_worker(
 
   auto has_shared_log = shared_log_config.shared_log;
   uint64_t shared_log_index = 0;
+  auto latency_between_shared_log_get_request_ms = 1;
   if (has_shared_log)
   {
     server.connect_to_remote_machine(shared_log_config.index);
@@ -357,7 +358,7 @@ void server_worker(
         while (!g_stop)
         {
           server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
         }
       });
       background_thread.detach();
@@ -880,6 +881,16 @@ void server_worker(
             auto p = data.getSharedLogGetResponse();
             shared_log_index = std::max(p.getIndex(), shared_log_index);
             auto entries = p.getE();
+
+            if (entries.size() == 0)
+            {
+              // Exp backoff
+              latency_between_shared_log_get_request_ms *= 2;
+            }
+            else
+            {
+              latency_between_shared_log_get_request_ms = 0;
+            }
 
             // Set the shared log entries to be put in our db
             for (const auto& e : entries)
