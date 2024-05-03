@@ -125,6 +125,7 @@ void Connection::send(int index, int port, std::string_view data)
     ret = machnet_send(channel, flow, data.data(), data.size());
     if (ret < 0)
     {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
       info("machnet_send() {} SIZE {} ? MAX_SIZE {}", ret, data.size(), MACHNET_MSG_MAX_LEN);
     }
   }

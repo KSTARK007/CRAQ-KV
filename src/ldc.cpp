@@ -346,7 +346,7 @@ void server_worker(
 
   auto has_shared_log = shared_log_config.shared_log;
   uint64_t shared_log_index = 0;
-  auto latency_between_shared_log_get_request_ms = 1;
+  auto latency_between_shared_log_get_request_ms = 100;
   if (has_shared_log)
   {
     server.connect_to_remote_machine(shared_log_config.index);
