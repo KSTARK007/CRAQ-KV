@@ -347,6 +347,10 @@ void server_worker(
   auto has_shared_log = shared_log_config.shared_log;
   uint64_t shared_log_index = 0;
   auto latency_between_shared_log_get_request_ms = 100;
+  bool shared_log_get_request_acked = true;
+  std::mutex shared_log_get_request_lock;
+  std::condition_variable shared_log_get_request_cv;
+  
   if (has_shared_log)
   {
     server.connect_to_remote_machine(shared_log_config.index);
@@ -357,7 +361,11 @@ void server_worker(
       {
         while (!g_stop)
         {
-          server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+          if (shared_log_get_request_acked)
+          {
+            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+            shared_log_get_request_acked = false;
+          }
           std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
         }
       });
@@ -892,13 +900,13 @@ void server_worker(
                 BlockCacheConfig write_cache_config = config;
                 auto write_cache_config_size = 1000;
                 auto write_cache = LRUCache<std::string, std::string>(write_cache_config, nullptr, write_cache_config_size);
-
               }
               else
               {
                 panic("Unsupported write policy {}", write_policy);
               }
             }
+            shared_log_get_request_acked = true;
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
