@@ -361,11 +361,11 @@ void server_worker(
       {
         while (!g_stop)
         {
-          if (shared_log_get_request_acked)
-          {
-            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-            shared_log_get_request_acked = false;
-          }
+          // if (shared_log_get_request_acked)
+          // {
+          //   server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+          //   shared_log_get_request_acked = false;
+          // }
           std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
         }
       });
@@ -927,7 +927,7 @@ void server_worker(
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
-              // hash_to_write_response.erase(it++);
+              hash_to_write_response.erase(it++);
             }
             else
             {
