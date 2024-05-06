@@ -872,7 +872,7 @@ void server_worker(
             }
             else
             {
-              latency_between_shared_log_get_request_ms = 0;
+              latency_between_shared_log_get_request_ms = 100;
             }
 
             // Set the shared log entries to be put in our db
