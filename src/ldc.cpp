@@ -928,8 +928,8 @@ void server_worker(
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
-              hash_to_write_response.erase(it++);
               LOG_STATE("Write response sent {} {} {}", k, write_response.remote_index, write_response.remote_port);
+              hash_to_write_response.erase(it++);
             }
             else
             {
