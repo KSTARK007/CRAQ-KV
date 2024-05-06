@@ -929,7 +929,7 @@ void server_worker(
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
               LOG_STATE("Write response sent {} {} {}", k, write_response.remote_index, write_response.remote_port);
-              // hash_to_write_response.erase(it++);
+              hash_to_write_response.erase(it++);
             }
             else
             {
