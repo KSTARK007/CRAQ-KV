@@ -728,6 +728,15 @@ void Server::execute_pending_operations()
       shared_log_get_request(index, port, shared_log_index);
     }
   }
+
+  {
+    AppendPutResponse request;
+    while (append_put_response_queue.try_dequeue(request))
+    {
+      auto [index, port, response_type] = request;
+      put_response(index, port, response_type);
+    }
+  }
 }
 
 void Server::append_to_rdma_get_response_queue(int index, int port, ResponseType response_type,
@@ -778,4 +787,10 @@ void Server::append_shared_log_get_request(int index, int port, uint64_t shared_
 {
   auto request = Server::SharedLogGetRequest{index, port, shared_log_index};
   shared_log_get_request_queue.enqueue(request);
+}
+
+void Server::append_put_response(int index, int port, ResponseType response_type)
+{
+  auto request = Server::AppendPutResponse{index, port, response_type};
+  append_put_response_queue.enqueue(request);
 }
