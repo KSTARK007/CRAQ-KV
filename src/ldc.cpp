@@ -865,15 +865,15 @@ void server_worker(
             shared_log_index = std::max(p.getIndex(), shared_log_index);
             auto entries = p.getE();
 
-            if (entries.size() == 0)
-            {
-              // Exp backoff
-              latency_between_shared_log_get_request_ms *= 2;
-            }
-            else
-            {
-              latency_between_shared_log_get_request_ms = 100;
-            }
+            // if (entries.size() == 0)
+            // {
+            //   // Exp backoff
+            //   latency_between_shared_log_get_request_ms *= 2;
+            // }
+            // else
+            // {
+            //   latency_between_shared_log_get_request_ms = 100;
+            // }
 
             // Set the shared log entries to be put in our db
             for (const auto& e : entries)
