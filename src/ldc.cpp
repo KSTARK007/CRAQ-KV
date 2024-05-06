@@ -492,6 +492,7 @@ void server_worker(
               auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
               // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
               if (ops_config.writes_linearizable)
@@ -926,7 +927,7 @@ void server_worker(
             if (true)
             {
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
-              server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
+              // server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
               LOG_STATE("Write response sent {} {} {}", k, write_response.remote_index, write_response.remote_port);
               hash_to_write_response.erase(it++);
