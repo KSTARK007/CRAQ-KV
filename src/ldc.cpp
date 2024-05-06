@@ -913,18 +913,18 @@ void server_worker(
             {
               expected_responses = 1;
             }
-            write_response.is_writing = false;
             if (write_response.ready(expected_responses))
             {
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
               server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
-              hash_to_write_response.erase(it++);
+              // hash_to_write_response.erase(it++);
             }
             else
             {
               ++it;
             }
+            write_response.is_writing = false;
           }          
         });
   }
