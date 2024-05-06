@@ -464,31 +464,6 @@ void server_worker(
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
-          for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
-          {
-            auto& [k, write_response] = *it;
-            while (write_response.is_writing)
-            {
-            }
-            write_response.is_writing = true;
-            auto expected_responses = num_servers;
-            if (!ops_config.writes_linearizable)
-            {
-              expected_responses = 1;
-            }
-            if (write_response.ready(expected_responses))
-            {
-              LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
-              server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
-              write_response.reset();
-              // hash_to_write_response.erase(it++);
-            }
-            else
-            {
-              ++it;
-            }
-            write_response.is_writing = false;
-          }
           if (data.isPutRequest())
           {
             auto p = data.getPutRequest();
@@ -925,6 +900,32 @@ void server_worker(
               }
             }
           }
+
+          for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
+          {
+            auto& [k, write_response] = *it;
+            while (write_response.is_writing)
+            {
+            }
+            write_response.is_writing = true;
+            auto expected_responses = num_servers;
+            if (!ops_config.writes_linearizable)
+            {
+              expected_responses = 1;
+            }
+            write_response.is_writing = false;
+            if (write_response.ready(expected_responses))
+            {
+              LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
+              server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
+              write_response.reset();
+              hash_to_write_response.erase(it++);
+            }
+            else
+            {
+              ++it;
+            }
+          }          
         });
   }
 }
