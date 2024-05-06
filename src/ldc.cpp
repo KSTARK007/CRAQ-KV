@@ -926,7 +926,7 @@ void server_worker(
             if (true)
             {
               LOG_STATE("Write response ready {} {} {}", k, write_response.remote_index, write_response.remote_port);
-              server.append_put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
+              server.put_response(write_response.remote_index, write_response.remote_port, ResponseType::OK);
               write_response.reset();
               hash_to_write_response.erase(it++);
             }
