@@ -179,10 +179,10 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       now = std::chrono::high_resolution_clock::now();
       op_end = now - op_start;
       run_time = std::chrono::duration_cast<std::chrono::seconds>(op_end).count();
-      if(!dump_latency && run_time >= WARMUP_TIME_IN_SECONDS){
+      if(!dump_latency && run_time >= ops_config.WARMUP_TIME_IN_SECONDS){
         dump_latency = true;
       }
-      if(run_time >= ops_config.TOTAL_RUNTIME_IN_SECONDS + WARMUP_TIME_IN_SECONDS){
+      if(run_time >= ops_config.TOTAL_RUNTIME_IN_SECONDS + ops_config.WARMUP_TIME_IN_SECONDS){
         break;
       }
     }
@@ -524,7 +524,7 @@ void server_worker(
             auto time_now = std::chrono::high_resolution_clock::now();
             auto elapsed = time_now - start_time;
             auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-            if (elapsed_seconds == WARMUP_TIME_IN_SECONDS){
+            if (elapsed_seconds == ops_config.WARMUP_TIME_IN_SECONDS){
               block_cache->reset_cache_info();
               local_disk_access.store(0);
               remote_disk_access.store(0);
