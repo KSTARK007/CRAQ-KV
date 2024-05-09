@@ -482,15 +482,15 @@ void server_worker(
 
             if (has_shared_log)
             {
-              // uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
-              // auto& write_response = hash_to_write_response[hash];
+              uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
+              auto& write_response = hash_to_write_response[hash];
               // write_response.reset();
               // write_response.remote_index = remote_index;
               // write_response.remote_port = remote_port;
 
               // Send to shared log
-              // auto shared_config_port = shared_log_config.port + thread_index;
-              // LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
+              auto shared_config_port = shared_log_config.port + thread_index;
+              LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
               // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
