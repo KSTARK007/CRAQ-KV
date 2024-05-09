@@ -361,11 +361,11 @@ void server_worker(
       {
         while (!g_stop)
         {
-          // if (shared_log_get_request_acked)
-          // {
-          //   server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-          //   shared_log_get_request_acked = false;
-          // }
+          if (shared_log_get_request_acked)
+          {
+            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
+            shared_log_get_request_acked = false;
+          }
           std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
         }
       });
