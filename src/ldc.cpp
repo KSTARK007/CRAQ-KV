@@ -491,25 +491,25 @@ void server_worker(
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
-              server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
-              // server.put_response(remote_index, remote_port, ResponseType::OK);
+              // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
-              if (ops_config.writes_linearizable)
-              {
-                for (auto i = 0; i < server_configs.size(); i++)
-                {
-                  auto& server_config = server_configs[i];
-                  auto index = server_config.index;
-                  auto port = server_config.port + thread_index;
-                  LOG_STATE("[PutRequest - shared_log_forward_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, index, port);
-                  if (index == machine_index)
-                  {
-                    continue;
-                  }
-                  server.shared_log_forward_request(index, port, key_cstr, hash);
-                }
-              }
+              // if (ops_config.writes_linearizable)
+              // {
+              //   for (auto i = 0; i < server_configs.size(); i++)
+              //   {
+              //     auto& server_config = server_configs[i];
+              //     auto index = server_config.index;
+              //     auto port = server_config.port + thread_index;
+              //     LOG_STATE("[PutRequest - shared_log_forward_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, index, port);
+              //     if (index == machine_index)
+              //     {
+              //       continue;
+              //     }
+              //     server.shared_log_forward_request(index, port, key_cstr, hash);
+              //   }
+              // }
             }
             else
             {
