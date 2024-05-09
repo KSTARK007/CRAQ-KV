@@ -482,11 +482,11 @@ void server_worker(
 
             if (has_shared_log)
             {
-              uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
-              auto& write_response = hash_to_write_response[hash];
-              write_response.reset();
-              write_response.remote_index = remote_index;
-              write_response.remote_port = remote_port;
+              // uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
+              // auto& write_response = hash_to_write_response[hash];
+              // write_response.reset();
+              // write_response.remote_index = remote_index;
+              // write_response.remote_port = remote_port;
 
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
