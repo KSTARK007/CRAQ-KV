@@ -880,19 +880,22 @@ void server_worker(
             // Set the shared log entries to be put in our db
             for (const auto& e : entries)
             {
-              std::string_view key = e.getKey().cStr();
-              std::string_view value = e.getValue().cStr();
+              std::string_view key_ = e.getKey().cStr();
+              std::string_view value_ = e.getValue().cStr();
+              auto key = std::string(key_);
+              auto value = std::string(value_);
 
-              LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
+              info("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
 
               static const auto& write_policy = ops_config.write_policy;
               if (write_policy == "write_through")
               {
-                block_cache->put(std::string(key), std::string(value));
+                block_cache->get_cache()->put(key, value);
+                block_cache->get_db()->put_async(key, value, [](auto v){});
               }
               else if (write_policy == "write_around")
               {
-                block_cache->get_db()->put(std::string(key), std::string(value));
+                block_cache->get_db()->put(key, value);
               }
               else if (write_policy == "write_cache")
               {
@@ -902,6 +905,7 @@ void server_worker(
                 BlockCacheConfig write_cache_config = config;
                 auto write_cache_config_size = 1000;
                 auto write_cache = LRUCache<std::string, std::string>(write_cache_config, nullptr, write_cache_config_size);
+                // write_cache->put(std::string(key), std::string(value));
               }
               else
               {
