@@ -338,6 +338,7 @@ void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
     int thread_index,
     std::shared_ptr<BlockCache<std::string, std::string>> block_cache,
+    std::shared_ptr<CachePolicy<std::string, std::string>> write_cache,
     HashMap<uint64_t, RDMA_connect> rdma_nodes,
     RemoteMachineConfig shared_log_config)
 {
@@ -467,6 +468,30 @@ void server_worker(
 
   std::unordered_map<uint64_t, WriteResponse> hash_to_write_response;
 
+  auto write_disk = [&](std::string_view key_, std::string_view value_)
+  {
+    static const auto& write_policy = ops_config.write_policy;
+    auto key = std::string(key_);
+    auto value = std::string(value_);
+    if (write_policy == "write_through")
+    {
+      block_cache->get_cache()->put(key, value);
+      block_cache->get_db()->put_async(key, value, [](auto v){});
+    }
+    else if (write_policy == "write_around")
+    {
+      block_cache->get_db()->put(key, value);
+    }
+    else if (write_policy == "write_cache")
+    {
+      write_cache->put(key, value);
+    }
+    else
+    {
+      panic("Unsupported write policy {}", write_policy);
+    }
+  };
+
   while (!g_stop)
   {
     server.loop(
@@ -482,6 +507,8 @@ void server_worker(
 
             if (has_shared_log)
             {
+              write_disk(key_cstr, value_cstr);
+
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
               auto inserted = hash_to_write_response.emplace(hash, WriteResponse{});
               WriteResponse& write_response = inserted.first->second;
@@ -880,37 +907,11 @@ void server_worker(
             // Set the shared log entries to be put in our db
             for (const auto& e : entries)
             {
-              std::string_view key_ = e.getKey().cStr();
-              std::string_view value_ = e.getValue().cStr();
-              auto key = std::string(key_);
-              auto value = std::string(value_);
+              std::string_view key = e.getKey().cStr();
+              std::string_view value = e.getValue().cStr();
 
-              info("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
-
-              static const auto& write_policy = ops_config.write_policy;
-              if (write_policy == "write_through")
-              {
-                block_cache->get_cache()->put(key, value);
-                block_cache->get_db()->put_async(key, value, [](auto v){});
-              }
-              else if (write_policy == "write_around")
-              {
-                block_cache->get_db()->put(key, value);
-              }
-              else if (write_policy == "write_cache")
-              {
-                // allocate write buffer
-                // block_cache =
-                //     std::make_shared<BlockCache<std::string, std::string>>(config);
-                BlockCacheConfig write_cache_config = config;
-                auto write_cache_config_size = 1000;
-                auto write_cache = LRUCache<std::string, std::string>(write_cache_config, nullptr, write_cache_config_size);
-                // write_cache->put(std::string(key), std::string(value));
-              }
-              else
-              {
-                panic("Unsupported write policy {}", write_policy);
-              }
+              LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
+              write_disk(key, value);
             }
             shared_log_get_request_acked = true;
           }
@@ -980,13 +981,32 @@ int main(int argc, char *argv[])
   exec("sudo pkill -9 machnet");
 
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache = nullptr;
+  std::shared_ptr<CachePolicy<std::string, std::string>> write_cache = nullptr;
   HashMap<uint64_t, RDMA_connect> rdma_nodes;
   if (!is_shared_log)
   {
     if (is_server)
     {
-      block_cache =
-          std::make_shared<BlockCache<std::string, std::string>>(config);
+      if (ops_config.write_policy == "write_cache")
+      {
+        auto total_cache_size = static_cast<float>(config.cache.thread_safe_lru.cache_size);
+        auto write_cache_size = ops_config.write_percent * total_cache_size;
+        auto read_cache_size = (1.0 - ops_config.write_percent) * total_cache_size;
+        auto write_config = config;
+        auto read_config = config;
+
+        write_config.cache.thread_safe_lru.cache_size = write_cache_size;
+        read_config.cache.thread_safe_lru.cache_size = read_cache_size;
+
+        write_config.baseline.one_sided_rdma_enabled = false;
+
+        block_cache = std::make_shared<BlockCache<std::string, std::string>>(read_config);
+        write_cache = std::make_shared<ThreadSafeLRUCache<std::string, std::string>>(write_config, nullptr, write_cache_size);
+      }
+      else
+      {
+        block_cache = std::make_shared<BlockCache<std::string, std::string>>(config);
+      }
 
       snapshot = std::make_shared<Snapshot>(config, ops_config);
 
@@ -1390,7 +1410,7 @@ int main(int argc, char *argv[])
     {
       auto server = servers[i];
       std::thread t(server_worker, server, client_server_config, ops_config, machine_index, i,
-                    block_cache, rdma_nodes, shared_log_config);
+                    block_cache, write_cache, rdma_nodes, shared_log_config);
       worker_threads.emplace_back(std::move(t));
     }
     else

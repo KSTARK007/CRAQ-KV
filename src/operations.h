@@ -55,6 +55,7 @@ struct Configuration
   std::string dump_snapshot_file;
   bool enable_fallback_rpc;
   bool fallback_rpc_broadcast;
+  float write_percent;
   bool cache_logs_push_entries;
   std::string write_policy;
   bool writes_linearizable;
