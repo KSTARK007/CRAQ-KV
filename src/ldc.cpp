@@ -490,9 +490,10 @@ void server_worker(
         is_clearing = true;
         for (const auto& k : write_cache->get_keys())
         {
-          block_cache->get_cache()->put(key, default_value);
+          block_cache->get_db()->put_async(key, default_value, [](auto v){});
         }
-        write_cache->clear();
+        // TODO: this is crashing, need to fix
+        // write_cache->clear();
         is_clearing = false;
       }
       while (is_clearing) {}
