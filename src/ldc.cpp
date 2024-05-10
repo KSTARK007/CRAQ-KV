@@ -488,6 +488,10 @@ void server_worker(
       if (write_cache->full())
       {
         is_clearing = true;
+        for (const auto& k : write_cache->get_keys())
+        {
+          block_cache->get_cache()->put(key, default_value);
+        }
         write_cache->clear();
         is_clearing = false;
       }
