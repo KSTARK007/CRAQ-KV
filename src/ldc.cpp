@@ -484,6 +484,14 @@ void server_worker(
     }
     else if (write_policy == "write_cache")
     {
+      static std::atomic<bool> is_clearing;
+      if (write_cache->full())
+      {
+        is_clearing = true;
+        write_cache->clear();
+        is_clearing = false;
+      }
+      while (is_clearing) {}
       write_cache->put(key, value);
     }
     else
