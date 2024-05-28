@@ -30,6 +30,8 @@ std::atomic<uint64_t> remote_disk_access;
 // Local disks access
 std::atomic<uint64_t> local_disk_access;
 
+std::atomic<uint64_t> total_writes_executed;
+
 // Timer for disk
 uint64_t cache_ns;
 uint64_t disk_ns;
@@ -503,6 +505,7 @@ void server_worker(
     {
       panic("Unsupported write policy {}", write_policy);
     }
+    total_writes_executed.fetch_add(1, std::memory_order::relaxed);
   };
 
   while (!g_stop)
