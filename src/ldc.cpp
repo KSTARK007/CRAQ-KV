@@ -554,7 +554,7 @@ void server_worker(
             }
             else
             {
-              block_cache->put(key_cstr, value_cstr);
+              write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
             }
           }
