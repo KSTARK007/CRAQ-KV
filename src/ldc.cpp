@@ -1258,6 +1258,7 @@ int main(int argc, char *argv[])
       uint64_t last_cache_misses = 0;
       uint64_t last_remote_disk_access = 0;
       uint64_t last_local_disk_access = 0;
+      uint64_t last_writes_executed = 0;
       while (!g_stop)
       {
         auto current_rdma_executed = total_rdma_executed.load(std::memory_order::relaxed);
@@ -1270,6 +1271,8 @@ int main(int argc, char *argv[])
         auto diff_remote_disk_access = current_remote_disk_access - last_remote_disk_access;
         auto current_local_disk_access = local_disk_access.load(std::memory_order::relaxed);
         auto diff_local_disk_access = current_local_disk_access - last_local_disk_access;
+        auto current_writes_executed = total_writes_executed.load(std::memory_order::relaxed);
+        auto diff_current_writes_executed = current_writes_executed - last_writes_executed;
 
         auto cache_info = block_cache->dump_cache_info_as_json();
         uint64_t current_cache_reads{};
@@ -1282,7 +1285,7 @@ int main(int argc, char *argv[])
         auto diff_cache_hits = current_cache_hits - last_cache_hits;
         auto diff_cache_misses = current_cache_misses - last_cache_misses;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}]", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}]", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -1290,7 +1293,8 @@ int main(int argc, char *argv[])
             current_cache_hits, diff_cache_hits,
             current_cache_misses, diff_cache_misses,
             current_remote_disk_access, diff_remote_disk_access,
-            current_local_disk_access, diff_local_disk_access
+            current_local_disk_access, diff_local_disk_access,
+            current_writes_executed, diff_current_writes_executed
         );
 
         last_rdma_executed = current_rdma_executed;
@@ -1301,6 +1305,7 @@ int main(int argc, char *argv[])
         last_cache_misses = current_cache_misses;
         last_remote_disk_access = current_remote_disk_access;
         last_local_disk_access = current_local_disk_access;
+        last_writes_executed = current_writes_executed;
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
