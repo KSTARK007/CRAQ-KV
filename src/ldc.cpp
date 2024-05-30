@@ -477,8 +477,8 @@ void server_worker(
     auto value = std::string(value_);
     if (write_policy == "write_back")
     {
-      // block_cache->get_cache()->put(key, value);
-      block_cache->get_db()->put_async(key, value, [](auto v){});
+      block_cache->get_cache()->put(key, value);
+      // block_cache->get_db()->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
