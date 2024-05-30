@@ -470,12 +470,12 @@ void server_worker(
 
   std::unordered_map<uint64_t, WriteResponse> hash_to_write_response;
 
-  auto write_cache_and_disk = [&](std::string_view key_, std::string_view value_)
+  auto write_disk = [&](std::string_view key_, std::string_view value_)
   {
     static const auto& write_policy = ops_config.write_policy;
     auto key = std::string(key_);
     auto value = std::string(value_);
-    if (write_policy == "write_back")
+    if (write_policy == "write_through")
     {
       block_cache->get_cache()->put(key, value);
       // block_cache->get_db()->put_async(key, value, [](auto v){});
@@ -523,7 +523,7 @@ void server_worker(
 
             if (has_shared_log)
             {
-              write_cache_and_disk(key_cstr, value_cstr);
+              write_disk(key_cstr, value_cstr);
 
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
               auto inserted = hash_to_write_response.emplace(hash, WriteResponse{});
@@ -557,7 +557,7 @@ void server_worker(
             }
             else
             {
-              write_cache_and_disk(key_cstr, value_cstr);
+              write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
             }
           }
@@ -927,7 +927,7 @@ void server_worker(
               std::string_view value = e.getValue().cStr();
 
               LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
-              write_cache_and_disk(key, value);
+              write_disk(key, value);
             }
             shared_log_get_request_acked = true;
           }
