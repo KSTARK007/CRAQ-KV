@@ -463,7 +463,7 @@ void server_worker(
         {
           const auto& key = put_request.key;
           const auto& value = put_request.value;
-          block_cache->get_db()->put_async(key, value, [](auto v){});
+          // block_cache->get_db()->put_async(key, value, [](auto v){});
         }
       }
     });
@@ -503,7 +503,7 @@ void server_worker(
     if (write_policy == "write_through")
     {
       block_cache->get_cache()->put(key, value);
-      // async_put_disk_queue.enqueue(AsyncPutRequest{key, value});
+      async_put_disk_queue.enqueue(AsyncPutRequest{key, value});
       // block_cache->get_db()->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
