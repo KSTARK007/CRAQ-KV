@@ -12,9 +12,6 @@
 	path = third_party/YCSB
 	url = git@github.com:dassl-uiuc/ycsb-tracegen
 	branch = sequential-keys
-[submodule "third_party/Lazylog"]
-	path = third_party/Lazylog
-	url = git@github.com:dassl-uiuc/LazyLog.git
 [submodule "third_party/eRPC"]
 	path = third_party/eRPC
 	url = https://github.com/erpc-io/eRPC.git

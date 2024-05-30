@@ -478,7 +478,7 @@ void server_worker(
     if (write_policy == "write_through")
     {
       block_cache->get_cache()->put(key, value);
-      // block_cache->get_db()->put_async(key, value, [](auto v){});
+      block_cache->get_db()->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
@@ -702,7 +702,7 @@ void server_worker(
                           delete tmp_data;
                         }
                       }
-                      if(config.policy_type == "access_rate"){
+                      if(config.policy_type == "access_rate" or config.policy_type == "access_rate_dynamic"){
                         auto key = std::to_string(key_index);
                         if(block_cache->get_cache()->put_access_rate_match(key, value)){
                           block_cache->cache_freq_addition++;
@@ -1024,7 +1024,38 @@ int main(int argc, char *argv[])
         block_cache = std::make_shared<BlockCache<std::string, std::string>>(config);
       }
 
-      snapshot = std::make_shared<Snapshot>(config, ops_config);
+    snapshot = std::make_shared<Snapshot>(config, ops_config);
+
+    if(config.policy_type == "access_rate_dynamic"){
+      static std::thread access_rate_thread([&, block_cache]()
+      {
+
+        std::this_thread::sleep_for(std::chrono::seconds(45));
+        CDFType freq;
+        while (!g_stop)
+        {
+          info("block_cache->get_cache()->is_ready() {}", block_cache->get_cache()->is_ready());
+          if(block_cache->get_cache()->is_ready()){
+            std::this_thread::sleep_for(std::chrono::seconds(30));
+            info("Access rate check triggered");
+            block_cache->get_cache()->clear_frequency();
+            freq = get_and_sort_freq(block_cache);
+            // for (const auto& [key, value] : freq)
+            // {
+            //   if(key != 0){
+            //     info("key {} value {}", key, value);
+            //   }
+            // }
+            get_best_access_rates(block_cache, freq, cache_ns, disk_ns, rdma_ns);
+
+            // g_stop.store(true);
+          } else {
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+          }
+        }
+      });
+      access_rate_thread.detach();
+    }
 
       // Load the database and operations
       // load the cache with part of database
@@ -1314,6 +1345,8 @@ int main(int argc, char *argv[])
       }
     });
     background_monitoring_thread.detach();
+
+    
 
     for (auto i = 0; i < FLAGS_threads; i++)
     {
