@@ -477,7 +477,7 @@ void server_worker(
     auto value = std::string(value_);
     if (write_policy == "write_back")
     {
-      block_cache->get_cache()->put(key, value);
+      // block_cache->get_cache()->put(key, value);
       // block_cache->get_db()->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
@@ -1158,10 +1158,7 @@ int main(int argc, char *argv[])
               block_cache->put(k, value);
               count_expected++;
             }
-            else
-            {
-              block_cache->get_db()->put(k, value);
-            }
+            block_cache->get_db()->put(k, value);
           }
 
           std::this_thread::sleep_for(std::chrono::milliseconds(1000));
