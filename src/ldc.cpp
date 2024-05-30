@@ -445,6 +445,28 @@ void server_worker(
 
   auto start_time = std::chrono::high_resolution_clock::now();
 
+  struct AsyncPutRequest
+  {
+    std::string key;
+    std::string value;
+  };
+
+  static MPMCQueue<AsyncPutRequest> async_put_disk_queue;
+  static std::thread async_put_disk_thread([&]()
+  {
+    while (!g_stop)
+    {
+      AsyncPutRequest put_request;
+      while (async_put_disk_queue.try_dequeue(put_request))
+      {
+        const auto& key = put_request.key;
+        const auto& value = put_request.value;
+        block_cache->get_db()->put_async(key, value, [](auto v){});
+      }
+    }
+  });
+  async_put_disk_thread.detach();
+
   struct WriteResponse
   {
     void reset()
@@ -478,7 +500,8 @@ void server_worker(
     if (write_policy == "write_through")
     {
       block_cache->get_cache()->put(key, value);
-      block_cache->get_db()->put_async(key, value, [](auto v){});
+      async_put_disk_queue.enqueue(AsyncPutRequest{key, value});
+      // block_cache->get_db()->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
