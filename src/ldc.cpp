@@ -452,20 +452,23 @@ void server_worker(
   };
 
   static MPMCQueue<AsyncPutRequest> async_put_disk_queue;
-  static std::thread async_put_disk_thread([&]()
+  if (thread_index == 0)
   {
-    while (!g_stop)
+    static std::thread async_put_disk_thread([&]()
     {
-      AsyncPutRequest put_request;
-      while (async_put_disk_queue.try_dequeue(put_request))
+      while (!g_stop)
       {
-        const auto& key = put_request.key;
-        const auto& value = put_request.value;
-        block_cache->get_db()->put_async(key, value, [](auto v){});
+        AsyncPutRequest put_request;
+        while (async_put_disk_queue.try_dequeue(put_request))
+        {
+          const auto& key = put_request.key;
+          const auto& value = put_request.value;
+          block_cache->get_db()->put_async(key, value, [](auto v){});
+        }
       }
-    }
-  });
-  async_put_disk_thread.detach();
+    });
+    async_put_disk_thread.detach();
+  }
 
   struct WriteResponse
   {
