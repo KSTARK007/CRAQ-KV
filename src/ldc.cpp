@@ -475,7 +475,7 @@ void server_worker(
     static const auto& write_policy = ops_config.write_policy;
     auto key = std::string(key_);
     auto value = std::string(value_);
-    if (write_policy == "write_through")
+    if (write_policy == "write_back")
     {
       block_cache->get_cache()->put(key, value);
       // block_cache->get_db()->put_async(key, value, [](auto v){});
