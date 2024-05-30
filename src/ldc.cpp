@@ -445,31 +445,6 @@ void server_worker(
 
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  struct AsyncPutRequest
-  {
-    std::string key;
-    std::string value;
-  };
-
-  static MPMCQueue<AsyncPutRequest> async_put_disk_queue;
-  if (thread_index == 0)
-  {
-    static std::thread async_put_disk_thread([&]()
-    {
-      while (!g_stop)
-      {
-        AsyncPutRequest put_request;
-        while (async_put_disk_queue.try_dequeue(put_request))
-        {
-          const auto& key = put_request.key;
-          const auto& value = put_request.value;
-          // block_cache->get_db()->put_async(key, value, [](auto v){});
-        }
-      }
-    });
-    async_put_disk_thread.detach();
-  }
-
   struct WriteResponse
   {
     void reset()
@@ -503,8 +478,7 @@ void server_worker(
     if (write_policy == "write_through")
     {
       block_cache->get_cache()->put(key, value);
-      async_put_disk_queue.enqueue(AsyncPutRequest{key, value});
-      // block_cache->get_db()->put_async(key, value, [](auto v){});
+      block_cache->get_db()->put_async_submit(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
@@ -518,7 +492,7 @@ void server_worker(
         is_clearing = true;
         for (const auto& k : write_cache->get_keys())
         {
-          block_cache->get_db()->put_async(key, default_value, [](auto v){});
+          block_cache->get_db()->put_async_submit(key, default_value, [](auto v){});
         }
         // TODO: this is crashing, need to fix
         // write_cache->clear();
@@ -639,7 +613,7 @@ void server_worker(
                   if (ops_config.DISK_ASYNC) {
                     // Cache miss
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async_submit(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Add to cache
@@ -659,7 +633,7 @@ void server_worker(
                   LOG_STATE("Fetching from disk {} {}", skey, value);
                   if (ops_config.DISK_ASYNC) {
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async_submit(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Send the response
