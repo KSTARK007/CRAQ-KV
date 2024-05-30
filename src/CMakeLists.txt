@@ -211,11 +211,7 @@ add_executable(ldc
             async_rdma.cpp
             
             rdma_reads.cpp
-            rdma_server.cpp
-            
-            access_rate_calculations.h
-            access_rate_calculations.cpp
-            )
+            rdma_server.cpp)
             
 target_include_directories(ldc PUBLIC
     .

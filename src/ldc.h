@@ -1248,15 +1248,3 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
   std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
 };
-
-using CDFType = std::pair<std::vector<std::tuple<uint64_t, std::string, uint64_t>>,
-              std::map<std::string, std::pair<uint64_t, uint64_t>>>;
-
-// std::vector<std::tuple<uint64_t, std::string, uint64_t>> get_and_sort_freq(std::shared_ptr<BlockCache<std::string, std::string>> cache);
-CDFType get_and_sort_freq(std::shared_ptr<BlockCache<std::string, std::string>> cache);
-
-// void get_best_access_rates(std::shared_ptr<BlockCache<std::string, std::string>> cache, std::vector<std::pair<uint64_t,std::string>>& cdf, uint64_t cache_ns_avg, uint64_t disk_ns_avg, uint64_t rdma_ns_avg);
-void get_best_access_rates(std::shared_ptr<BlockCache<std::string, std::string>> cache, CDFType& cdf, uint64_t cache_ns_avg, uint64_t disk_ns_avg, uint64_t rdma_ns_avg);
-
-void set_bucket_cumulative_sum(std::map<uint64_t, uint64_t>& cdf);
-std::map<uint64_t, uint64_t> get_bucket_cumulative_sum();

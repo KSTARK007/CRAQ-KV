@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from tqdm import tqdm
-import argparse
 
 def process_file(filepath):
     keys = []
@@ -64,8 +63,4 @@ def plot_cdf_graph(directory):
 
 if __name__ == "__main__":
     # plot_cdf_graph('/mydata/ycsb_workloads/hotspot_95_5/')
-    parser = argparse.ArgumentParser(description='Get file directory')
-    parser.add_argument('-d', '--directory', type=str, required=True)
-    args = parser.parse_args()
-    # plot_cdf_graph('/mydata/workload/zipfian_default')
-    plot_cdf_graph(args.directory)
+    plot_cdf_graph('/mydata/ycsb/hotspot_95_5/')
