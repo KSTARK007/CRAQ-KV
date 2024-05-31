@@ -475,14 +475,27 @@ void server_worker(
     static const auto& write_policy = ops_config.write_policy;
     auto key = std::string(key_);
     auto value = std::string(value_);
+    auto cache = block_cache->get_cache();
+    auto db = block_cache->get_db();
     if (write_policy == "write_through")
     {
-      block_cache->get_cache()->put(key, value);
-      block_cache->get_db()->put_async_submit(key, value, [](auto v){});
+      cache->put(key, value);
+      db->put_async_submit(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
-      block_cache->get_db()->put(key, value);
+      db->put(key, value);
+    }
+    else if (write_policy == "selective_write_around")
+    {
+      if (cache->exists_in_cache(key))
+      {
+        cache->put(key, value);
+      }
+      else
+      {
+        db->put_async_submit(key, value, [](auto v){});
+      }
     }
     else if (write_policy == "write_cache")
     {
