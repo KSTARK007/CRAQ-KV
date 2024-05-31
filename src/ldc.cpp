@@ -480,7 +480,7 @@ void server_worker(
     if (write_policy == "write_through")
     {
       cache->put(key, value);
-      db->put_async_submit(key, value, [](auto v){});
+      db->put_async(key, value, [](auto v){});
     }
     else if (write_policy == "write_around")
     {
@@ -494,7 +494,7 @@ void server_worker(
       }
       else
       {
-        db->put_async_submit(key, value, [](auto v){});
+        db->put_async(key, value, [](auto v){});
       }
     }
     else if (write_policy == "write_cache")
@@ -505,7 +505,7 @@ void server_worker(
         is_clearing = true;
         for (const auto& k : write_cache->get_keys())
         {
-          block_cache->get_db()->put_async_submit(key, default_value, [](auto v){});
+          block_cache->get_db()->put_async(key, default_value, [](auto v){});
         }
         // TODO: this is crashing, need to fix
         // write_cache->clear();
@@ -626,7 +626,7 @@ void server_worker(
                   if (ops_config.DISK_ASYNC) {
                     // Cache miss
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async_submit(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Add to cache
@@ -646,7 +646,7 @@ void server_worker(
                   LOG_STATE("Fetching from disk {} {}", skey, value);
                   if (ops_config.DISK_ASYNC) {
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async_submit(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Send the response
