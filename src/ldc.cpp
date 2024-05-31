@@ -488,7 +488,7 @@ void server_worker(
     }
     else if (write_policy == "selective_write_around")
     {
-      if (cache->exists(key))
+      if (cache->exist(key))
       {
         cache->put(key, value);
       }
