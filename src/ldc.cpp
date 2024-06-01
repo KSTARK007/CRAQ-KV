@@ -469,14 +469,27 @@ void server_worker(
   };
 
   std::unordered_map<uint64_t, WriteResponse> hash_to_write_response;
+  static const auto& write_policy = ops_config.write_policy;
+  auto cache = block_cache->get_cache();
+  auto db = block_cache->get_db();
 
-  auto write_disk = [&](std::string_view key_, std::string_view value_)
+  if (thread_index == 0)
   {
-    static const auto& write_policy = ops_config.write_policy;
+    cache->add_callback_on_eviction([&, db, cache, ops_config](EvictionCallbackData<std::string, std::string> data){
+      if (data.dirty)
+      {
+        if (write_policy == "selective_write_around")
+        {
+          db->put_async_submit(data.key, data.value, [](auto v){});
+        }
+      }
+    });    
+  }
+
+  auto write_disk = [&, db, cache, ops_config](std::string_view key_, std::string_view value_)
+  {
     auto key = std::string(key_);
     auto value = std::string(value_);
-    auto cache = block_cache->get_cache();
-    auto db = block_cache->get_db();
     if (write_policy == "write_through")
     {
       cache->put(key, value);
@@ -494,8 +507,8 @@ void server_worker(
       }
       else
       {
-        // db->put_async_submit(key, value, [](auto v){});
-        db->put(key, value);
+        db->put_async_submit(key, value, [](auto v){});
+        // db->put(key, value);
       }
     }
     else if (write_policy == "write_cache")
