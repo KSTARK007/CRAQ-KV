@@ -494,7 +494,8 @@ void server_worker(
       }
       else
       {
-        db->put_async_submit(key, value, [](auto v){});
+        // db->put_async_submit(key, value, [](auto v){});
+        db->put(key, value);
       }
     }
     else if (write_policy == "write_cache")
