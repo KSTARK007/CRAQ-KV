@@ -881,22 +881,22 @@ struct RDMAKeyValueCache : public RDMAData
   {
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initializing machine index {}", machine_index);
     auto cache = block_cache->get_cache();
-    // cache->add_callback_on_write([this, ops_config](const std::string& key, const std::string& value){
-    //   // Update the cache_indexes on remote nodes
-    //   LOG_RDMA_DATA("[RDMAKeyValueCache] Writing callback on cache index {} {}", key, value);
-    //   // if (ops_config.use_cache_logs)
-    //   // {
-    //   //   cache_index_logs->append_entry_k(key);
-    //   // }
-    //   // else
-    //   // {
-    //   //   cache_indexes->write_remote(key, value);
-    //   // }
-    //   EvictionCallbackData<std::string, std::string> data{key, value};
-    //   cache_index_write_queue.enqueue(data);
-    //   write_cache_index_cv.notify_one();
-    //   writes.fetch_add(1, std::memory_order::relaxed);
-    // });
+    cache->add_callback_on_write([this, ops_config](const std::string& key, const std::string& value){
+      // Update the cache_indexes on remote nodes
+      LOG_RDMA_DATA("[RDMAKeyValueCache] Writing callback on cache index {} {}", key, value);
+      // if (ops_config.use_cache_logs)
+      // {
+      //   cache_index_logs->append_entry_k(key);
+      // }
+      // else
+      // {
+      //   cache_indexes->write_remote(key, value);
+      // }
+      EvictionCallbackData<std::string, std::string> data{key, value};
+      cache_index_write_queue.enqueue(data);
+      write_cache_index_cv.notify_one();
+      writes.fetch_add(1, std::memory_order::relaxed);
+    });
     cache->add_callback_on_eviction([this, ops_config](EvictionCallbackData<std::string, std::string> data){
       LOG_RDMA_DATA("Evicted {}", data.key);
       snapshot->update_evicted(std::stoi(data.key));
