@@ -23,7 +23,7 @@ def process_file(file_path):
             'p50': p50
         }
 
-def process_directory(directory_path):
+def process_directory(directory_path, file_filter):
     results = []
     total_throughput = 0
     median_latency_list = []
@@ -32,7 +32,7 @@ def process_directory(directory_path):
     
     for root, dirs, files in os.walk(directory_path):
         for file in files:
-            if file.startswith("latency_data_client"):
+            if file.startswith(file_filter):
                 file_path = os.path.join(root, file)
                 result = process_file(file_path)
                 results.append(result)
@@ -70,7 +70,15 @@ if __name__ == "__main__":
         print("Usage: python script_name.py <path_to_directory>")
     else:
         directory_path = sys.argv[1]
-        results, total_metrics = process_directory(directory_path)
+        results, total_metrics = process_directory(directory_path, "latency_data_client")
         output_file_path = os.path.join(directory_path, 'latency_results.json')
         dump_results_to_json(results, total_metrics, output_file_path)
         print(f"Processed latency data and results are saved to {output_file_path}")
+
+        results, total_metrics = process_directory(directory_path, "r_latency_data_client")
+        output_file_path = os.path.join(directory_path, 'r_latency_results.json')
+        dump_results_to_json(results, total_metrics, output_file_path)
+
+        results, total_metrics = process_directory(directory_path, "w_latency_data_client")
+        output_file_path = os.path.join(directory_path, 'w_latency_results.json')
+        dump_results_to_json(results, total_metrics, output_file_path)

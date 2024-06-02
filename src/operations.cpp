@@ -488,7 +488,11 @@ void dump_latency_to_file(const std::string &filename, const std::vector<long lo
   // std::cout << "Latency data has been successfully written to " << filename << std::endl;
 }
 
-void dump_per_thread_latency_to_file(const std::vector<long long>& timestamps,int client_index_per_thread, int machine_index ,int thread_index) {
+void dump_per_thread_latency_to_file(const std::vector<long long>& timestamps, const std::vector<long long>& r_timestamps, const std::vector<long long>& w_timestamps, int client_index_per_thread, int machine_index ,int thread_index) {
   std::string filename = "latency_data_client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_client_index_per_thread_" + std::to_string(client_index_per_thread) + ".txt";
   dump_latency_to_file(filename, timestamps);
+  filename = "r_latency_data_client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_client_index_per_thread_" + std::to_string(client_index_per_thread) + ".txt";
+  dump_latency_to_file(filename, r_timestamps);
+  filename = "w_latency_data_client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_client_index_per_thread_" + std::to_string(client_index_per_thread) + ".txt";
+  dump_latency_to_file(filename, w_timestamps);
 }

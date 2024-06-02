@@ -1061,7 +1061,7 @@ void executeOperations(
     const Operations &operationSet, int client_start_index,
     BlockCacheConfig config, Configuration &ops_config, Client &client, int client_index_per_thread, int machine_index);
 
-void dump_per_thread_latency_to_file(const std::vector<long long> &timestamps, int client_index_per_thread, int machine_index, int thread_index);
+void dump_per_thread_latency_to_file(const std::vector<long long> &timestamps, const std::vector<long long>& r_timestamps, const std::vector<long long>& w_timestamps, int client_index_per_thread, int machine_index, int thread_index);
 void dump_latency_to_file(const std::string &filename, const std::vector<long long> &timestamps);
 
 int issueOps(BlockCacheConfig config, Configuration &ops_config,

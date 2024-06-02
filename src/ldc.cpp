@@ -134,6 +134,8 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
   int wrong_value = 0;
   std::string value;
   std::vector<long long> timeStamps;
+  std::vector<long long> readTimeStamps;
+  std::vector<long long> writeTimeStamps;
   bool dump_latency = false;
   for (int j = 0; j < ops_config.VALUE_SIZE; j++)
   {
@@ -175,6 +177,14 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       long long nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count();
       if(dump_latency){
         timeStamps.push_back(nanoseconds);
+        if (op == READ_OP)
+        {
+          readTimeStamps.emplace_back(nanoseconds);
+        }
+        else if (op == INSERT_OP || op == UPDATE_OP)
+        {
+          writeTimeStamps.emplace_back(nanoseconds);
+        }
       }
       total_ops_executed.fetch_add(1, std::memory_order::relaxed);
       client_thread_ops_executed[client_index]++;
@@ -193,7 +203,7 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
     run_time = std::chrono::duration_cast<std::chrono::seconds>(op_end).count();
   } while (run_time < ops_config.TOTAL_RUNTIME_IN_SECONDS);
   info("[{}] [{}] Client done executing {}", machine_index, client_index, timeStamps.size());
-  dump_per_thread_latency_to_file(timeStamps, client_index_per_thread, machine_index, thread_index);
+  dump_per_thread_latency_to_file(timeStamps, readTimeStamps, writeTimeStamps, client_index_per_thread, machine_index, thread_index);
   info("wrong_values till now {}", wrong_value);
 
 #ifdef CLIENT_SYNC_WITH_OTHER_CLIENTS
