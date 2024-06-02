@@ -488,9 +488,13 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](EvictionCallbackData<std::string, std::string> data){
       if (data.dirty)
       {
-        if (write_policy == "selective_write_around")
+        if (write_policy == "selective_write_back")
         {
           db->put_async_submit(data.key, data.value, [](auto v){});
+        }
+        else if (write_policy == "selective_write_around")
+        {
+          db->put(data.key, data.value);
         }
       }
     });    
@@ -500,7 +504,7 @@ void server_worker(
   {
     auto key = std::string(key_);
     auto value = std::string(value_);
-    if (write_policy == "write_through")
+    if (write_policy == "write_back")
     {
       cache->put(key, value);
       db->put_async_submit(key, value, [](auto v){});
@@ -508,6 +512,17 @@ void server_worker(
     else if (write_policy == "write_around")
     {
       db->put(key, value);
+    }
+    else if (write_policy == "selective_write_back")
+    {
+      if (cache->exist(key))
+      {
+        cache->put(key, value);
+      }
+      else
+      {
+        db->put_async_submit(key, value, [](auto v){});
+      }
     }
     else if (write_policy == "selective_write_around")
     {
@@ -517,8 +532,7 @@ void server_worker(
       }
       else
       {
-        db->put_async_submit(key, value, [](auto v){});
-        // db->put(key, value);
+        db->put(key, value);
       }
     }
     else if (write_policy == "write_cache")
