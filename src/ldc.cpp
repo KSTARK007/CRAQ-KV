@@ -488,6 +488,7 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](EvictionCallbackData<std::string, std::string> data){
       if (data.dirty)
       {
+        info("EVICTED {}", data.dirty);
         if (write_policy == "write_back")
         {
           info("WRITE BACK !!!!");
