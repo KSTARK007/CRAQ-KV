@@ -480,11 +480,11 @@ void server_worker(
 
   std::unordered_map<uint64_t, WriteResponse> hash_to_write_response;
   static const auto& write_policy = ops_config.write_policy;
-  const auto write_policy_hash = std::hash<std::string>{}(write_policy);
-  const auto write_back_hash = std::hash<std::string>{}("write_back");
-  const auto write_around_hash = std::hash<std::string>{}("write_around");
-  const auto selective_write_back_hash = std::hash<std::string>{}("selective_write_back");
-  const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
+  static const auto write_policy_hash = std::hash<std::string>{}(write_policy);
+  static const auto write_back_hash = std::hash<std::string>{}("write_back");
+  static const auto write_around_hash = std::hash<std::string>{}("write_around");
+  static const auto selective_write_back_hash = std::hash<std::string>{}("selective_write_back");
+  static const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
   auto cache = block_cache->get_cache();
   auto db = block_cache->get_db();
 
