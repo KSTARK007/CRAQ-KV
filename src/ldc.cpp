@@ -516,7 +516,7 @@ void server_worker(
     if (write_policy_hash == write_back_hash)
     {
       cache->put(key, value);
-      db->put_async_submit(data.key, data.value, [](auto v){});
+      db->put_async_submit(key, value, [](auto v){});
     }
     else if (write_policy_hash == write_around_hash)
     {
