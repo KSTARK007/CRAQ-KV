@@ -480,6 +480,11 @@ void server_worker(
 
   std::unordered_map<uint64_t, WriteResponse> hash_to_write_response;
   static const auto& write_policy = ops_config.write_policy;
+  const auto write_policy_hash = std::hash<std::string>{}(write_policy);
+  const auto write_back_hash = std::hash<std::string>{}("write_back");
+  const auto write_around_hash = std::hash<std::string>{}("write_around");
+  const auto selective_write_back_hash = std::hash<std::string>{}("selective_write_back");
+  const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
   auto cache = block_cache->get_cache();
   auto db = block_cache->get_db();
 
@@ -488,15 +493,15 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](EvictionCallbackData<std::string, std::string> data){
       if (data.dirty)
       {
-        if (write_policy == "write_back")
+        if (write_policy_hash == write_back_hash)
         {
           db->put_async_submit(data.key, data.value, [](auto v){});
         }
-        else if (write_policy == "selective_write_back")
+        else if (write_policy_hash == selective_write_back_hash)
         {
           db->put_async_submit(data.key, data.value, [](auto v){});
         }
-        else if (write_policy == "selective_write_around")
+        else if (write_policy_hash == selective_write_around_hash)
         {
           db->put(data.key, data.value);
         }
@@ -508,15 +513,15 @@ void server_worker(
   {
     auto key = std::string(key_);
     auto value = std::string(value_);
-    if (write_policy == "write_back")
+    if (write_policy_hash == write_back_hash)
     {
       cache->put(key, value);
     }
-    else if (write_policy == "write_around")
+    else if (write_policy_hash == write_around_hash)
     {
       db->put(key, value);
     }
-    else if (write_policy == "selective_write_back")
+    else if (write_policy_hash == selective_write_back_hash)
     {
       if (cache->exist(key))
       {
@@ -527,7 +532,7 @@ void server_worker(
         db->put_async_submit(key, value, [](auto v){});
       }
     }
-    else if (write_policy == "selective_write_around")
+    else if (write_policy_hash == selective_write_around_hash)
     {
       if (cache->exist(key))
       {
