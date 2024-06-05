@@ -490,6 +490,7 @@ void server_worker(
       {
         if (write_policy == "write_back")
         {
+          info("WRITE BACK !!!!");
           db->put_async_submit(data.key, data.value, [](auto v){});
         }
         else if (write_policy == "selective_write_back")
