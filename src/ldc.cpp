@@ -1063,21 +1063,29 @@ int main(int argc, char *argv[])
   {
     if (is_server)
     {
-      if (ops_config.write_policy == "write_cache")
+      if (ops_config.write_percent > 0.0)
       {
-        auto total_cache_size = static_cast<float>(config.cache.thread_safe_lru.cache_size);
-        auto write_cache_size = ops_config.write_percent * total_cache_size;
-        auto read_cache_size = (1.0 - ops_config.write_percent) * total_cache_size;
-        auto write_config = config;
         auto read_config = config;
 
-        write_config.cache.thread_safe_lru.cache_size = write_cache_size;
+        auto key_value_size = static_cast<float>(sizeof(uint64_t) + ops_config.VALUE_SIZE);
+        auto total_cache_size = static_cast<float>(config.cache.thread_safe_lru.cache_size);
+        auto total_cache_size_in_bytes = total_cache_size * key_value_size;
+
+        auto write_batch_buffer_size_in_bytes = 0;
+        if (config.db.block_db.batch_max_pending_requests > 0)
+        {
+          write_batch_buffer_size_in_bytes = config.db.block_db.batch_max_pending_requests * key_value_size;
+        }
+
+        auto read_cache_size_in_bytes = total_cache_size_in_bytes - write_batch_buffer_size_in_bytes;
+        auto read_cache_size = static_cast<uint64_t>(std::ceil(read_cache_size_in_bytes / key_value_size));
+
+        auto write_batch_buffer_size = static_cast<uint64_t>(std::ceil(write_batch_buffer_size_in_bytes / key_value_size));
+        info("Total allocated cache entries {} - Read {} - Write {}", total_cache_size, read_cache_size, write_batch_buffer_size);
+
         read_config.cache.thread_safe_lru.cache_size = read_cache_size;
-
-        write_config.baseline.one_sided_rdma_enabled = false;
-
         block_cache = std::make_shared<BlockCache<std::string, std::string>>(read_config);
-        write_cache = std::make_shared<ThreadSafeLRUCache<std::string, std::string>>(write_config, nullptr, write_cache_size);
+        config = read_config;
       }
       else
       {
