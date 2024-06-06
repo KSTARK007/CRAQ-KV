@@ -490,7 +490,7 @@ void server_worker(
 
   if (thread_index == 0)
   {
-    cache->add_callback_on_eviction([&, db, cache, ops_config](EvictionCallbackData<std::string, std::string> data){
+    cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty)
       {
         if (write_policy_hash == write_back_hash)

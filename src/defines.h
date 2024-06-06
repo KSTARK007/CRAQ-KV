@@ -92,6 +92,17 @@ inline T convert_string(std::string_view sv)
   return t;
 }
 
+template<typename T>
+inline std::optional<T> convert_to_string_opt(std::string_view sv)
+{
+  T t{};
+  auto result = std::from_chars(sv.data(), sv.data() + sv.size(), t);
+  if (result.ec == std::errc::invalid_argument) {
+    return std::nullopt;
+  }
+  return t;
+}
+
 struct KeyValueEntry
 {
   std::string key;
