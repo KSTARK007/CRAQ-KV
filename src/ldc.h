@@ -221,7 +221,7 @@ struct RDMAData
     for (auto i = 0; i < block_cache_config.remote_machine_configs.size(); i++)
     {
       auto remote_machine_config = block_cache_config.remote_machine_configs[i];
-      if (remote_machine_config.server)
+      if (remote_machine_config.server && !remote_machine_config.shared_log)
       {
         server_configs.push_back(remote_machine_config);
       }
