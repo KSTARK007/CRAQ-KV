@@ -425,7 +425,7 @@ void server_worker(
     // Handle if singletons exist on other servers
     block_cache->get_cache()->add_callback_on_write([=, server = server_, &rdma_nodes](const std::string& key, const std::string& value){
       auto& rdma_node = std::begin(rdma_nodes)->second;
-      auto key_index = std::stoi(key);
+      auto key_index = convert_string<uint64_t>(key);
 
       auto cache_indexes = rdma_node.rdma_key_value_cache->get_cache_indexes();
       auto underlying_cache_indexes = cache_indexes->get_cache_indexes();
@@ -640,7 +640,7 @@ void server_worker(
 
             auto key_ = p.getKey();
             auto key = key_.cStr();
-            auto key_index = std::stoi(key);
+            auto key_index = convert_string<uint64_t>(key);
             auto exists_in_cache = block_cache->exists_in_cache(key);
             if (exists_in_cache)
             {
@@ -857,7 +857,7 @@ void server_worker(
             auto p = data.getDeleteRequest();
             auto key_ = p.getKey();
             auto key = key_.cStr();
-            auto key_index = std::stoi(key);
+            auto key_index = convert_string<uint64_t>(key);
 
             block_cache->get_cache()->delete_key(key);
           }
@@ -1114,7 +1114,7 @@ int main(int argc, char *argv[])
       if(!config.baseline.one_sided_rdma_enabled){
         for (const auto &k : keys)
         {
-          auto key_index = std::stoi(k);
+          auto key_index = convert_string<uint64_t>(k);
           if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
           {
             block_cache->put(k, value);
@@ -1208,7 +1208,7 @@ int main(int argc, char *argv[])
           info("adding keys to the blockcache");
           for (const auto &k : keys)
           {
-            auto key_index = std::stoi(k);
+            auto key_index = convert_string<uint64_t>(k);
             // if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
             // {
             //   block_cache->put(k, value);
@@ -1234,7 +1234,7 @@ int main(int argc, char *argv[])
           info("adding keys to the blockcache in the else part");
           for (const auto &k : keys)
           {
-            auto key_index = std::stoi(k);
+            auto key_index = convert_string<uint64_t>(k);
             if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
             {
               block_cache->put(k, value);
@@ -1257,7 +1257,7 @@ int main(int argc, char *argv[])
           info("writing keys");
           for (const auto &k : keys)
           {
-            auto key_index = std::stoi(k);
+            auto key_index = convert_string<uint64_t>(k);
             if (key_index >= start_keys && key_index < end_keys)
             {
               write_correct_node(ops_config, rdma_nodes, server_start_index, key_index, write_buffer);
