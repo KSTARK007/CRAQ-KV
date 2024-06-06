@@ -106,7 +106,7 @@ HashMap<uint64_t, RDMA_connect>  connect_to_servers(
     auto *qpf = new infinity::queues::QueuePairFactory(context);
     for(auto &t : config.remote_machine_configs) {
         std::cout << "adding node "<< t.ip<< std::endl; 
-        if(t.server){
+        if(t.server && !t.shared_log){
 
             std::cout << "created node"<< t.ip<< std::endl; 
             RDMA_connect node;
