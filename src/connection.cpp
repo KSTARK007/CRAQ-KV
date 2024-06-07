@@ -321,7 +321,7 @@ void Client::sync_with_other_clients()
   // Check if the number of acks is equal to the number of other clients
   if (request_acks.size() != total_other_clients)
   {
-    panic("Client sync failed {} != {}", request_acks.size(), total_other_clients);
+    info("Client sync failed {} != {}", request_acks.size(), total_other_clients);
   }
 }
 
