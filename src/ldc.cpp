@@ -492,7 +492,7 @@ void server_worker(
   if (thread_index == 0)
   {
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-      if (data.dirty && config.baseline.one_sided_rdma_enabled)
+      if (data.dirty)
       {
         dirty_entries.enqueue(data);
       }
