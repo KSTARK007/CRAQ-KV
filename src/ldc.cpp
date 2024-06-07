@@ -514,7 +514,7 @@ void server_worker(
         }
         else if (write_policy_hash == selective_write_back_hash)
         {
-          // db->put_async_submit(key, value, [](auto v){});
+          db->put_async_submit(key, value, [](auto v){});
         }
         else if (write_policy_hash == selective_write_around_hash)
         {
