@@ -7,6 +7,8 @@ def process_file(file_path):
     with open(file_path, 'r') as file:
         latencies = [int(line.strip()) for line in file.readlines()]
         total_time_ns = sum(latencies)
+        if total_time_ns == 0:
+            total_time_ns = 1
         total_time_s = total_time_ns / 1e9
         throughput = len(latencies) / total_time_s
 
