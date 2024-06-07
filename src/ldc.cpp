@@ -487,27 +487,42 @@ void server_worker(
   static const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
   auto cache = block_cache->get_cache();
   auto db = block_cache->get_db();
+  static moodycamel::ConcurrentQueue<EvictionCallbackData<std::string, std::string>> dirty_entries;
 
   if (thread_index == 0)
   {
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty)
       {
-        if (write_policy_hash == write_back_hash)
-        {
-          db->put_async_submit(data.key, data.value, [](auto v){});
-        }
-        else if (write_policy_hash == selective_write_back_hash)
-        {
-          db->put_async_submit(data.key, data.value, [](auto v){});
-        }
-        else if (write_policy_hash == selective_write_around_hash)
-        {
-          db->put(data.key, data.value);
-        }
+        dirty_entries.enqueue(data);
       }
     });    
   }
+
+  auto flush_dirty = [&]()
+  {
+    if (thread_index == 0)
+    {
+      EvictionCallbackData<std::string, std::string> e;
+      while (dirty_entries.try_dequeue(e))
+      {
+        const auto& key = e.key;
+        const auto& value = e.value;
+        if (write_policy_hash == write_back_hash)
+        {
+          db->put_async_submit(key, value, [](auto v){});
+        }
+        else if (write_policy_hash == selective_write_back_hash)
+        {
+          db->put_async_submit(key, value, [](auto v){});
+        }
+        else if (write_policy_hash == selective_write_around_hash)
+        {
+          db->put(key, value);
+        }
+      }
+    }
+  };
 
   auto write_disk = [&, db, cache, ops_config](std::string_view key_, std::string_view value_)
   {
@@ -565,6 +580,7 @@ void server_worker(
     {
       panic("Unsupported write policy {}", write_policy);
     }
+    flush_dirty();
     total_writes_executed.fetch_add(1, std::memory_order::relaxed);
   };
 
