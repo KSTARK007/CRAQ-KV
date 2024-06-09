@@ -912,9 +912,9 @@ struct RDMAKeyValueCache : public RDMAData
       // cache_index_eviction_queue.enqueue(data);
       if (data.dirty)
       {
-        // auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-        // while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
-        // write_eviction_cache_index_cv.notify_one();
+        auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+        while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
+        write_eviction_cache_index_cv.notify_one();
       }
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
