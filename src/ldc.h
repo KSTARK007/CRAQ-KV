@@ -955,7 +955,7 @@ struct RDMAKeyValueCache : public RDMAData
           {
             auto index = iindex % CACHE_INDEX_SIZE;
             auto [e, valid] = vec.GetEntry2(index);
-            if (!valid)
+            if (!e || !valid)
             {
               break;
             }
