@@ -4,12 +4,31 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import csv
 import argparse
+import os
 
 parser = argparse.ArgumentParser(description='Run code on cloudlab machines from xml config of cluster')
 parser.add_argument("-c", "--char", choices=["A", "B", "C"], default="C", help="Key distribution type (default: 'uniform')")
-parser.add_argument("-s", "--system", choices=["thread_safe_lru", "access_rate", "nchance"], default="thread_safe_lru", help="Key distribution type (default: 'uniform')")
+parser.add_argument("-s", "--system", choices=["thread_safe_lru", "access_rate", "nchance", "access_rate_dynamic"], default="thread_safe_lru", help="Key distribution type (default: 'uniform')")
 parser.add_argument("-d", "--distribution", choices=['uniform', 'zipfian', 'hotspot'], default="none", help="Key distribution type (default: 'uniform')")
 args = parser.parse_args()
+
+def plot_data(data, foldername):
+    # Create the folder if it doesn't exist
+    os.makedirs(foldername, exist_ok=True)
+    print(foldername)
+
+    for key, values in data.items():
+        plt.figure(figsize=(10, 6))
+        plt.plot(values, marker='o', linestyle='-', label=key)
+        plt.title(f'{key} Over Time')
+        plt.xlabel('Time Interval')
+        plt.ylabel(key)
+        plt.grid(True)
+        plt.xticks(range(len(values)), range(1, len(values) + 1))
+        plt.legend()
+        filepath = os.path.join(foldername, f'{key}.png')
+        plt.savefig(filepath)
+        plt.close()
 
 def calculate_sorensen_similarity(integer_sets):
     nsets = len(integer_sets)
@@ -17,9 +36,37 @@ def calculate_sorensen_similarity(integer_sets):
     keys_intersect = set().intersection(*integer_sets)
     total_size = sum(len(s) for s in integer_sets)
     nunique = len(keys_union)
-    scale = nsets / (nsets - 1)
-    sorensen_similarity = scale * (1 - (nunique / total_size))
+    if(nsets == 1):
+        scale = 1
+    else:
+        scale = nsets / (nsets - 1)
+    if (nunique / total_size) == 1:
+        sorensen_similarity = 1
+    else:
+        sorensen_similarity = scale * (1 - (nunique / total_size))
     return sorensen_similarity
+
+def extract_access_rate_from_filename(filename):
+    access_rate_details = {}
+    access_rate_details['access_rate'] = []
+    access_rate_details['local'] = []
+    access_rate_details['remote'] = []
+    access_rate_details['performance'] = []
+    access_rate_details['dup_allowed'] = []
+    access_rate_details['curr_dup'] = []
+    access_rate_details['system_dup'] = []
+    file_data = open(filename, 'r').read()
+    for line in file_data.splitlines():
+        details = line.split(";")
+        if(len(details) > 2):
+            access_rate_details['access_rate'].append(int(details[0]))
+            access_rate_details['local'].append(int(details[1]))
+            access_rate_details['remote'].append(int(details[2]))
+            access_rate_details['performance'].append(int(details[3]))
+            access_rate_details['dup_allowed'].append(int(details[4]))
+            access_rate_details['curr_dup'].append(int(details[5]))
+            access_rate_details['system_dup'].append(int(details[6]))
+    return(access_rate_details)
 
 def write_to_csv(sorted_results, filename='metrics_summary.csv'):
     """Write the aggregated metrics to a CSV file."""
@@ -54,7 +101,13 @@ def read_integers(file_path):
     return integers
 
 # base_directory = Path('backup/full_runs_backup')
-base_directory = Path('results')
+base_directory = Path('results/SINGLE_NODE_HOT_KEYS')
+# base_directory = Path('results/hotspot_80_20')
+# base_directory = Path('results/hotspot_95_5')
+# base_directory = Path('results/zipfian_0.90')
+# base_directory = Path('results/uniform')
+# base_directory = Path('results')
+# base_directory = Path('backup')
 
 def average(lst):
     return sum(lst) / len(lst) if lst else 0
@@ -107,6 +160,9 @@ for subdirectory in base_directory.iterdir():
 
         integer_sets = []
 
+        access_rate_details = {}
+        
+
         # Read and aggregate metrics based on num_clients
         for i in range(num_clients):
             metrics_file = subdirectory / f'latency_results_{i}.json'
@@ -132,6 +188,13 @@ for subdirectory in base_directory.iterdir():
             cache_dump_file = subdirectory / f'cache_dump_{i + details["num_servers"]}.txt'
             if cache_dump_file.exists():
                 integer_sets.append(read_integers(cache_dump_file))
+            access_rate_file = subdirectory / f'access_rate_{i + details["num_servers"]}.txt'
+            if access_rate_file.exists():
+                access_rate_details[f'node_{i + details["num_servers"]}'] = extract_access_rate_from_filename(access_rate_file)
+        # print(access_rate_details['node_3'])
+        access_rate_file = subdirectory / f'access_rate_{i + details["num_servers"]}.txt'
+        if access_rate_file.exists():
+            plot_data(access_rate_details['node_3'], f'{subdirectory}/data_series_plot')
 
         # Calculate averages
         average_latency_us = average(average_latency)
