@@ -863,7 +863,7 @@ struct CacheIndexLogs : public RDMAData
   std::shared_ptr<CacheIndexes> cache_indexes;
 };
 
-constexpr std::size_t CACHE_INDEX_SIZE = 1000 * 1000;
+constexpr std::size_t CACHE_INDEX_SIZE = 10 * 1000 * 1000;
 
 struct RDMAKeyValueCache : public RDMAData
 {
@@ -892,9 +892,9 @@ struct RDMAKeyValueCache : public RDMAData
       //   cache_indexes->write_remote(key, value);
       // }
       EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
-      cache_index_write_queue.enqueue(data);
-      // auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-      // cache_index_write_vec.InsertUnsafe(index, data);
+      // cache_index_write_queue.enqueue(data);
+      auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      while (!cache_index_write_vec.InsertUnsafe(index, data)) {}
       write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
@@ -910,9 +910,9 @@ struct RDMAKeyValueCache : public RDMAData
       //   cache_indexes->dealloc_remote(data.key);
       // }
       // cache_index_eviction_queue.enqueue(data);
-      // // auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-      // // cache_index_eviction_vec.InsertUnsafe(index, data);
-      // write_cache_index_cv.notify_one();
+      auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
+      write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
@@ -924,56 +924,56 @@ struct RDMAKeyValueCache : public RDMAData
         std::unique_lock lk(write_cache_index_m);
         write_cache_index_cv.wait_for(lk, 1ms);
         write_cache_index_m.unlock();
-        EvictionCallbackData<std::string, std::string> data;
-        while (cache_index_write_queue.try_dequeue(data))
-        {
-          if (ops_config.use_cache_logs)
-          {
-            cache_index_logs->append_entry_k(data.keyi);
-          }
-          else
-          {
-            cache_indexes->write_remote(data.keyi, data.value);
-          }
-        }
-
-        while (cache_index_eviction_queue.try_dequeue(data))
-        {
-          if (ops_config.use_cache_logs)
-          {
-            cache_index_logs->append_entry_k(data.keyi);
-          }
-          else
-          {
-            cache_indexes->dealloc_remote(data.keyi);
-          }
-        }
-        
-        // auto AppendEntry = [&](auto& iindex, auto& vec)
+        // EvictionCallbackData<std::string, std::string> data;
+        // while (cache_index_write_queue.try_dequeue(data))
         // {
-        //   while (true)
+        //   if (ops_config.use_cache_logs)
         //   {
-        //     auto index = iindex % CACHE_INDEX_SIZE;
-        //     auto [e, valid] = vec.GetEntry2(index);
-        //     if (!valid)
-        //     {
-        //       break;
-        //     }
-        //     const auto& data = *e;
-        //     if (ops_config.use_cache_logs)
-        //     {
-        //       cache_index_logs->append_entry_k(data.keyi);
-        //     }
-        //     else
-        //     {
-        //       cache_indexes->dealloc_remote(data.keyi);
-        //     }
-        //     vec.Delete(index);
-        //     iindex++;
+        //     cache_index_logs->append_entry_k(data.keyi);
         //   }
-        // };
-        // AppendEntry(read_cache_index_write_vec_i, cache_index_write_vec);
-        // AppendEntry(read_cache_index_eviction_vec_i, cache_index_eviction_vec);
+        //   else
+        //   {
+        //     cache_indexes->write_remote(data.keyi, data.value);
+        //   }
+        // }
+
+        // while (cache_index_eviction_queue.try_dequeue(data))
+        // {
+        //   if (ops_config.use_cache_logs)
+        //   {
+        //     cache_index_logs->append_entry_k(data.keyi);
+        //   }
+        //   else
+        //   {
+        //     cache_indexes->dealloc_remote(data.keyi);
+        //   }
+        // }
+        
+        auto AppendEntry = [&](auto& iindex, auto& vec)
+        {
+          while (true)
+          {
+            auto index = iindex % CACHE_INDEX_SIZE;
+            auto [e, valid] = vec.GetEntry2(index);
+            if (!valid)
+            {
+              break;
+            }
+            const auto& data = *e;
+            if (ops_config.use_cache_logs)
+            {
+              cache_index_logs->append_entry_k(data.keyi);
+            }
+            else
+            {
+              cache_indexes->dealloc_remote(data.keyi);
+            }
+            vec.Delete(index);
+            iindex++;
+          }
+        };
+        AppendEntry(read_cache_index_write_vec_i, cache_index_write_vec);
+        AppendEntry(read_cache_index_eviction_vec_i, cache_index_eviction_vec);
       }
     });
     background_worker.detach();
