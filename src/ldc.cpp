@@ -514,7 +514,7 @@ void server_worker(
         }
         else if (write_policy_hash == selective_write_back_hash)
         {
-          db->put_async_submit(key, value, [](auto v){});
+          // db->put_async_submit(key, value, [](auto v){});
         }
         else if (write_policy_hash == selective_write_around_hash)
         {
@@ -1072,6 +1072,12 @@ int main(int argc, char *argv[])
   // Kill machnet
   exec("sudo pkill -9 machnet");
 
+  bool owning = false;
+  if (config.policy_type == "thread_safe_lru")
+  {
+    owning = true;
+  }
+
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache = nullptr;
   std::shared_ptr<CachePolicy<std::string, std::string>> write_cache = nullptr;
   HashMap<uint64_t, RDMA_connect> rdma_nodes;
@@ -1141,7 +1147,7 @@ int main(int argc, char *argv[])
           auto key_index = convert_string<uint64_t>(k);
           if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
           {
-            block_cache->put(k, value, false);
+            block_cache->put(k, value, owning);
           }
           block_cache->get_db()->put(k, value);
         }
@@ -1258,7 +1264,7 @@ int main(int argc, char *argv[])
             auto key_index = convert_string<uint64_t>(k);
             if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
             {
-              block_cache->put(k, value, false);
+              block_cache->put(k, value, owning);
             }
             else
             {
