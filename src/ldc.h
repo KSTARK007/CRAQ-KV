@@ -891,15 +891,12 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->write_remote(key, value);
       // }
-      if (data.dirty)
-      {
-        EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
-        // cache_index_write_queue.enqueue(data);
-        auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-        while (!cache_index_write_vec.InsertUnsafe(index, data)) {}
-        write_cache_index_cv.notify_one();
-        writes.fetch_add(1, std::memory_order::relaxed);
-      }
+      EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
+      // cache_index_write_queue.enqueue(data);
+      auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      while (!cache_index_write_vec.InsertUnsafe(index, data)) {}
+      write_cache_index_cv.notify_one();
+      writes.fetch_add(1, std::memory_order::relaxed);
     });
     cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       LOG_RDMA_DATA("Evicted {}", data.key);
