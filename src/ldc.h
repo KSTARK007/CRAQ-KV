@@ -863,6 +863,8 @@ struct CacheIndexLogs : public RDMAData
   std::shared_ptr<CacheIndexes> cache_indexes;
 };
 
+constexpr std::size_t CACHE_INDEX_SIZE = 1000 * 1000;
+
 struct RDMAKeyValueCache : public RDMAData
 {
   RDMAKeyValueCache(BlockCacheConfig block_cache_config, Configuration ops_config, int machine_index, infinity::core::Context *context,
@@ -890,25 +892,29 @@ struct RDMAKeyValueCache : public RDMAData
       //   cache_indexes->write_remote(key, value);
       // }
       EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
-      cache_index_write_queue.enqueue(data);
+      // cache_index_write_queue.enqueue(data);
+      auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      cache_index_write_vec.InsertUnsafe(index, data);
       write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
-    // cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-    //   LOG_RDMA_DATA("Evicted {}", data.key);
-    //   // snapshot->update_evicted(data.keyi);
-    //   // if (ops_config.use_cache_logs)
-    //   // {
-    //   //   cache_index_logs->append_entry_k(data.key);
-    //   // }
-    //   // else
-    //   // {
-    //   //   cache_indexes->dealloc_remote(data.key);
-    //   // }
-    //   cache_index_eviction_queue.enqueue(data);
-    //   write_cache_index_cv.notify_one();
-    //   writes.fetch_add(1, std::memory_order::relaxed);
-    // });
+    cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
+      LOG_RDMA_DATA("Evicted {}", data.key);
+      snapshot->update_evicted(data.keyi);
+      // if (ops_config.use_cache_logs)
+      // {
+      //   cache_index_logs->append_entry_k(data.key);
+      // }
+      // else
+      // {
+      //   cache_indexes->dealloc_remote(data.key);
+      // }
+      // cache_index_eviction_queue.enqueue(data);
+      auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      cache_index_eviction_vec.InsertUnsafe(index, data);
+      write_cache_index_cv.notify_one();
+      writes.fetch_add(1, std::memory_order::relaxed);
+    });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
     static std::thread background_worker([this, ops_config]()
@@ -1014,6 +1020,11 @@ private:
   std::condition_variable write_cache_index_cv;
   MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_write_queue;
   MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_eviction_queue;
+  
+  std::atomic<uint64_t> cache_index_write_vec_i;
+  std::atomic<uint64_t> cache_index_eviction_vec_i;
+  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE> cache_index_write_vec;
+  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE> cache_index_eviction_vec;
 };
 
 struct RDMA_connect
