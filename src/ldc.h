@@ -900,7 +900,7 @@ struct RDMAKeyValueCache : public RDMAData
     });
     cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       LOG_RDMA_DATA("Evicted {}", data.key);
-      snapshot->update_evicted(data.keyi);
+      // snapshot->update_evicted(data.keyi);
       // if (ops_config.use_cache_logs)
       // {
       //   cache_index_logs->append_entry_k(data.key);
@@ -912,12 +912,36 @@ struct RDMAKeyValueCache : public RDMAData
       // cache_index_eviction_queue.enqueue(data);
       auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
       while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
-      write_cache_index_cv.notify_one();
+      write_eviction_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
-    static std::thread background_worker([this, ops_config]()
+    auto AppendEntry = [&](auto& iindex, auto& vec)
+    {
+      while (true)
+      {
+        auto index = iindex % CACHE_INDEX_SIZE;
+        auto [e, valid] = vec.GetEntry2(index);
+        if (!e || !valid)
+        {
+          break;
+        }
+        const auto& data = *e;
+        if (ops_config.use_cache_logs)
+        {
+          cache_index_logs->append_entry_k(data.keyi);
+        }
+        else
+        {
+          cache_indexes->dealloc_remote(data.keyi);
+        }
+        vec.Delete(index);
+        iindex++;
+      }
+    };
+
+    static std::thread background_worker([&, this, ops_config]()
     {
       while (!g_stop)
       {
@@ -936,7 +960,19 @@ struct RDMAKeyValueCache : public RDMAData
         //     cache_indexes->write_remote(data.keyi, data.value);
         //   }
         // }
-
+        
+        AppendEntry(read_cache_index_write_vec_i, cache_index_write_vec);
+      }
+    });
+    background_worker.detach();
+    static std::thread background_eviction_worker([&, this, ops_config]()
+    {
+      while (!g_stop)
+      {
+        std::unique_lock lk(write_eviction_cache_index_m);
+        write_eviction_cache_index_cv.wait_for(lk, 1ms);
+        write_eviction_cache_index_m.unlock();
+        // EvictionCallbackData<std::string, std::string> data;
         // while (cache_index_eviction_queue.try_dequeue(data))
         // {
         //   if (ops_config.use_cache_logs)
@@ -948,35 +984,10 @@ struct RDMAKeyValueCache : public RDMAData
         //     cache_indexes->dealloc_remote(data.keyi);
         //   }
         // }
-        
-        auto AppendEntry = [&](auto& iindex, auto& vec)
-        {
-          while (true)
-          {
-            auto index = iindex % CACHE_INDEX_SIZE;
-            auto [e, valid] = vec.GetEntry2(index);
-            if (!e || !valid)
-            {
-              break;
-            }
-            const auto& data = *e;
-            if (ops_config.use_cache_logs)
-            {
-              cache_index_logs->append_entry_k(data.keyi);
-            }
-            else
-            {
-              cache_indexes->dealloc_remote(data.keyi);
-            }
-            vec.Delete(index);
-            iindex++;
-          }
-        };
-        AppendEntry(read_cache_index_write_vec_i, cache_index_write_vec);
         AppendEntry(read_cache_index_eviction_vec_i, cache_index_eviction_vec);
       }
     });
-    background_worker.detach();
+    background_eviction_worker.detach();
   }
 
   void read(int remote_index, uint64_t key_index)
@@ -1046,6 +1057,9 @@ private:
   std::condition_variable write_cache_index_cv;
   MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_write_queue;
   MPMCQueue<EvictionCallbackData<std::string, std::string>> cache_index_eviction_queue;
+
+  std::mutex write_eviction_cache_index_m;
+  std::condition_variable write_eviction_cache_index_cv;
 
   uint64_t read_cache_index_write_vec_i;
   uint64_t read_cache_index_eviction_vec_i;
