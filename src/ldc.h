@@ -909,10 +909,10 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->dealloc_remote(data.key);
       // }
-      cache_index_eviction_queue.enqueue(data);
-      // auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-      // cache_index_eviction_vec.InsertUnsafe(index, data);
-      write_cache_index_cv.notify_one();
+      // cache_index_eviction_queue.enqueue(data);
+      // // auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+      // // cache_index_eviction_vec.InsertUnsafe(index, data);
+      // write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
