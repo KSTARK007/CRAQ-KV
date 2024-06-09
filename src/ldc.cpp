@@ -1168,7 +1168,7 @@ int main(int argc, char *argv[])
       static std::thread access_rate_thread([&, block_cache]()
       {
 
-        std::this_thread::sleep_for(std::chrono::seconds(45));
+        std::this_thread::sleep_for(std::chrono::seconds(15));
         CDFType freq;
         while (!g_stop)
         {
