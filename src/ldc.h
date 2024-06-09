@@ -863,7 +863,7 @@ struct CacheIndexLogs : public RDMAData
   std::shared_ptr<CacheIndexes> cache_indexes;
 };
 
-constexpr std::size_t CACHE_INDEX_SIZE = 10 * 1000 * 1000;
+constexpr std::size_t CACHE_INDEX_SIZE = 100 * 1000 * 1000;
 
 struct RDMAKeyValueCache : public RDMAData
 {
