@@ -896,7 +896,7 @@ struct RDMAKeyValueCache : public RDMAData
     });
     cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       LOG_RDMA_DATA("Evicted {}", data.key);
-      snapshot->update_evicted(data.keyi);
+      // snapshot->update_evicted(data.keyi);
       // if (ops_config.use_cache_logs)
       // {
       //   cache_index_logs->append_entry_k(data.key);
