@@ -496,12 +496,12 @@ void server_worker(
 
   if (thread_index == 0)
   {
-    cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-      if (0)
-      {
-        dirty_entries.enqueue(data);
-      }
-    });    
+    // cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
+    //   if (0)
+    //   {
+    //     dirty_entries.enqueue(data);
+    //   }
+    // });    
   }
 
   auto flush_dirty = [&]()
