@@ -515,11 +515,11 @@ void server_worker(
         const auto& value = e.value;
         if (write_policy_hash == write_back_hash)
         {
-          db->put_async_submit(key, value, [](auto v){});
+          db->put_async(key, value, [](auto v){});
         }
         else if (write_policy_hash == selective_write_back_hash)
         {
-          // db->put_async_submit(key, value, [](auto v){});
+          // db->put_async(key, value, [](auto v){});
         }
         else if (write_policy_hash == selective_write_around_hash)
         {
@@ -536,7 +536,7 @@ void server_worker(
     if (write_policy_hash == write_back_hash)
     {
       cache->put(key, value);
-      // db->put_async_submit(key, value, [](auto v){});
+      // db->put_async(key, value, [](auto v){});
     }
     else if (write_policy_hash == write_around_hash)
     {
@@ -550,7 +550,7 @@ void server_worker(
       }
       else
       {
-        db->put_async_submit(key, value, [](auto v){});
+        db->put_async(key, value, [](auto v){});
       }
     }
     else if (write_policy_hash == selective_write_around_hash)
@@ -567,19 +567,19 @@ void server_worker(
     else if (write_policy == "write_cache")
     {
       static std::atomic<bool> is_clearing;
-      if (write_cache->full())
-      {
-        is_clearing = true;
-        for (const auto& k : write_cache->get_keys())
-        {
-          block_cache->get_db()->put_async_submit(key, default_value, [](auto v){});
-        }
-        // TODO: this is crashing, need to fix
-        // write_cache->clear();
-        is_clearing = false;
-      }
-      while (is_clearing) {}
-      write_cache->put(key, value);
+      // if (write_cache->full())
+      // {
+      //   is_clearing = true;
+      //   for (const auto& k : write_cache->get_keys())
+      //   {
+      //     block_cache->get_db()->put_async(key, default_value, [](auto v){});
+      //   }
+      //   // TODO: this is crashing, need to fix
+      //   // write_cache->clear();
+      //   is_clearing = false;
+      // }
+      // while (is_clearing) {}
+      // write_cache->put(key, value);
     }
     else
     {
@@ -738,7 +738,7 @@ void server_worker(
                   if (ops_config.DISK_ASYNC) {
                     // Cache miss
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async_submit(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Add to cache
@@ -758,7 +758,7 @@ void server_worker(
                   LOG_STATE("Fetching from disk {} {}", skey, value);
                   if (ops_config.DISK_ASYNC) {
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async_submit(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
                       // Send the response
@@ -1144,7 +1144,7 @@ int main(int argc, char *argv[])
         auto write_batch_buffer_size_in_bytes = 0;
         if (config.db.block_db.batch_max_pending_requests > 0)
         {
-          write_batch_buffer_size_in_bytes = config.db.block_db.batch_max_pending_requests * key_value_size;
+          // write_batch_buffer_size_in_bytes = config.db.block_db.batch_max_pending_requests * key_value_size;
         }
 
         auto read_cache_size_in_bytes = total_cache_size_in_bytes - write_batch_buffer_size_in_bytes;
