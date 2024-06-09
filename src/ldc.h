@@ -913,36 +913,35 @@ struct RDMAKeyValueCache : public RDMAData
       auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
       while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
       write_eviction_cache_index_cv.notify_one();
-      writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
-    auto AppendEntry = [&](auto& iindex, auto& vec)
+    static std::thread background_worker([this, ops_config]()
     {
-      while (true)
+      auto AppendEntry = [&](auto& iindex, auto& vec)
       {
-        auto index = iindex % CACHE_INDEX_SIZE;
-        auto [e, valid] = vec.GetEntry2(index);
-        if (!e || !valid)
+        while (true)
         {
-          break;
+          auto index = iindex % CACHE_INDEX_SIZE;
+          auto [e, valid] = vec.GetEntry2(index);
+          if (!e || !valid)
+          {
+            break;
+          }
+          const auto& data = *e;
+          if (ops_config.use_cache_logs)
+          {
+            cache_index_logs->append_entry_k(data.keyi);
+          }
+          else
+          {
+            cache_indexes->dealloc_remote(data.keyi);
+          }
+          vec.Delete(index);
+          iindex++;
         }
-        const auto& data = *e;
-        if (ops_config.use_cache_logs)
-        {
-          cache_index_logs->append_entry_k(data.keyi);
-        }
-        else
-        {
-          cache_indexes->dealloc_remote(data.keyi);
-        }
-        vec.Delete(index);
-        iindex++;
-      }
-    };
+      };
 
-    static std::thread background_worker([&, this, ops_config]()
-    {
       while (!g_stop)
       {
         std::unique_lock lk(write_cache_index_m);
@@ -965,8 +964,32 @@ struct RDMAKeyValueCache : public RDMAData
       }
     });
     background_worker.detach();
-    static std::thread background_eviction_worker([&, this, ops_config]()
+    static std::thread background_eviction_worker([this, ops_config]()
     {
+      auto AppendEntry = [&](auto& iindex, auto& vec)
+      {
+        while (true)
+        {
+          auto index = iindex % CACHE_INDEX_SIZE;
+          auto [e, valid] = vec.GetEntry2(index);
+          if (!e || !valid)
+          {
+            break;
+          }
+          const auto& data = *e;
+          if (ops_config.use_cache_logs)
+          {
+            cache_index_logs->append_entry_k(data.keyi);
+          }
+          else
+          {
+            cache_indexes->dealloc_remote(data.keyi);
+          }
+          vec.Delete(index);
+          iindex++;
+        }
+      };
+
       while (!g_stop)
       {
         std::unique_lock lk(write_eviction_cache_index_m);
