@@ -241,8 +241,11 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
-  SimpleSharedLog shared_log(1 * 1000 * 1000);
+  SimpleSharedLog shared_log(1024 * 1024);
+  info("shared log worker started, 1024 * 1024 entry shared log initialized");
   std::vector<std::thread> ts;
+  std::atomic<uint64_t> num_get_requests = 0, num_put_requests = 0;
+
   for (auto i = 0; i < FLAGS_threads; i++)
   {
     int thread_index = i;
@@ -277,6 +280,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               auto tail = shared_log.get_tail();
               connection.shared_log_put_response(remote_index, remote_port, tail, hash);
+              num_put_requests++;
             }
             else if (data.isSharedLogGetRequest())
             {
@@ -296,6 +300,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               }
 
               connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
+              num_get_requests++;
             }
           }
         );
@@ -303,6 +308,21 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     });
     ts.emplace_back(std::move(t));
   }
+  std::thread background_monitoring_thread([&]() {
+    while (!g_stop)
+    {
+        info(
+            "current log tail: {}, put requests executed: {}, get requests "
+            "executed: {}",
+            shared_log.get_tail(), num_put_requests, num_get_requests);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+    });
+    background_monitoring_thread.detach();
+    for (auto &t : ts) {
+        t.join();
+    }
+
   for (auto& t : ts)
   {
     t.join();
@@ -358,33 +378,12 @@ void server_worker(
   auto &server = *server_;
 
   auto has_shared_log = shared_log_config.shared_log;
-  uint64_t shared_log_index = 0;
+  std::atomic<uint64_t> shared_log_consume_idx = 0;
+  std::atomic<uint64_t> shared_log_next_apply_idx = 0;
   auto latency_between_shared_log_get_request_ms = 100;
   bool shared_log_get_request_acked = true;
   std::mutex shared_log_get_request_lock;
   std::condition_variable shared_log_get_request_cv;
-  
-  if (has_shared_log)
-  {
-    server.connect_to_remote_machine(shared_log_config.index);
-
-    if (thread_index == 0)
-    {
-      static std::thread background_thread([&]()
-      {
-        while (!g_stop)
-        {
-          if (shared_log_get_request_acked)
-          {
-            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_index);
-            shared_log_get_request_acked = false;
-          }
-          std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
-        }
-      });
-      background_thread.detach();
-    }
-  }
 
   std::vector<RemoteMachineConfig> server_configs;
   for (auto i = 0; i < config.remote_machine_configs.size(); i++)
@@ -589,6 +588,50 @@ void server_worker(
     flush_dirty();
     total_writes_executed.fetch_add(1, std::memory_order::relaxed);
   };
+  
+  // fixed size queue for unprocessed log entries
+  // lock-free SPSC queue from https://github.com/cameron314/readerwriterqueue
+  MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
+  if (has_shared_log) {
+    server.connect_to_remote_machine(shared_log_config.index);
+    if (thread_index == 0) {
+      // periodically gets the latest log entries from the shared log, entries not applied yet
+      static std::thread background_get_thread([&]() {
+        auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
+        while (!g_stop) {
+          if (shared_log_get_request_acked) {
+            auto now = std::chrono::high_resolution_clock::now();
+            if (now > print_time) {
+              info("consumed entries from shared log: {}, applied entries from shared log: {}",
+                shared_log_consume_idx.load(), shared_log_next_apply_idx.load());
+                print_time = now + std::chrono::seconds(5);
+            }
+            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
+              shared_log_consume_idx);
+            shared_log_get_request_acked = false;
+          }
+          std::this_thread::sleep_for(std::chrono::milliseconds(latency_between_shared_log_get_request_ms));
+        }
+      });
+      static std::thread background_application_thread([&]() {
+        while (!g_stop) {
+          LogEntry entry;
+          if (unprocessed_log_entries.try_dequeue(entry)) {
+            KeyValueEntry e = entry.kvp;
+
+            LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+            write_disk(e.key, e.value);
+            shared_log_next_apply_idx++;
+          } else {
+            // backoff to wait for entries to fill up in the queue
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
+        }
+      });
+      background_get_thread.detach();
+      background_application_thread.detach();
+    }
+  }
 
   while (!g_stop)
   {
@@ -989,27 +1032,26 @@ void server_worker(
           else if (data.isSharedLogGetResponse())
           {
             auto p = data.getSharedLogGetResponse();
-            shared_log_index = std::max(p.getIndex(), shared_log_index);
+            auto old_shared_log_consume_idx = shared_log_consume_idx.load(std::memory_order_relaxed);
+            shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
             auto entries = p.getE();
 
-            // if (entries.size() == 0)
-            // {
-            //   // Exp backoff
-            //   latency_between_shared_log_get_request_ms *= 2;
-            // }
-            // else
-            // {
-            //   latency_between_shared_log_get_request_ms = 100;
-            // }
-
             // Set the shared log entries to be put in our db
-            for (const auto& e : entries)
-            {
+            for (uint64_t idx = 0; idx < entries.size(); idx++) {
+              const auto& e = entries[idx];
+
               std::string_view key = e.getKey().cStr();
               std::string_view value = e.getValue().cStr();
 
               LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
-              write_disk(key, value);
+              // Add to unprocessed list of key value pairs
+              LogEntry entry;
+              entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
+              entry.index = shared_log_consume_idx + idx;
+              // busy-wait until we can enqueue
+              while (!unprocessed_log_entries.try_enqueue(entry)) {};
+
+            //   write_disk(key, value);
             }
             shared_log_get_request_acked = true;
           }

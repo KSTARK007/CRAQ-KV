@@ -1193,6 +1193,11 @@ struct CacheLayerData
     int replica_count;
 };
 
+struct LogEntry {
+    KeyValueEntry kvp;
+    uint64_t index;
+};
+
 struct SimpleSharedLog
 {
   SimpleSharedLog(std::size_t capacity_) : capacity(capacity_)
