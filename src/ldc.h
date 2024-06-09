@@ -519,9 +519,8 @@ struct CacheIndexes : public RDMAData
     LOG_RDMA_DATA("[CacheIndexes] Initialized");
   }
 
-  void write_remote(const std::string& key, const std::string& value)
+  void write_remote(uint64_t key_index, const std::string& value)
   {
-    auto key_index = convert_string<uint64_t>(key);
     for (auto i = 0; i < server_configs.size(); i++)
     {
       const auto& server_config = server_configs[i];
@@ -566,9 +565,8 @@ struct CacheIndexes : public RDMAData
     }
   }
 
-  void dealloc_remote(const std::string& key)
+  void dealloc_remote(uint64_t key_index)
   {
-    auto key_index = convert_string<uint64_t>(key);
     for (auto i = 0; i < server_configs.size(); i++)
     {
       const auto& server_config = server_configs[i];
@@ -838,9 +836,8 @@ struct CacheIndexLogs : public RDMAData
     }
   }
 
-  void append_entry_k(const std::string& key)
+  void append_entry_k(uint64_t key_index)
   {
-    auto key_index = convert_string<uint64_t>(key);
     const auto& rdma_cache_index = cache_indexes->get_cache_index(machine_index);
     auto cache_index = rdma_cache_index[key_index];
     CacheIndexLogEntry entry{key_index, cache_index, true};
@@ -892,7 +889,7 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->write_remote(key, value);
       // }
-      EvictionCallbackData<std::string, std::string> data{key, value};
+      EvictionCallbackData<std::string, std::string> data{{}, std::convert_string<uint64_t>(key), value};
       cache_index_write_queue.enqueue(data);
       write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
@@ -908,9 +905,9 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->dealloc_remote(data.key);
       // }
-      // cache_index_eviction_queue.enqueue(data);
-      // write_cache_index_cv.notify_one();
-      // writes.fetch_add(1, std::memory_order::relaxed);
+      cache_index_eviction_queue.enqueue(data);
+      write_cache_index_cv.notify_one();
+      writes.fetch_add(1, std::memory_order::relaxed);
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
@@ -926,11 +923,11 @@ struct RDMAKeyValueCache : public RDMAData
         {
           if (ops_config.use_cache_logs)
           {
-            cache_index_logs->append_entry_k(data.key);
+            cache_index_logs->append_entry_k(data.keyi);
           }
           else
           {
-            cache_indexes->write_remote(data.key, data.value);
+            cache_indexes->write_remote(data.keyi, data.value);
           }
         }
 
@@ -938,11 +935,11 @@ struct RDMAKeyValueCache : public RDMAData
         {
           if (ops_config.use_cache_logs)
           {
-            cache_index_logs->append_entry_k(data.key);
+            cache_index_logs->append_entry_k(data.keyi);
           }
           else
           {
-            cache_indexes->dealloc_remote(data.key);
+            cache_indexes->dealloc_remote(data.keyi);
           }
         }
       }
