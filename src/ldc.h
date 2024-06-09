@@ -889,7 +889,7 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->write_remote(key, value);
       // }
-      EvictionCallbackData<std::string, std::string> data{{}, std::convert_string<uint64_t>(key), value};
+      EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
       cache_index_write_queue.enqueue(data);
       write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
