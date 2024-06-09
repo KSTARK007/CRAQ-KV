@@ -497,7 +497,7 @@ void server_worker(
   if (thread_index == 0)
   {
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-      if (data.dirty)
+      if (0)
       {
         dirty_entries.enqueue(data);
       }
@@ -515,7 +515,7 @@ void server_worker(
         const auto& value = e.value;
         if (write_policy_hash == write_back_hash)
         {
-          db->put_async(key, value, [](auto v){});
+          // db->put_async(key, value, [](auto v){});
         }
         else if (write_policy_hash == selective_write_back_hash)
         {
@@ -550,7 +550,7 @@ void server_worker(
       }
       else
       {
-        db->put_async(key, value, [](auto v){});
+        // db->put_async(key, value, [](auto v){});
       }
     }
     else if (write_policy_hash == selective_write_around_hash)
@@ -1142,10 +1142,10 @@ int main(int argc, char *argv[])
         auto total_cache_size_in_bytes = total_cache_size * key_value_size;
 
         auto write_batch_buffer_size_in_bytes = 0;
-        if (config.db.block_db.batch_max_pending_requests > 0)
-        {
-          // write_batch_buffer_size_in_bytes = config.db.block_db.batch_max_pending_requests * key_value_size;
-        }
+        // if (config.db.block_db.batch_max_pending_requests > 0)
+        // {
+        //   // write_batch_buffer_size_in_bytes = config.db.block_db.batch_max_pending_requests * key_value_size;
+        // }
 
         auto read_cache_size_in_bytes = total_cache_size_in_bytes - write_batch_buffer_size_in_bytes;
         auto read_cache_size = static_cast<uint64_t>(std::ceil(read_cache_size_in_bytes / key_value_size));
