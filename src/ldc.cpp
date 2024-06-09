@@ -455,6 +455,12 @@ void server_worker(
 
   auto start_time = std::chrono::high_resolution_clock::now();
 
+  static bool owning = false;
+  if (config.policy_type == "thread_safe_lru")
+  {
+    owning = true;
+  }
+
   struct WriteResponse
   {
     void reset()
@@ -663,7 +669,7 @@ void server_worker(
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
               LDCTimer cache_timer;
-              auto value = block_cache->get(key, false, exists_in_cache);
+              auto value = block_cache->get(key, owning, exists_in_cache);
               cache_ns = cache_timer.time_elapsed();
               server.get_response(remote_index, remote_port, ResponseType::OK, value);
             }
