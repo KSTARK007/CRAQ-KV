@@ -894,21 +894,21 @@ struct RDMAKeyValueCache : public RDMAData
       write_cache_index_cv.notify_one();
       writes.fetch_add(1, std::memory_order::relaxed);
     });
-    cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-      LOG_RDMA_DATA("Evicted {}", data.key);
-      // snapshot->update_evicted(data.keyi);
-      // if (ops_config.use_cache_logs)
-      // {
-      //   cache_index_logs->append_entry_k(data.key);
-      // }
-      // else
-      // {
-      //   cache_indexes->dealloc_remote(data.key);
-      // }
-      cache_index_eviction_queue.enqueue(data);
-      write_cache_index_cv.notify_one();
-      writes.fetch_add(1, std::memory_order::relaxed);
-    });
+    // cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
+    //   LOG_RDMA_DATA("Evicted {}", data.key);
+    //   // snapshot->update_evicted(data.keyi);
+    //   // if (ops_config.use_cache_logs)
+    //   // {
+    //   //   cache_index_logs->append_entry_k(data.key);
+    //   // }
+    //   // else
+    //   // {
+    //   //   cache_indexes->dealloc_remote(data.key);
+    //   // }
+    //   cache_index_eviction_queue.enqueue(data);
+    //   write_cache_index_cv.notify_one();
+    //   writes.fetch_add(1, std::memory_order::relaxed);
+    // });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
     static std::thread background_worker([this, ops_config]()
