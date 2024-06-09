@@ -1051,8 +1051,8 @@ private:
   uint64_t read_cache_index_eviction_vec_i;
   std::atomic<uint64_t> cache_index_write_vec_i;
   std::atomic<uint64_t> cache_index_eviction_vec_i;
-  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE, true> cache_index_write_vec;
-  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE, true> cache_index_eviction_vec;
+  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE> cache_index_write_vec;
+  RotatingVector2<EvictionCallbackData<std::string, std::string>, 1, CACHE_INDEX_SIZE> cache_index_eviction_vec;
 };
 
 struct RDMA_connect
