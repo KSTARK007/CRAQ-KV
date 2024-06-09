@@ -863,7 +863,7 @@ struct CacheIndexLogs : public RDMAData
   std::shared_ptr<CacheIndexes> cache_indexes;
 };
 
-constexpr std::size_t CACHE_INDEX_SIZE = 10 * 1000 * 1000;
+constexpr std::size_t CACHE_INDEX_SIZE = 100 * 1000 * 1000;
 
 struct RDMAKeyValueCache : public RDMAData
 {
@@ -891,12 +891,15 @@ struct RDMAKeyValueCache : public RDMAData
       // {
       //   cache_indexes->write_remote(key, value);
       // }
-      EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
-      // cache_index_write_queue.enqueue(data);
-      auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-      while (!cache_index_write_vec.InsertUnsafe(index, data)) {}
-      write_cache_index_cv.notify_one();
-      writes.fetch_add(1, std::memory_order::relaxed);
+      if (data.dirty)
+      {
+        EvictionCallbackData<std::string, std::string> data{{}, convert_string<uint64_t>(key), value};
+        // cache_index_write_queue.enqueue(data);
+        auto index = cache_index_write_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+        while (!cache_index_write_vec.InsertUnsafe(index, data)) {}
+        write_cache_index_cv.notify_one();
+        writes.fetch_add(1, std::memory_order::relaxed);
+      }
     });
     cache->add_callback_on_eviction([this, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       LOG_RDMA_DATA("Evicted {}", data.key);
@@ -910,9 +913,12 @@ struct RDMAKeyValueCache : public RDMAData
       //   cache_indexes->dealloc_remote(data.key);
       // }
       // cache_index_eviction_queue.enqueue(data);
-      auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
-      while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
-      write_eviction_cache_index_cv.notify_one();
+      if (data.dirty)
+      {
+        auto index = cache_index_eviction_vec_i.fetch_add(1, std::memory_order::relaxed) % CACHE_INDEX_SIZE;
+        while (!cache_index_eviction_vec.InsertUnsafe(index, data)) {}
+        write_eviction_cache_index_cv.notify_one();
+      }
     });
     LOG_RDMA_DATA("[RDMAKeyValueCache] Initialized");
 
