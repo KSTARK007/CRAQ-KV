@@ -99,14 +99,14 @@ struct Connection
     }
   }
   
-  void add_pending_function(std::function<void()> f)
+  void append_pending_function(std::function<void()> f)
   {
     pending_functions.emplace_back(f);
   }
 
   bool receive(auto &&handler)
   {
-    std::array<char, 4096> buf;
+    std::array<char, 4096 * 2> buf;
 
     MachnetFlow rx_flow;
 
