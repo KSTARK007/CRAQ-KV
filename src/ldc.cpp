@@ -280,7 +280,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               auto tail = shared_log.get_tail();
               connection.shared_log_put_response(remote_index, remote_port, tail, hash);
-              num_put_requests++;
+              num_put_requests.fetch_add(1, std::memory_order::relaxed);
             }
             else if (data.isSharedLogGetRequest())
             {
@@ -297,10 +297,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               {
                 auto kv = shared_log.get(i);
                 key_values.emplace_back(kv);
+                num_get_requests.fetch_add(1, std::memory_order::relaxed);
               }
 
               connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
-              num_get_requests++;
             }
           }
         );
