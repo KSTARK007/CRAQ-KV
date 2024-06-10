@@ -708,22 +708,22 @@ void server_worker(
         }
       });
       background_get_thread.detach();
-      // static std::thread background_application_thread([&]() {
-      //   while (!g_stop) {
-      //     LogEntry entry;
-      //     if (unprocessed_log_entries.try_dequeue(entry)) {
-      //       KeyValueEntry e = entry.kvp;
+      static std::thread background_application_thread([&]() {
+        while (!g_stop) {
+          LogEntry entry;
+          if (unprocessed_log_entries.try_dequeue(entry)) {
+            KeyValueEntry e = entry.kvp;
 
-      //       LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-      //       write_disk(e.key, e.value);
-      //       shared_log_next_apply_idx++;
-      //     } else {
-      //       // backoff to wait for entries to fill up in the queue
-      //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      //     }
-      //   }
-      // });
-      // background_application_thread.detach();
+            LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+            write_disk(e.key, e.value);
+            shared_log_next_apply_idx++;
+          } else {
+            // backoff to wait for entries to fill up in the queue
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
+        }
+      });
+      background_application_thread.detach();
     }
   }
 
@@ -1148,9 +1148,9 @@ void server_worker(
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
-              // while (!unprocessed_log_entries.try_enqueue(entry)) {};
+              unprocessed_log_entries.enqueue(entry);
 
-              write_disk(key, value);
+              // write_disk(key, value);
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
