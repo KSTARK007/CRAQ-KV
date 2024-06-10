@@ -265,7 +265,13 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       }
 
       auto start_time = std::chrono::high_resolution_clock::now();
-      HashMap<int, uint64_t> remote_index_to_index;
+      struct SharedLogMachineInfo
+      {
+        std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
+        uint64_t index = 0;
+        uint64_t remaining_ask = 0;
+      };
+      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       while (!g_stop)
       {
         connection.loop(
@@ -290,42 +296,59 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               auto p = data.getSharedLogGetRequest();
               uint64_t index = p.getIndex();
 
-              // Respond with all entries
-              auto tail = shared_log.get_tail();
-              
-              // Can't add all entries
-              const auto shared_log_num_batches = 32;
-              const auto shared_log_batch_get_response_size = 16;
-              for (auto j = 0; j < shared_log_num_batches; j++)
+              if (auto found = remote_index_to_index.find(remote_index); found != std::end(remote_index_to_index))
               {
-                auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-                std::vector<KeyValueEntry> key_values;
-                key_values.reserve(min_tail - index);
-                for (auto i = index; i < min_tail; i++)
-                {
-                  auto kv = shared_log.get(i);
-                  key_values.emplace_back(kv);
-                  num_get_requests.fetch_add(1, std::memory_order::relaxed);
-                }
-
-                connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
-                index += shared_log_batch_get_response_size;
-                if (index + shared_log_batch_get_response_size > tail)
-                {
-                  break;
-                }
-                std::this_thread::sleep_for(100us);
+                auto& e = *found;
+                e.index = index;
+                e.remaining_ask = shared_log_batch_get_response_size;
               }
+              else
+              {
+                auto e = SharedLogMachineInfo{};
+                e.index = index;
+                e.remaining_ask = shared_log_batch_get_response_size;
+                remote_index_to_index.emplace(remote_index, e);
+              }
+
+              // // Respond with all entries
+              // auto tail = shared_log.get_tail();
+              
+              // // Can't add all entries
+              // const auto shared_log_num_batches = 1;
+              // const auto shared_log_batch_get_response_size = 16;
+              // for (auto j = 0; j < shared_log_num_batches; j++)
+              // {
+              //   auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+              //   std::vector<KeyValueEntry> key_values;
+              //   key_values.reserve(min_tail - index);
+              //   for (auto i = index; i < min_tail; i++)
+              //   {
+              //     auto kv = shared_log.get(i);
+              //     key_values.emplace_back(kv);
+              //     num_get_requests.fetch_add(1, std::memory_order::relaxed);
+              //   }
+
+              //   connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+              //   index += shared_log_batch_get_response_size;
+              //   remote_index_to_index[remote_index] = index;
+              //   if (index + shared_log_batch_get_response_size > tail)
+              //   {
+              //     break;
+              //   }
+              //   // std::this_thread::sleep_for(100us);
+              // }
             }
 
-            // auto elapsed = std::chrono::high_resolution_clock::now() - start_time;
+
+
+            // auto current_time = std::chrono::high_resolution_clock::now();
+            // auto elapsed = current_time - start_time;
             // auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
             // if (elapsed_us > 100)
             // {
-            //   if (auto found = remote_index_to_index.find())
+            //   start_time = current_time;
             // }
-
           }
         );
       }
