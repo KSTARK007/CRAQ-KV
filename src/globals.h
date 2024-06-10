@@ -33,7 +33,7 @@
 // #define IO_URING_SUBMITTING_THREAD
 
 #define ENABLE_STREAMING_SHARED_LOG
-#define COMPRESS_SHARED_LOG
+// #define COMPRESS_SHARED_LOG
 
 // Stop the program, check this if we get SIGINT
 extern std::atomic<bool> g_stop;
