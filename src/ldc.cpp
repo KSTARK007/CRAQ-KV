@@ -608,7 +608,7 @@ void server_worker(
               shared_log_consume_idx);
             shared_log_get_request_acked = false;
           }
-          std::this_thread::sleep_for(25ms);
+          std::this_thread::sleep_for(5ms);
         }
       });
       static std::thread background_application_thread([&]() {
