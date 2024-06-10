@@ -597,7 +597,7 @@ void server_worker(
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         while (!g_stop) {
-          if (true) {
+          if (shared_log_get_request_acked) {
             auto now = std::chrono::high_resolution_clock::now();
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
@@ -608,7 +608,6 @@ void server_worker(
               shared_log_consume_idx);
             shared_log_get_request_acked = false;
           }
-          std::this_thread::sleep_for(5ms);
         }
       });
       static std::thread background_application_thread([&]() {
@@ -1048,7 +1047,7 @@ void server_worker(
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
-              while (!unprocessed_log_entries.try_enqueue(entry)) {};
+              // while (!unprocessed_log_entries.try_enqueue(entry)) {};
 
             //   write_disk(key, value);
             }
