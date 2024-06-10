@@ -91,8 +91,19 @@ struct Connection
     }
   }
 
-  virtual void execute_pending_operations() {}
+  virtual void execute_pending_operations()
+  {
+    for (const auto& pending_function : pending_functions)
+    {
+      pending_function();
+    }
+  }
   
+  void add_pending_function(std::function<void()> f)
+  {
+    pending_functions.emplace_back(f);
+  }
+
   bool receive(auto &&handler)
   {
     std::array<char, 4096> buf;
@@ -176,6 +187,8 @@ protected:
 
   // Machnet channel
   void *channel;
+
+  std::vector<std::function<void()>> pending_functions;
 };
 
 struct Client : public Connection
