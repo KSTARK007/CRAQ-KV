@@ -95,7 +95,7 @@ struct Connection
   
   bool receive(auto &&handler)
   {
-    std::array<char, 4096 * 2> buf;
+    std::array<char, 4096 * 4> buf;
 
     MachnetFlow rx_flow;
 
