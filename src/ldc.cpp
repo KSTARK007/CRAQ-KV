@@ -343,10 +343,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             }
 
             auto tail = shared_log.get_tail();
-            // for (auto& [remote_index, e] : remote_index_to_index)
-            if (!remote_indices.empty())
+            for (auto& [remote_index, e] : remote_index_to_index)
+            // if (!remote_indices.empty())
             {
-              auto& e = remote_index_to_index[remote_indices[current_remote_index]];
+              // auto& e = remote_index_to_index[remote_indices[current_remote_index]];
               current_remote_index++;
               if (current_remote_index >= remote_indices.size())
               {
