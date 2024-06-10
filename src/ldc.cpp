@@ -1117,7 +1117,7 @@ void server_worker(
               // busy-wait until we can enqueue
               // while (!unprocessed_log_entries.try_enqueue(entry)) {};
 
-            //   write_disk(key, value);
+              write_disk(key, value);
             }
             shared_log_get_request_acked = true;
           }
