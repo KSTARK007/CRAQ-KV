@@ -689,7 +689,7 @@ void server_worker(
           auto now = std::chrono::high_resolution_clock::now();
           auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
           // if (shared_log_get_request_acked) {
-          if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0)
+          if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
             last = now;
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
