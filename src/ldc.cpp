@@ -708,23 +708,23 @@ void server_worker(
         }
       });
       background_get_thread.detach();
-      // static std::thread background_application_thread([&]() {
-      //   while (!g_stop) {
-      //     LogEntry entry;
-      //     if (unprocessed_log_entries.try_dequeue(entry)) {
-      //       KeyValueEntry e = entry.kvp;
+    //   static std::thread background_application_thread([&]() {
+    //     while (!g_stop) {
+    //       LogEntry entry;
+    //       if (unprocessed_log_entries.try_dequeue(entry)) {
+    //         KeyValueEntry e = entry.kvp;
 
-      //       LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-      //       write_disk(e.key, e.value);
-      //       shared_log_next_apply_idx++;
-      //     } else {
-      //       // backoff to wait for entries to fill up in the queue
-      //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      //     }
-      //   }
-      // });
-      // background_application_thread.detach();
-    }
+    //         LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+    //         write_disk(e.key, e.value);
+    //         shared_log_next_apply_idx++;
+    //       } else {
+    //         // backoff to wait for entries to fill up in the queue
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    //       }
+    //     }
+    //   });
+    //   background_application_thread.detach();
+    // }
   }
 
   // RotatingVector2<LogEntry, 1, 1000 * 1000> local_log_entries;
