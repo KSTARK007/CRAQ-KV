@@ -290,7 +290,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               // Respond with all entries
               auto tail = shared_log.get_tail();
               // Can't add all entries
-              tail = std::min(tail, index + 16);
+              tail = std::min(tail, index + 32);
               std::vector<KeyValueEntry> key_values;
               key_values.reserve(tail - index);
               for (auto i = index; i < tail; i++)
@@ -599,7 +599,7 @@ void server_worker(
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         while (!g_stop) {
-          if (true) {
+          if (shared_log_get_request_acked) {
             auto now = std::chrono::high_resolution_clock::now();
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {}",
