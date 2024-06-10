@@ -272,6 +272,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         uint64_t remaining_ask = 0;
       };
       HashMap<int, SharedLogMachineInfo> remote_index_to_index;
+      const auto shared_log_num_batches = 1;
+      const auto shared_log_batch_get_response_size = 16;
       while (!g_stop)
       {
         connection.loop(
@@ -314,8 +316,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               // auto tail = shared_log.get_tail();
               
               // // Can't add all entries
-              // const auto shared_log_num_batches = 1;
-              // const auto shared_log_batch_get_response_size = 16;
               // for (auto j = 0; j < shared_log_num_batches; j++)
               // {
               //   auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
@@ -339,16 +339,27 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               // }
             }
 
+            auto tail = shared_log.get_tail();
+            for (const auto& [remote_index, e] : remote_index_to_index)
+            {
+              auto& index = e.index;
+              if (index + shared_log_batch_get_response_size > tail)
+              {
+                continue;
+              }
+              auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+              std::vector<KeyValueEntry> key_values;
+              key_values.reserve(min_tail - index);
+              for (auto i = index; i < min_tail; i++)
+              {
+                auto kv = shared_log.get(i);
+                key_values.emplace_back(kv);
+                num_get_requests.fetch_add(1, std::memory_order::relaxed);
+              }
 
-
-            // auto current_time = std::chrono::high_resolution_clock::now();
-            // auto elapsed = current_time - start_time;
-            // auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-
-            // if (elapsed_us > 100)
-            // {
-            //   start_time = current_time;
-            // }
+              connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+              index += shared_log_batch_get_response_size;
+            }
           }
         );
       }
