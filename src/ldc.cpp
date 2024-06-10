@@ -466,7 +466,7 @@ void server_worker(
   std::atomic<uint64_t> shared_log_server_idx = 0;
   std::atomic<uint64_t> shared_log_next_apply_idx = 0;
   auto latency_between_shared_log_get_request_ms = 1;
-  std::atomic<uint64_t> num_shared_log_get_request_acked = 0;
+  std::atomic<uint64_t> num_shared_log_get_request_acked = 1;
   bool shared_log_get_request_acked = true;
   std::mutex shared_log_get_request_lock;
   std::condition_variable shared_log_get_request_cv;
