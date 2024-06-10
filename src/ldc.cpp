@@ -298,10 +298,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               const auto shared_log_batch_get_response_size = 16;
               for (auto j = 0; j < shared_log_num_batches; j++)
               {
-                if (index + shared_log_batch_get_response_size > tail)
-                {
-                  break;
-                }
                 auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
                 std::vector<KeyValueEntry> key_values;
                 key_values.reserve(min_tail - index);
@@ -314,6 +310,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                 connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                 index += shared_log_batch_get_response_size;
+                if (index + shared_log_batch_get_response_size > tail)
+                {
+                  break;
+                }
                 std::this_thread::sleep_for(10ms);
               }
             }
