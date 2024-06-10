@@ -710,7 +710,7 @@ void server_worker(
       background_get_thread.detach();
       for (auto j = 0; j < 4; j++)
       {
-        static std::thread background_application_thread([&]() {
+        std::thread background_application_thread([&]() {
           while (!g_stop) {
             LogEntry entry;
             if (unprocessed_log_entries.try_dequeue(entry)) {
