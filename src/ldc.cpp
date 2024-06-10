@@ -274,7 +274,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
       auto current_remote_index = 0;
-      const auto shared_log_num_batches = 1;
+      const auto shared_log_num_batches = 2;
       const auto shared_log_batch_get_response_size = 16;
       while (!g_stop)
       {
@@ -353,21 +353,28 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 current_remote_index = 0;
               }
               auto& index = e.index;
-              if (index + shared_log_batch_get_response_size <= tail)
+              for (auto j = 0; j < shared_log_num_batches; j++)
               {
-                auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-                std::vector<KeyValueEntry> key_values;
-                key_values.reserve(min_tail - index);
-                for (auto i = index; i < min_tail; i++)
+                if (index + shared_log_batch_get_response_size <= tail)
                 {
-                  auto kv = shared_log.get(i);
-                  key_values.emplace_back(kv);
-                  num_get_requests.fetch_add(1, std::memory_order::relaxed);
-                }
+                  auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                  std::vector<KeyValueEntry> key_values;
+                  key_values.reserve(min_tail - index);
+                  for (auto i = index; i < min_tail; i++)
+                  {
+                    auto kv = shared_log.get(i);
+                    key_values.emplace_back(kv);
+                    num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                  }
 
-                // info("Sending {} {} | {}", index, tail, key_values.size());
-                connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
-                index += shared_log_batch_get_response_size;
+                  // info("Sending {} {} | {}", index, tail, key_values.size());
+                  connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+                  index += shared_log_batch_get_response_size;
+                }
+                else
+                {
+                  break;
+                }
               }
             }
           }
@@ -678,23 +685,23 @@ void server_worker(
           // std::this_thread::sleep_for(100us);
         }
       });
-      static std::thread background_application_thread([&]() {
-        while (!g_stop) {
-          LogEntry entry;
-          if (unprocessed_log_entries.try_dequeue(entry)) {
-            KeyValueEntry e = entry.kvp;
-
-            LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-            write_disk(e.key, e.value);
-            shared_log_next_apply_idx++;
-          } else {
-            // backoff to wait for entries to fill up in the queue
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-          }
-        }
-      });
       background_get_thread.detach();
-      background_application_thread.detach();
+      // static std::thread background_application_thread([&]() {
+      //   while (!g_stop) {
+      //     LogEntry entry;
+      //     if (unprocessed_log_entries.try_dequeue(entry)) {
+      //       KeyValueEntry e = entry.kvp;
+
+      //       LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+      //       write_disk(e.key, e.value);
+      //       shared_log_next_apply_idx++;
+      //     } else {
+      //       // backoff to wait for entries to fill up in the queue
+      //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      //     }
+      //   }
+      // });
+      // background_application_thread.detach();
     }
   }
 
