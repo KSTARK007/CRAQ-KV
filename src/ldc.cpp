@@ -357,6 +357,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 num_get_requests.fetch_add(1, std::memory_order::relaxed);
               }
 
+              info("Sending {} {} | {}", index, tail, key_values.size());
               connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
               index += shared_log_batch_get_response_size;
             }
