@@ -314,7 +314,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 {
                   break;
                 }
-                std::this_thread::sleep_for(10ms);
+                std::this_thread::sleep_for(100us);
               }
             }
 
