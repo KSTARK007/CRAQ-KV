@@ -380,7 +380,7 @@ void server_worker(
   auto has_shared_log = shared_log_config.shared_log;
   std::atomic<uint64_t> shared_log_consume_idx = 0;
   std::atomic<uint64_t> shared_log_next_apply_idx = 0;
-  auto latency_between_shared_log_get_request_ms = 100;
+  auto latency_between_shared_log_get_request_ms = 1;
   bool shared_log_get_request_acked = true;
   std::mutex shared_log_get_request_lock;
   std::condition_variable shared_log_get_request_cv;
@@ -594,7 +594,7 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index == 0) {
+    if (thread_index == 0 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
