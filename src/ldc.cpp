@@ -300,7 +300,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               if (auto found = remote_index_to_index.find(remote_index); found != std::end(remote_index_to_index))
               {
-                auto& e = *found;
+                auto& e = found->second;
                 e.index = index;
                 e.remaining_ask = shared_log_batch_get_response_size;
               }
