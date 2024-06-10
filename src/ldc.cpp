@@ -599,7 +599,7 @@ void server_worker(
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         while (!g_stop) {
-          if (shared_log_get_request_acked) {
+          if (true) {
             auto now = std::chrono::high_resolution_clock::now();
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {}",
