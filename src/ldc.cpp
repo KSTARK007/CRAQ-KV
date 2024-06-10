@@ -294,7 +294,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               auto tail = shared_log.get_tail();
               
               // Can't add all entries
-              const auto shared_log_num_batches = 2;
+              const auto shared_log_num_batches = 32;
               const auto shared_log_batch_get_response_size = 16;
               for (auto j = 0; j < shared_log_num_batches; j++)
               {
