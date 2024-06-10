@@ -733,7 +733,7 @@ void server_worker(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
           LogEntry entry;
-          if (unprocessed_log_entries.try_dequeue(entry)) {
+          while (unprocessed_log_entries.try_dequeue(entry)) {
             const KeyValueEntry& e = entry.kvp;
 
             LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
