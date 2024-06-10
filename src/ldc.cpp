@@ -1158,9 +1158,9 @@ void server_worker(
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
-              // unprocessed_log_entries.enqueue(entry);
+              unprocessed_log_entries.enqueue(entry);
 
-              write_disk(key, value);
+              // write_disk(key, value);
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
