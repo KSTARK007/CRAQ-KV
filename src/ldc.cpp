@@ -317,12 +317,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             shared_log.get_tail(), num_put_requests, num_get_requests);
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
-    });
-    background_monitoring_thread.detach();
-    for (auto &t : ts) {
-        t.join();
-    }
-
+  });
+  background_monitoring_thread.detach();
   for (auto& t : ts)
   {
     t.join();
