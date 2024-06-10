@@ -277,7 +277,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       auto shared_log_num_batches = 1;
       auto shared_log_batch_get_response_size = 16;
 #ifdef ENABLE_STREAMING_SHARED_LOG
-      shared_log_num_batches = 16;
+      shared_log_num_batches = 4;
       shared_log_batch_get_response_size = 16;
 #endif
 
@@ -344,7 +344,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                 connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                 index += shared_log_batch_get_response_size;
-                remote_index_to_index[remote_index] = index;
                 if (index + shared_log_batch_get_response_size > tail)
                 {
                   break;
