@@ -661,40 +661,40 @@ void server_worker(
     server.connect_to_remote_machine(shared_log_config.index);
     if (thread_index == 0 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
-      // static std::thread background_get_thread([&]() {
-      //   auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
-      //   while (!g_stop) {
-      //     if (shared_log_get_request_acked) {
-      //       auto now = std::chrono::high_resolution_clock::now();
-      //       if (now > print_time) {
-      //         info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
-      //           shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
-      //           print_time = now + std::chrono::seconds(5);
-      //       }
-      //       server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
-      //         shared_log_consume_idx);
-      //       shared_log_get_request_acked = false;
-      //     }
-      //     // std::this_thread::sleep_for(100us);
-      //   }
-      // });
-      // static std::thread background_application_thread([&]() {
-      //   while (!g_stop) {
-      //     LogEntry entry;
-      //     if (unprocessed_log_entries.try_dequeue(entry)) {
-      //       KeyValueEntry e = entry.kvp;
+      static std::thread background_get_thread([&]() {
+        auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
+        while (!g_stop) {
+          if (shared_log_get_request_acked) {
+            auto now = std::chrono::high_resolution_clock::now();
+            if (now > print_time) {
+              info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
+                shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
+                print_time = now + std::chrono::seconds(5);
+            }
+            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
+              shared_log_consume_idx);
+            shared_log_get_request_acked = false;
+          }
+          // std::this_thread::sleep_for(100us);
+        }
+      });
+      static std::thread background_application_thread([&]() {
+        while (!g_stop) {
+          LogEntry entry;
+          if (unprocessed_log_entries.try_dequeue(entry)) {
+            KeyValueEntry e = entry.kvp;
 
-      //       LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-      //       write_disk(e.key, e.value);
-      //       shared_log_next_apply_idx++;
-      //     } else {
-      //       // backoff to wait for entries to fill up in the queue
-      //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      //     }
-      //   }
-      // });
-      // background_get_thread.detach();
-      // background_application_thread.detach();
+            LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+            write_disk(e.key, e.value);
+            shared_log_next_apply_idx++;
+          } else {
+            // backoff to wait for entries to fill up in the queue
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
+        }
+      });
+      background_get_thread.detach();
+      background_application_thread.detach();
     }
   }
 
