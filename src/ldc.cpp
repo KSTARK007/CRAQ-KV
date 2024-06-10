@@ -466,6 +466,7 @@ void server_worker(
   std::atomic<uint64_t> shared_log_server_idx = 0;
   std::atomic<uint64_t> shared_log_next_apply_idx = 0;
   auto latency_between_shared_log_get_request_ms = 1;
+  std::atomic<uint64_t> num_shared_log_get_request_acked = 0;
   bool shared_log_get_request_acked = true;
   std::mutex shared_log_get_request_lock;
   std::condition_variable shared_log_get_request_cv;
@@ -687,7 +688,8 @@ void server_worker(
         while (!g_stop) {
           auto now = std::chrono::high_resolution_clock::now();
           auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
-          if (shared_log_get_request_acked) {
+          // if (shared_log_get_request_acked) {
+          if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0)
             last = now;
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
@@ -697,6 +699,7 @@ void server_worker(
             server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
               shared_log_consume_idx);
             shared_log_get_request_acked = false;
+            num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
           }
           // std::this_thread::sleep_for(100us);
         }
@@ -1147,6 +1150,7 @@ void server_worker(
               write_disk(key, value);
             }
             shared_log_get_request_acked = true;
+            num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
