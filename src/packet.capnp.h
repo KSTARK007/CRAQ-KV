@@ -331,7 +331,7 @@ struct SharedLogGetResponse {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(83b7ecc25270e0af, 1, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(83b7ecc25270e0af, 2, 1)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -1963,6 +1963,8 @@ public:
 
   inline  ::uint64_t getIndex() const;
 
+  inline  ::uint64_t getLogIndex() const;
+
   inline bool hasE() const;
   inline  ::capnp::List< ::SharedLogEntry,  ::capnp::Kind::STRUCT>::Reader getE() const;
 
@@ -1996,6 +1998,9 @@ public:
 
   inline  ::uint64_t getIndex();
   inline void setIndex( ::uint64_t value);
+
+  inline  ::uint64_t getLogIndex();
+  inline void setLogIndex( ::uint64_t value);
 
   inline bool hasE();
   inline  ::capnp::List< ::SharedLogEntry,  ::capnp::Kind::STRUCT>::Builder getE();
@@ -3309,6 +3314,20 @@ inline  ::uint64_t SharedLogGetResponse::Builder::getIndex() {
 inline void SharedLogGetResponse::Builder::setIndex( ::uint64_t value) {
   _builder.setDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint64_t SharedLogGetResponse::Reader::getLogIndex() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t SharedLogGetResponse::Builder::getLogIndex() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+inline void SharedLogGetResponse::Builder::setLogIndex( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool SharedLogGetResponse::Reader::hasE() const {

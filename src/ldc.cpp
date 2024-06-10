@@ -290,17 +290,17 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               // Respond with all entries
               auto tail = shared_log.get_tail();
               // Can't add all entries
-              tail = std::min(tail, index + 16);
+              auto min_tail = std::min(tail, index + 16);
               std::vector<KeyValueEntry> key_values;
-              key_values.reserve(tail - index);
-              for (auto i = index; i < tail; i++)
+              key_values.reserve(min_tail - index);
+              for (auto i = index; i < min_tail; i++)
               {
                 auto kv = shared_log.get(i);
                 key_values.emplace_back(kv);
                 num_get_requests.fetch_add(1, std::memory_order::relaxed);
               }
 
-              connection.shared_log_get_response(remote_index, remote_port, tail, key_values);
+              connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
             }
           }
         );
@@ -375,6 +375,7 @@ void server_worker(
 
   auto has_shared_log = shared_log_config.shared_log;
   std::atomic<uint64_t> shared_log_consume_idx = 0;
+  std::atomic<uint64_t> shared_log_server_idx = 0;
   std::atomic<uint64_t> shared_log_next_apply_idx = 0;
   auto latency_between_shared_log_get_request_ms = 1;
   bool shared_log_get_request_acked = true;
@@ -598,8 +599,8 @@ void server_worker(
           if (shared_log_get_request_acked) {
             auto now = std::chrono::high_resolution_clock::now();
             if (now > print_time) {
-              info("consumed entries from shared log: {}, applied entries from shared log: {}",
-                shared_log_consume_idx.load(), shared_log_next_apply_idx.load());
+              info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
+                shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
             server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
@@ -1030,6 +1031,7 @@ void server_worker(
             auto p = data.getSharedLogGetResponse();
             auto old_shared_log_consume_idx = shared_log_consume_idx.load(std::memory_order_relaxed);
             shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
+            shared_log_server_idx.store(p.getLogIndex(), std::memory_order_relaxed);
             auto entries = p.getE();
 
             // Set the shared log entries to be put in our db

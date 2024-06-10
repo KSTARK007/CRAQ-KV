@@ -1274,30 +1274,67 @@ struct LogEntry {
     uint64_t index;
 };
 
-struct SimpleSharedLog
-{
-  SimpleSharedLog(std::size_t capacity_) : capacity(capacity_)
-  {
-    key_values.resize(capacity);
-  }
+// struct SimpleSharedLog
+// {
+//   SimpleSharedLog(std::size_t capacity_) : capacity(capacity_)
+//   {
+//     key_values.resize(capacity);
+//   }
 
-  uint64_t append(std::string_view key, std::string_view value)
-  {
-    auto current_index = index.fetch_add(1, std::memory_order::relaxed);
-    key_values[current_index % capacity] = KeyValueEntry{std::string(key), std::string(value)};
-    return current_index;
-  }
+//   uint64_t append(std::string_view key, std::string_view value)
+//   {
+//     auto current_index = index.fetch_add(1, std::memory_order::relaxed);
+//     key_values[current_index % capacity] = KeyValueEntry{std::string(key), std::string(value)};
+//     return current_index;
+//   }
 
-  KeyValueEntry get(uint64_t current_index)
-  {
-    return key_values[current_index % capacity];
-  }
+//   KeyValueEntry get(uint64_t current_index)
+//   {
+//     return key_values[current_index % capacity];
+//   }
 
-  uint64_t get_tail() const { return index.load(std::memory_order::relaxed); }
+//   uint64_t get_tail() const { return index.load(std::memory_order::relaxed); }
 
-  std::size_t capacity;
-  std::vector<KeyValueEntry> key_values;
-  std::atomic<uint64_t> index;
+//   std::size_t capacity;
+//   std::vector<KeyValueEntry> key_values;
+//   std::atomic<uint64_t> index;
+// };
+
+struct SimpleSharedLog {
+    SimpleSharedLog(std::size_t capacity_) : capacity(capacity_) {
+        key_values.resize(capacity);
+        index.store(0, std::memory_order_relaxed);
+        num_reads = new std::atomic<uint64_t>[capacity];
+        for (auto i = 0; i < capacity; i++) {
+            // store enough to bypass initial warning
+            num_reads[i].store(4, std::memory_order_relaxed);
+        }
+    }
+
+    ~SimpleSharedLog() { delete[] num_reads; }
+
+    uint64_t append(std::string_view key, std::string_view value) {
+        auto current_index = index.fetch_add(1, std::memory_order::relaxed);
+        if (num_reads[current_index % capacity].load(std::memory_order_relaxed) < 3) {
+            panic("overwrite!! not everybody might have consumed entry at idx {}", current_index);
+            return std::numeric_limits<uint64_t>::max();
+        }
+        key_values[current_index % capacity] = KeyValueEntry{std::string(key), std::string(value)};
+        num_reads[current_index % capacity].store(0, std::memory_order_relaxed);
+        return current_index;
+    }
+
+    KeyValueEntry get(uint64_t current_index) {
+        num_reads[current_index % capacity].fetch_add(1, std::memory_order_relaxed);
+        return key_values[current_index % capacity];
+    }
+
+    uint64_t get_tail() const { return index.load(std::memory_order::relaxed); }
+
+    std::size_t capacity;
+    std::vector<KeyValueEntry> key_values;
+    std::atomic<uint64_t>* num_reads;
+    std::atomic<uint64_t> index;
 };
 
 class LDCTimer {

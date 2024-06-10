@@ -98,7 +98,8 @@ struct SharedLogGetRequest {
 
 struct SharedLogGetResponse {
   index @0 : UInt64;
-  e @1: List(SharedLogEntry);
+  logIndex @1: UInt64;
+  e @2: List(SharedLogEntry);
 }
 
 struct Packet {

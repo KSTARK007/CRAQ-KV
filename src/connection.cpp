@@ -629,7 +629,7 @@ void Connection::shared_log_get_request(int index, int port, uint64_t shared_log
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::shared_log_get_response(int index, int port, uint64_t shared_log_index, std::vector<KeyValueEntry> entries)
+void Connection::shared_log_get_response(int index, int port, uint64_t shared_log_index, uint64_t server_shared_log_index, std::vector<KeyValueEntry> entries)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -637,6 +637,7 @@ void Connection::shared_log_get_response(int index, int port, uint64_t shared_lo
   Packet::Data::Builder data = packet[0].initData();
   SharedLogGetResponse::Builder request = data.initSharedLogGetResponse();
   request.setIndex(shared_log_index);
+  request.setLogIndex(server_shared_log_index);
 
   ::capnp::List<SharedLogEntry>::Builder shared_log_entries = request.initE(entries.size());
   for (auto i = 0; i < entries.size(); i++)
