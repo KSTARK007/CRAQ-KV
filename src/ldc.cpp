@@ -274,7 +274,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
       auto current_remote_index = 0;
-      const auto shared_log_num_batches = 2;
+      const auto shared_log_num_batches = 4;
       const auto shared_log_batch_get_response_size = 16;
       while (!g_stop)
       {
