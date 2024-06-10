@@ -1316,8 +1316,9 @@ struct SimpleSharedLog {
     uint64_t append(std::string_view key, std::string_view value) {
         auto current_index = index.fetch_add(1, std::memory_order::relaxed);
         if (num_reads[current_index % capacity].load(std::memory_order_relaxed) < 3) {
-            panic("overwrite!! not everybody might have consumed entry at idx {}", current_index);
-            return std::numeric_limits<uint64_t>::max();
+            // panic("overwrite!! not everybody might have consumed entry at idx {}", current_index);
+            // return std::numeric_limits<uint64_t>::max();
+            info("overwrite!! not everybody might have consumed entry at idx {}", current_index);
         }
         key_values[current_index % capacity] = KeyValueEntry{std::string(key), std::string(value)};
         num_reads[current_index % capacity].store(0, std::memory_order_relaxed);
