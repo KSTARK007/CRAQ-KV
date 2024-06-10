@@ -296,7 +296,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               const auto shared_log_batch_get_response_size = 16;
               for (auto j = 0; j < shared_log_num_batches; j++)
               {
-                if (min_tail > tail)
+                if (index + shared_log_batch_get_response_size > tail)
                 {
                   break;
                 }
