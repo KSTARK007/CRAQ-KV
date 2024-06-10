@@ -281,6 +281,11 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       shared_log_batch_get_response_size = 16;
 #endif
 
+#ifdef COMPRESS_SHARED_LOG
+      shared_log_num_batches = 1;
+      shared_log_batch_get_response_size = 1024;
+#endif
+
       while (!g_stop)
       {
         connection.loop(
@@ -1123,7 +1128,11 @@ void server_worker(
               const auto& e = entries[idx];
 
               std::string_view key = e.getKey().cStr();
+#ifndef COMPRESS_SHARED_LOG
               std::string_view value = e.getValue().cStr();
+#else
+              std::string_view value = default_value;
+#endif
 
               LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
               // Add to unprocessed list of key value pairs

@@ -646,7 +646,9 @@ void Connection::shared_log_get_response(int index, int port, uint64_t shared_lo
     const auto& e = entries[i];
 
     shared_log_entry.setKey(e.key);
+#ifndef COMPRESS_SHARED_LOG
     shared_log_entry.setValue(e.value);
+#endif
   }
 
   auto m = capnp::messageToFlatArray(message);
