@@ -273,7 +273,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       };
       HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
-      const auto current_remote_index = 0;
+      auto current_remote_index = 0;
       const auto shared_log_num_batches = 1;
       const auto shared_log_batch_get_response_size = 16;
       while (!g_stop)
@@ -346,30 +346,29 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             // for (auto& [remote_index, e] : remote_index_to_index)
             if (!remote_indices.empty())
             {
-              auto& e = remote_indices[current_remote_index];
+              auto& e = remote_index_to_index[remote_indices[current_remote_index]];
               current_remote_index++;
               if (current_remote_index >= remote_indices.size())
               {
                 current_remote_index = 0;
               }
               auto& index = e.index;
-              if (index + shared_log_batch_get_response_size > tail)
+              if (index + shared_log_batch_get_response_size <= tail)
               {
-                continue;
-              }
-              auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-              std::vector<KeyValueEntry> key_values;
-              key_values.reserve(min_tail - index);
-              for (auto i = index; i < min_tail; i++)
-              {
-                auto kv = shared_log.get(i);
-                key_values.emplace_back(kv);
-                num_get_requests.fetch_add(1, std::memory_order::relaxed);
-              }
+                auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                std::vector<KeyValueEntry> key_values;
+                key_values.reserve(min_tail - index);
+                for (auto i = index; i < min_tail; i++)
+                {
+                  auto kv = shared_log.get(i);
+                  key_values.emplace_back(kv);
+                  num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                }
 
-              // info("Sending {} {} | {}", index, tail, key_values.size());
-              connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
-              index += shared_log_batch_get_response_size;
+                // info("Sending {} {} | {}", index, tail, key_values.size());
+                connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+                index += shared_log_batch_get_response_size;
+              }
             }
           }
         );
