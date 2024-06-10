@@ -683,9 +683,12 @@ void server_worker(
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
+        auto last = std::chrono::high_resolution_clock::now();
         while (!g_stop) {
+          auto now = std::chrono::high_resolution_clock::now();
+          auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
           if (shared_log_get_request_acked) {
-            auto now = std::chrono::high_resolution_clock::now();
+            last = now;
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
