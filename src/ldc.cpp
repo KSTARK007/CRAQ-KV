@@ -644,7 +644,7 @@ void server_worker(
 
             if (has_shared_log)
             {
-              write_disk(key_cstr, value_cstr);
+              // write_disk(key_cstr, value_cstr);
 
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
               auto inserted = hash_to_write_response.emplace(hash, WriteResponse{});
