@@ -290,18 +290,26 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
               // Respond with all entries
               auto tail = shared_log.get_tail();
-              // Can't add all entries
-              auto min_tail = std::min(tail, index + 16);
-              std::vector<KeyValueEntry> key_values;
-              key_values.reserve(min_tail - index);
-              for (auto i = index; i < min_tail; i++)
+              for (auto j = 0; j < 6; j++)
               {
-                auto kv = shared_log.get(i);
-                key_values.emplace_back(kv);
-                num_get_requests.fetch_add(1, std::memory_order::relaxed);
-              }
+                if (index + 16 > tail)
+                {
+                  break;
+                }
+                // Can't add all entries
+                auto min_tail = std::min(tail, index + 16);
+                std::vector<KeyValueEntry> key_values;
+                key_values.reserve(min_tail - index);
+                for (auto i = index; i < min_tail; i++)
+                {
+                  auto kv = shared_log.get(i);
+                  key_values.emplace_back(kv);
+                  num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                }
 
-              connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+                connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+                index+=16;
+              }
             }
           }
         );
