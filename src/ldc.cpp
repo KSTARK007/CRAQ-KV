@@ -741,7 +741,7 @@ void server_worker(
         write_disk(e.key, e.value);
         shared_log_next_apply_idx.fetch_add(1, std::memory_order::relaxed);
       }
-    })
+    });
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
