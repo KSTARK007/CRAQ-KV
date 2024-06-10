@@ -613,9 +613,9 @@ void server_worker(
             }
             server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
               shared_log_consume_idx);
-            // shared_log_get_request_acked = false;
+            shared_log_get_request_acked = false;
           }
-          std::this_thread::sleep_for(100us);
+          // std::this_thread::sleep_for(100us);
         }
       });
       static std::thread background_application_thread([&]() {
