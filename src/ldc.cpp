@@ -272,6 +272,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         uint64_t remaining_ask = 0;
       };
       HashMap<int, SharedLogMachineInfo> remote_index_to_index;
+      std::vector<int> remote_indices;
+      const auto current_remote_index = 0;
       const auto shared_log_num_batches = 1;
       const auto shared_log_batch_get_response_size = 16;
       while (!g_stop)
@@ -310,6 +312,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 e.index = index;
                 e.remaining_ask = shared_log_batch_get_response_size;
                 remote_index_to_index.emplace(remote_index, e);
+                remote_indices.emplace_back(remote_index);
               }
 
               // // Respond with all entries
@@ -340,8 +343,15 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             }
 
             auto tail = shared_log.get_tail();
-            for (auto& [remote_index, e] : remote_index_to_index)
+            // for (auto& [remote_index, e] : remote_index_to_index)
+            if (!remote_indices.empty())
             {
+              auto& e = remote_indices[current_remote_index];
+              current_remote_index++;
+              if (current_remote_index >= remote_indices.size())
+              {
+                current_remote_index = 0;
+              }
               auto& index = e.index;
               if (index + shared_log_batch_get_response_size > tail)
               {
@@ -357,7 +367,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 num_get_requests.fetch_add(1, std::memory_order::relaxed);
               }
 
-              info("Sending {} {} | {}", index, tail, key_values.size());
+              // info("Sending {} {} | {}", index, tail, key_values.size());
               connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
               index += shared_log_batch_get_response_size;
             }
