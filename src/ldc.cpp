@@ -1115,7 +1115,7 @@ void server_worker(
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
-              while (!unprocessed_log_entries.try_enqueue(entry)) {};
+              // while (!unprocessed_log_entries.try_enqueue(entry)) {};
 
             //   write_disk(key, value);
             }
