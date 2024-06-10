@@ -264,6 +264,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         }
       }
 
+      auto start_time = std::chrono::high_resolution_clock::now();
+      HashMap<int, uint64_t> remote_index_to_index;
       while (!g_stop)
       {
         connection.loop(
@@ -312,9 +314,18 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                 connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                 index += shared_log_batch_get_response_size;
-                std::this_thread::sleep_for(1ms);
+                std::this_thread::sleep_for(10ms);
               }
             }
+
+            // auto elapsed = std::chrono::high_resolution_clock::now() - start_time;
+            // auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+
+            // if (elapsed_us > 100)
+            // {
+            //   if (auto found = remote_index_to_index.find())
+            // }
+
           }
         );
       }
