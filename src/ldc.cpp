@@ -687,7 +687,7 @@ void server_worker(
     server.connect_to_remote_machine(shared_log_config.index);
     if (thread_index <= 5 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
-      static std::thread background_get_thread([&]() {
+      std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         auto last = std::chrono::high_resolution_clock::now();
         while (!g_stop) {
