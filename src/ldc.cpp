@@ -282,7 +282,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         uint64_t index = 0;
         uint64_t remaining_ask = 0;
       };
-      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
+      std::unordered_map<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
