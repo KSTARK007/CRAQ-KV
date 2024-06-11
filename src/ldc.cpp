@@ -252,15 +252,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
-  int num_servers = 0;
-  for (auto i = 0; i < config.remote_machine_configs.size(); i++)
-  {
-    if (config.remote_machine_configs[i].server)
-    {
-      num_servers += 1;
-    }
-  }
-
   const auto shared_log_size = 32 * 1024 * 1024;
   SimpleSharedLog shared_log(shared_log_size);
   info("shared log worker started, {} entry shared log initialized", shared_log_size);
@@ -290,10 +281,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
         uint64_t index = 0;
         uint64_t remaining_ask = 0;
-        uint64_t remote_index = 0;
-        uint64_t remote_port = 0;
       };
-      std::vector<SharedLogMachineInfo> remote_index_to_index(num_servers);
+      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
+      std::vector<int> remote_indices;
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
       auto shared_log_batch_get_response_size = 16;
@@ -332,11 +322,20 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               uint64_t index = p.getIndex();
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
-              auto& e = remote_index_to_index[remote_index];
-              e.index = std::max(index, e.index);
-              e.remaining_ask = shared_log_batch_get_response_size;
-              e.remote_index = remote_index;
-              e.remote_port = remote_port;
+              if (auto found = remote_index_to_index.find(remote_index); found != std::end(remote_index_to_index))
+              {
+                auto& e = found->second;
+                e.index = std::max(index, e.index);
+                e.remaining_ask = shared_log_batch_get_response_size;
+              }
+              else
+              {
+                auto e = SharedLogMachineInfo{};
+                e.index = index;
+                e.remaining_ask = shared_log_batch_get_response_size;
+                remote_index_to_index.emplace(remote_index, e);
+                remote_indices.emplace_back(remote_index);
+              }
 #else
               // Respond with all entries
               auto tail = shared_log.get_tail();
@@ -366,50 +365,44 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             }
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
-            // if (thread_index == 0)
+            auto tail = shared_log.get_tail();
+            info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
+            for (auto& [remote_index, e] : remote_index_to_index)
+            // if (!remote_indices.empty())
             {
-              auto tail = shared_log.get_tail();
-              // info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
-              for (auto& e: remote_index_to_index)
+              // auto& e = remote_index_to_index[remote_indices[current_remote_index]];
+              current_remote_index++;
+              if (current_remote_index >= remote_indices.size())
               {
-                if (e.remote_port == 0)
+                current_remote_index = 0;
+              }
+              auto& index = e.index;
+              info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
+              for (auto j = 0; j < shared_log_num_batches; j++)
+              {
+                if (index + shared_log_batch_get_response_size <= tail)
                 {
-                  continue;
-                }
-                current_remote_index++;
-                if (current_remote_index >= remote_index_to_index.size())
-                {
-                  current_remote_index = 0;
-                }
-                auto& index = e.index;
-                info("SHARED_LOG GET RESPONSE {} {} {} {}", i, e.remote_port, tail, index);
-                for (auto j = 0; j < shared_log_num_batches; j++)
-                {
-                  if (index + shared_log_batch_get_response_size <= tail)
+                  auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                  std::vector<KeyValueEntry> key_values;
+                  key_values.reserve(min_tail - index);
+                  for (auto i = index; i < min_tail; i++)
                   {
-                    auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-                    std::vector<KeyValueEntry> key_values;
-                    key_values.reserve(min_tail - index);
-                    for (auto i = index; i < min_tail; i++)
-                    {
-                      auto kv = shared_log.get(i);
-                      key_values.emplace_back(kv);
-                      num_get_requests.fetch_add(1, std::memory_order::relaxed);
-                    }
+                    auto kv = shared_log.get(i);
+                    key_values.emplace_back(kv);
+                    num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                  }
 
-                    info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                    connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
-                    index += shared_log_batch_get_response_size;
-                  }
-                  else
-                  {
-                    break;
-                  }
+                  info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
+                  connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+                  index += shared_log_batch_get_response_size;
+                }
+                else
+                {
+                  break;
                 }
               }
             }
 #endif
-
           }
         );
       }
@@ -1155,10 +1148,10 @@ void server_worker(
           else if (data.isSharedLogGetResponse())
           {
             auto p = data.getSharedLogGetResponse();
-            auto entries = p.getE();
             auto old_shared_log_consume_idx = shared_log_consume_idx.load(std::memory_order_relaxed);
             shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
             shared_log_server_idx.store(p.getLogIndex(), std::memory_order_relaxed);
+            auto entries = p.getE();
 
             auto start_index = 0;
             if (old_shared_log_consume_idx > p.getIndex())
@@ -1167,7 +1160,7 @@ void server_worker(
             }
 
             // Set the shared log entries to be put in our db
-            for (uint64_t idx = 0; idx < entries.size(); idx++) {
+            for (uint64_t idx = start_index; idx < entries.size(); idx++) {
               const auto& e = entries[idx];
 
               std::string_view key = e.getKey().cStr();
