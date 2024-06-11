@@ -746,6 +746,7 @@ void server_worker(
     }
   }
 
+  std::atomic<uint64_t> every_time = 0;
   while (!g_stop)
   {
     constexpr std::size_t REPLY_EXECUTION_LIMIT = 128;
@@ -778,8 +779,6 @@ void server_worker(
 
             if (has_shared_log)
             {
-              write_disk(key_cstr, value_cstr);
-
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
               auto inserted = hash_to_write_response.emplace(hash, WriteResponse{});
               WriteResponse& write_response = inserted.first->second;
@@ -790,12 +789,11 @@ void server_worker(
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
-              static std::atomic<uint64_t> every_time = 0;
-              if (every_time.fetch_add(1) % 64 == 0)
+              // if (every_time.fetch_add(1) % 32 == 0)
               {
                 server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
               }
-              server.put_response(remote_index, remote_port, ResponseType::OK);
+              // server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
               if (ops_config.writes_linearizable)
@@ -813,6 +811,7 @@ void server_worker(
                   server.shared_log_forward_request(index, port, key_cstr, hash);
                 }
               }
+              write_disk(key_cstr, value_cstr);
             }
             else
             {

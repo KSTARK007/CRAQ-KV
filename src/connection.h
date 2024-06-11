@@ -295,6 +295,13 @@ public:
     ResponseType response_type;
   };
 
+  struct SharedLogPutRequest
+  {
+    std::string key;
+    std::string value;
+    uint64_t hash;
+  };
+
 private:
   MPMCQueue<RDMAGetResponse> rdma_get_response_queue;
   uint64_t remote_rdma_cache_hits{};
