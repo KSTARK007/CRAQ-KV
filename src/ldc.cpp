@@ -369,7 +369,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             // if (thread_index == 0)
             {
               auto tail = shared_log.get_tail();
-              info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
+              // info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
               for (auto& e: remote_index_to_index)
               {
                 if (e.remote_port == 0)
@@ -398,7 +398,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     }
 
                     info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                    connection.shared_log_get_response(e.remote_index, e.remote_port, min_tail, tail, key_values);
+                    connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                     index += shared_log_batch_get_response_size;
                   }
                   else
