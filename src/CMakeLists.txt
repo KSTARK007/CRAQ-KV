@@ -182,6 +182,7 @@ add_dependency(nlohmann_json https://github.com/nlohmann/json v3.11.2 TRUE)
 add_dependency(magic_enum https://github.com/Neargye/magic_enum v0.9.3 TRUE)
 add_dependency(parallel_hashmap https://github.com/greg7mdp/parallel-hashmap v1.3.12 TRUE)
 add_dependency(concurrentqueue https://github.com/cameron314/concurrentqueue v1.0.4 TRUE)
+add_dependency(readerwriterqueue https://github.com/cameron314/readerwriterqueue v1.0.6 TRUE)
 
 set(EXPECTED_BUILD_TESTS OFF)
 add_dependency(tl_expected https://github.com/TartanLlama/expected v1.1.0 TRUE)
@@ -229,6 +230,7 @@ target_include_directories(ldc PUBLIC
     ${tl_expected_SOURCE_DIR}/include/tl
     ${capnproto_SOURCE_DIR}/c++/src/
     ${concurrentqueue_SOURCE_DIR}
+    ${readerwriterqueue_SOURCE_DIR}
     ${tlru_SOURCE_DIR}
     ${hdr_histogram_SOURCE_DIR}
 
@@ -243,6 +245,7 @@ target_link_libraries(ldc PUBLIC
     magic_enum
     phmap
     concurrentqueue
+    readerwriterqueue
     #expected
     capnp
 
