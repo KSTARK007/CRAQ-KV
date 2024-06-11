@@ -50,6 +50,17 @@ std::vector<uint64_t> client_thread_ops_executed;
 
 std::shared_ptr<Snapshot> snapshot = nullptr;
 
+// Shared log
+std::atomic<uint64_t> shared_log_consume_idx = 0;
+std::atomic<uint64_t> shared_log_server_idx = 0;
+std::atomic<uint64_t> shared_log_next_apply_idx = 0;
+auto latency_between_shared_log_get_request_ms = 1;
+std::atomic<uint64_t> num_shared_log_get_request_acked = 1;
+bool shared_log_get_request_acked = true;
+std::mutex shared_log_get_request_lock;
+std::condition_variable shared_log_get_request_cv;
+ExecutionQueue<LogEntry> shared_log_entry_queues;
+
 void exec(std::string command, bool print_output = true)
 {
   // set up file redirection
@@ -462,14 +473,6 @@ void server_worker(
   auto &server = *server_;
 
   auto has_shared_log = shared_log_config.shared_log;
-  std::atomic<uint64_t> shared_log_consume_idx = 0;
-  std::atomic<uint64_t> shared_log_server_idx = 0;
-  std::atomic<uint64_t> shared_log_next_apply_idx = 0;
-  auto latency_between_shared_log_get_request_ms = 1;
-  std::atomic<uint64_t> num_shared_log_get_request_acked = 1;
-  bool shared_log_get_request_acked = true;
-  std::mutex shared_log_get_request_lock;
-  std::condition_variable shared_log_get_request_cv;
 
   std::vector<RemoteMachineConfig> server_configs;
   for (auto i = 0; i < config.remote_machine_configs.size(); i++)
@@ -708,40 +711,44 @@ void server_worker(
         }
       });
       background_get_thread.detach();
-      for (auto j = 0; j < 4; j++)
-      {
-        std::thread background_application_thread([&]() {
-          while (!g_stop) {
-            LogEntry entry;
-            if (unprocessed_log_entries.try_dequeue(entry)) {
-              KeyValueEntry e = entry.kvp;
+      // std::thread background_application_thread([&]() {
+      //   while (!g_stop) {
+      //     LogEntry entry;
+      //     if (unprocessed_log_entries.try_dequeue(entry)) {
+      //       KeyValueEntry e = entry.kvp;
 
-              LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-              write_disk(e.key, e.value);
-              shared_log_next_apply_idx++;
-            } else {
-              // backoff to wait for entries to fill up in the queue
-              std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-          }
-        });
-        background_application_thread.detach();
-      }
+      //       LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+      //       write_disk(e.key, e.value);
+      //       shared_log_next_apply_idx++;
+      //     } else {
+      //       // backoff to wait for entries to fill up in the queue
+      //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      //     }
+      //   }
+      // });
+      // background_application_thread.detach();
     }
   }
 
-  // RotatingVector2<LogEntry, 1, 1000 * 1000> local_log_entries;
-
   while (!g_stop)
   {
-    // LogEntry entry;
-    // while (unprocessed_log_entries.try_dequeue(entry)) {
-    //   const KeyValueEntry& e = entry.kvp;
+    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128;
+    for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
+    {
+      if (auto data = shared_log_entry_queues.pull_data_from_queue(thread_index))
+      {
+        const auto& entry = *data;
+        const KeyValueEntry& e = entry.kvp;
 
-    //   LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
-    //   write_disk(e.key, e.value);
-    //   shared_log_next_apply_idx.fetch_add(1, std::memory_order::relaxed);
-    // }
+        LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+        write_disk(e.key, e.value);
+        shared_log_next_apply_idx.fetch_add(1, std::memory_order::relaxed);
+      }
+      else
+      {
+        break;
+      }
+    }
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
@@ -1161,7 +1168,8 @@ void server_worker(
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
-              unprocessed_log_entries.enqueue(entry);
+              // unprocessed_log_entries.enqueue(entry);
+              shared_log_entry_queues.send_data_to_queue(key, entry);
 
               // write_disk(key, value);
             }
@@ -1701,6 +1709,11 @@ int main(int argc, char *argv[])
     }
 
 
+  }
+
+  if (is_server)
+  {
+    shared_log_entry_queues.set_num_queues(FLAGS_threads);
   }
 
   for (auto i = 0; i < FLAGS_threads; i++)

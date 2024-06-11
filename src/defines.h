@@ -7,6 +7,7 @@
 #include <capnp/message.h>
 #include <capnp/serialize-packed.h>
 #include "concurrentqueue.h"
+#include "readerwriterqueue.h"
 #include "unordered_dense.h"
 #include <gflags/gflags.h>
 #include <nlohmann/json.hpp>
@@ -59,6 +60,15 @@ using HashMap = ankerl::unordered_dense::map<T, T2>;
 
 template <typename T>
 using MPMCQueue = moodycamel::ConcurrentQueue<T>;
+
+template <typename T>
+using SPSCQueue = moodycamel::ReaderWriterQueue<T>;
+
+template<typename T>
+using SingleProducerSingleConsumerQueue = moodycamel::ReaderWriterQueue<T>;
+
+template<typename T>
+using MultiProducerSingleConsumerQueue = moodycamel::ConcurrentQueue<T>;
 
 using json = nlohmann::json;
 
@@ -321,4 +331,145 @@ public:
 
 private:
     std::array<std::array<RotatingVectorEntry<std::optional<T>>, N>, ROWS> data;
+};
+
+template<typename T>
+struct ExecutionQueue
+{
+    void set_num_queues(std::size_t num)
+    {
+        execution_queues.resize(num);
+        num_queues = num;
+    }
+
+    std::size_t get_num_queues() const
+    {
+        return num_queues;
+    }
+
+    void send_data_to_queue(std::size_t index, T data)
+    {
+        execution_queues[index].enqueue(data);
+    }
+
+    std::optional<T> pull_data_from_queue(std::size_t index)
+    {
+        T data;
+        if (execution_queues[index].try_dequeue(data))
+        {
+            return data;
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    T pull_data_from_queue_blocking(std::size_t index)
+    {
+        while (true)
+        {
+            std::optional<T> data = pull_data_from_queue(index);
+            if (data)
+            {
+                return *data;
+            }
+            else
+            {
+                std::this_thread::yield();
+            }
+        }
+    }
+    
+    void send_data_to_queue(std::string_view key, T data)
+    {
+        auto index = hash_to_queue(key);
+        send_data_to_queue(index, data);
+    }
+
+    uint64_t hash_to_queue(std::string_view key)
+    {
+        auto queueIndex = 0;
+        constexpr uint64_t hash = 5381;
+        for (const auto& c : key) {
+            queueIndex = ((queueIndex << 5) + queueIndex) + c;
+        }
+        queueIndex %= num_queues;
+        return queueIndex;
+    }
+
+private:
+    std::size_t num_queues = 0;
+    std::vector<SingleProducerSingleConsumerQueue<T>> execution_queues;    
+};
+
+using DurIndex = uint64_t;
+
+template<typename T>
+struct DurIndexAndMessage
+{
+    DurIndex index;
+    T message;
+};
+
+constexpr auto BACKGROUND_HANDLE_MESSAGE_LIMIT = 128;
+template<typename T, std::size_t DURABILITY_MSG_QUEUE_PREALLOCATION_COLUMNS = 50, std::size_t DURABILITY_MSG_QUEUE_PREALLOCATION_ROWS = 1000>
+class DurabilityAndExecutionContext
+{
+public:
+    explicit DurabilityAndExecutionContext()
+    {
+        durable_background_consuming_thread = std::thread([&]()
+        {
+            while (!stop)
+            {
+                auto i = 0;
+                const auto message_limit = BACKGROUND_HANDLE_MESSAGE_LIMIT;
+                while (i < message_limit)
+                {
+                    const auto& [entry, valid] = message_vector.GetEntry2(message_index);
+                    if (!entry.has_value() || !valid)
+                    {
+                        break;
+                    }
+                    const auto& [index, message] = *entry;
+                    if (index != message_index)
+                    {
+                        // panic("Indices not matching - %d != %d", index, message_index);
+                    }
+                    // Handle function here
+                    // HandleRequestBg(message);
+                    message_vector.Delete(message_index);
+                    message_index += 1;
+                }
+            }
+        });
+    }
+
+    ~DurabilityAndExecutionContext()
+    {
+        stop = true;
+        durable_background_consuming_thread.join();
+    }
+
+    void durable_insert(DurIndex dur_index, T message)
+    {
+        auto dur_index_and_message = DurIndexAndMessage{dur_index, message};
+        while (!message_vector.InsertUnsafe(dur_index, dur_index_and_message))
+        {
+            // info("Message vector is full... waiting for background thread to consume messages");
+            std::this_thread::yield();
+        }
+    }
+
+private:
+    bool stop = false;
+    RotatingVector2<DurIndexAndMessage<T>, DURABILITY_MSG_QUEUE_PREALLOCATION_COLUMNS, DURABILITY_MSG_QUEUE_PREALLOCATION_ROWS> message_vector;
+    std::thread durable_background_consuming_thread;
+
+	// To keep track of where end starts, so when popping from message queue adds to this end
+	DurIndex messages_end = 0;
+
+	// Keep track of what message index are we at (keeps track of what message index to expect next)
+	DurIndex message_index = 0;
 };
