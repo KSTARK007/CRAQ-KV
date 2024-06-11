@@ -282,7 +282,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         uint64_t index = 0;
         uint64_t remaining_ask = 0;
       };
-      std::unordered_map<int, SharedLogMachineInfo> remote_index_to_index;
+      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
@@ -366,7 +366,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
             auto tail = shared_log.get_tail();
-            info("REMOTE INDEX SIZE {}", remote_index_to_index.size());
+            info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
             for (auto& [remote_index, e] : remote_index_to_index)
             // if (!remote_indices.empty())
             {
