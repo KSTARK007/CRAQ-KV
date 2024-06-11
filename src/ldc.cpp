@@ -309,51 +309,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
       while (!g_stop)
       {
-#ifdef ENABLE_STREAMING_SHARED_LOG
-        // if (thread_index == 0)
-        {
-          auto tail = shared_log.get_tail();
-          info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
-          for (auto& e: remote_index_to_index)
-          {
-            if (e.remote_port == 0)
-            {
-              continue;
-            }
-            current_remote_index++;
-            if (current_remote_index >= remote_index_to_index.size())
-            {
-              current_remote_index = 0;
-            }
-            auto& index = e.index;
-            info("SHARED_LOG GET RESPONSE {} {} {} {}", i, e.remote_port, tail, index);
-            for (auto j = 0; j < shared_log_num_batches; j++)
-            {
-              if (index + shared_log_batch_get_response_size <= tail)
-              {
-                auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-                std::vector<KeyValueEntry> key_values;
-                key_values.reserve(min_tail - index);
-                for (auto i = index; i < min_tail; i++)
-                {
-                  auto kv = shared_log.get(i);
-                  key_values.emplace_back(kv);
-                  num_get_requests.fetch_add(1, std::memory_order::relaxed);
-                }
-
-                info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                connection.shared_log_get_response(e.remote_index, e.remote_port, min_tail, tail, key_values);
-                index += shared_log_batch_get_response_size;
-              }
-              else
-              {
-                break;
-              }
-            }
-          }
-        }
-#endif
-
         connection.loop(
           [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
           {
@@ -409,6 +364,52 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               }
 #endif
             }
+
+#ifdef ENABLE_STREAMING_SHARED_LOG
+            // if (thread_index == 0)
+            {
+              auto tail = shared_log.get_tail();
+              info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
+              for (auto& e: remote_index_to_index)
+              {
+                if (e.remote_port == 0)
+                {
+                  continue;
+                }
+                current_remote_index++;
+                if (current_remote_index >= remote_index_to_index.size())
+                {
+                  current_remote_index = 0;
+                }
+                auto& index = e.index;
+                info("SHARED_LOG GET RESPONSE {} {} {} {}", i, e.remote_port, tail, index);
+                for (auto j = 0; j < shared_log_num_batches; j++)
+                {
+                  if (index + shared_log_batch_get_response_size <= tail)
+                  {
+                    auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                    std::vector<KeyValueEntry> key_values;
+                    key_values.reserve(min_tail - index);
+                    for (auto i = index; i < min_tail; i++)
+                    {
+                      auto kv = shared_log.get(i);
+                      key_values.emplace_back(kv);
+                      num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                    }
+
+                    info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
+                    connection.shared_log_get_response(e.remote_index, e.remote_port, min_tail, tail, key_values);
+                    index += shared_log_batch_get_response_size;
+                  }
+                  else
+                  {
+                    break;
+                  }
+                }
+              }
+            }
+#endif
+
           }
         );
       }
