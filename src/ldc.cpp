@@ -790,7 +790,11 @@ void server_worker(
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
-              server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              static std::atomic<uint64_t> every_time = 0;
+              if (every_time.fetch_add(1) % 2 == 0)
+              {
+                server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              }
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
