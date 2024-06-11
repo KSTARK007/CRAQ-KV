@@ -363,7 +363,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               auto hash = p.getHash();
 
               // Put this in our list of keys
-              shared_log.append(key, value);
+              // shared_log.append(key, value);
 
               auto tail = shared_log.get_tail();
               connection.shared_log_put_response(remote_index, remote_port, tail, hash);
