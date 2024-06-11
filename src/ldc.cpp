@@ -366,7 +366,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
             auto tail = shared_log.get_tail();
-            info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
+            // info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
             for (auto& [remote_index, e] : remote_index_to_index)
             // if (!remote_indices.empty())
             {
@@ -377,7 +377,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 current_remote_index = 0;
               }
               auto& index = e.index;
-              info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
+              // info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
               for (auto j = 0; j < shared_log_num_batches; j++)
               {
                 if (index + shared_log_batch_get_response_size <= tail)
@@ -1178,7 +1178,7 @@ void server_worker(
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
               shared_log_entry_queues.send_data_to_queue(key, entry);
-              info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
+              // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
               // write_disk(key, value);
             }
