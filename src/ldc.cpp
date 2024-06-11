@@ -252,6 +252,15 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
+  int num_servers = 0;
+  for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+  {
+    if (config.remote_machine_configs[i].server)
+    {
+      num_servers += 1;
+    }
+  }
+
   const auto shared_log_size = 32 * 1024 * 1024;
   SimpleSharedLog shared_log(shared_log_size);
   info("shared log worker started, {} entry shared log initialized", shared_log_size);
@@ -281,9 +290,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
         uint64_t index = 0;
         uint64_t remaining_ask = 0;
+        uint64_t remote_port = 0;
       };
-      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
-      std::vector<int> remote_indices;
+      std::vector<SharedLogMachineInfo> remote_index_to_index(num_servers);
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
       auto shared_log_batch_get_response_size = 16;
@@ -302,12 +311,14 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 #ifdef ENABLE_STREAMING_SHARED_LOG
         auto tail = shared_log.get_tail();
         info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
-        for (auto& [remote_index, e] : remote_index_to_index)
-        // if (!remote_indices.empty())
+        for (auto& e: remote_index_to_index)
         {
-          // auto& e = remote_index_to_index[remote_indices[current_remote_index]];
+          if (e.remote_port == 0)
+          {
+            continue;
+          }
           current_remote_index++;
-          if (current_remote_index >= remote_indices.size())
+          if (current_remote_index >= remote_index_to_index.size())
           {
             current_remote_index = 0;
           }
@@ -362,20 +373,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               uint64_t index = p.getIndex();
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
-              if (auto found = remote_index_to_index.find(remote_index); found != std::end(remote_index_to_index))
-              {
-                auto& e = found->second;
-                e.index = std::max(index, e.index);
-                e.remaining_ask = shared_log_batch_get_response_size;
-              }
-              else
-              {
-                auto e = SharedLogMachineInfo{};
-                e.index = index;
-                e.remaining_ask = shared_log_batch_get_response_size;
-                remote_index_to_index.emplace(remote_index, e);
-                remote_indices.emplace_back(remote_index);
-              }
+              auto& e = remote_index_to_index[remote_index];
+              e.index = std::max(index, e.index);
+              e.remaining_ask = shared_log_batch_get_response_size;
+              e.remote_port = remote_port;
 #else
               // Respond with all entries
               auto tail = shared_log.get_tail();
