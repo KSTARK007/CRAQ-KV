@@ -355,6 +355,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                 connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                 index += shared_log_batch_get_response_size;
+                info("SHARED_LOG GET RESPONSE", min_tail, tail, key_values.size());
                 if (index + shared_log_batch_get_response_size > tail)
                 {
                   break;
