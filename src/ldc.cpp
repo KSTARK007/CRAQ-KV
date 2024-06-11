@@ -1170,6 +1170,7 @@ void server_worker(
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
               shared_log_entry_queues.send_data_to_queue(key, entry);
+              info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
               // write_disk(key, value);
             }
