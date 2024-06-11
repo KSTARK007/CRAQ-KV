@@ -366,6 +366,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
             auto tail = shared_log.get_tail();
+            info("REMOTE INDEX SIZE {}", remote_index_to_index.size());
             for (auto& [remote_index, e] : remote_index_to_index)
             // if (!remote_indices.empty())
             {
