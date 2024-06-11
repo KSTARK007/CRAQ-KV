@@ -685,19 +685,15 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index <= 5 && machine_index != server_start_index) {
+    if (thread_index == 0 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
-      std::thread background_get_thread([&]() {
+      static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         auto last = std::chrono::high_resolution_clock::now();
         while (!g_stop) {
           auto now = std::chrono::high_resolution_clock::now();
           auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
-#ifdef ENABLE_STREAMING_SHARED_LOG
-          if (shared_log_get_request_acked) {
-#else
           if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
-#endif
             last = now;
             if (now > print_time) {
               info("consumed entries from shared log: {}, applied entries from shared log: {} Server index: {}",
