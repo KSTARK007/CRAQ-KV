@@ -290,6 +290,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
         uint64_t index = 0;
         uint64_t remaining_ask = 0;
+        uint64_t remote_index = 0;
         uint64_t remote_port = 0;
       };
       std::vector<SharedLogMachineInfo> remote_index_to_index(num_servers);
@@ -323,7 +324,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             current_remote_index = 0;
           }
           auto& index = e.index;
-          info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
+          info("SHARED_LOG GET RESPONSE {} {} {} {}", i, e.remote_port, tail, index);
           for (auto j = 0; j < shared_log_num_batches; j++)
           {
             if (index + shared_log_batch_get_response_size <= tail)
@@ -339,7 +340,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               }
 
               info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-              connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
+              connection.shared_log_get_response(e.remote_index, e.remote_port, min_tail, tail, key_values);
               index += shared_log_batch_get_response_size;
             }
             else
@@ -376,6 +377,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               auto& e = remote_index_to_index[remote_index];
               e.index = std::max(index, e.index);
               e.remaining_ask = shared_log_batch_get_response_size;
+              e.remote_index = remote_index;
               e.remote_port = remote_port;
 #else
               // Respond with all entries
