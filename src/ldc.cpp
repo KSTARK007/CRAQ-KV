@@ -310,7 +310,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       while (!g_stop)
       {
 #ifdef ENABLE_STREAMING_SHARED_LOG
-        if (thread_index == 0)
+        // if (thread_index == 0)
         {
           auto tail = shared_log.get_tail();
           info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
@@ -1154,10 +1154,16 @@ void server_worker(
           else if (data.isSharedLogGetResponse())
           {
             auto p = data.getSharedLogGetResponse();
+            auto entries = p.getE();
             auto old_shared_log_consume_idx = shared_log_consume_idx.load(std::memory_order_relaxed);
             shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
             shared_log_server_idx.store(p.getLogIndex(), std::memory_order_relaxed);
-            auto entries = p.getE();
+
+            auto start_index 0;
+            if (old_shared_log_consume_idx > p.getIndex())
+            {
+              start_index = old_shared_log_consume_idx - p.getIndex();
+            }
 
             // Set the shared log entries to be put in our db
             for (uint64_t idx = 0; idx < entries.size(); idx++) {
