@@ -376,6 +376,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 current_remote_index = 0;
               }
               auto& index = e.index;
+              info("SHARED_LOG GET RESPONSE {} {} {}", remote_index, tail, index);
               for (auto j = 0; j < shared_log_num_batches; j++)
               {
                 if (index + shared_log_batch_get_response_size <= tail)
@@ -390,8 +391,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     num_get_requests.fetch_add(1, std::memory_order::relaxed);
                   }
 
-                  info("SHARED_LOG GET RESPONSE {} {} {}", min_tail, tail, key_values.size());
-                  info("Sending {} {} | {}", index, tail, key_values.size());
+                  info("Sending {} {} {} | {}", min_tail, index, tail, key_values.size());
                   connection.shared_log_get_response(remote_index, remote_port, min_tail, tail, key_values);
                   index += shared_log_batch_get_response_size;
                 }
