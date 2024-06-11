@@ -1159,7 +1159,7 @@ void server_worker(
             shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
             shared_log_server_idx.store(p.getLogIndex(), std::memory_order_relaxed);
 
-            auto start_index 0;
+            auto start_index = 0;
             if (old_shared_log_consume_idx > p.getIndex())
             {
               start_index = old_shared_log_consume_idx - p.getIndex();
