@@ -756,7 +756,7 @@ void server_worker(
   }
 
   uint64_t shared_log_put_request_index = 0;
-  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 8;
+  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 4;
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
   std::atomic<uint64_t> every_time = 0;
@@ -778,6 +778,11 @@ void server_worker(
       {
         break;
       }
+    }
+    if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
+    {
+      shared_log_put_request_index = 0;
+      server.shared_log_put_request(shared_log_config.index, shared_config_port, shared_log_put_request_entries);
     }
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
@@ -813,11 +818,6 @@ void server_worker(
 #endif
               SharedLogPutRequestEntry e{key, value, hash};
               shared_log_put_request_entries[shared_log_put_request_index++] = e;
-              if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
-              {
-                shared_log_put_request_index = 0;
-                server.shared_log_put_request(shared_log_config.index, shared_config_port, shared_log_put_request_entries);
-              }
               write_disk(key_cstr, value_cstr);
 
               // Send to other server nodes (to cache)
