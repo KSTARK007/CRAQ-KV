@@ -805,7 +805,13 @@ void server_worker(
 
               // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
               server.put_response(remote_index, remote_port, ResponseType::OK);
-              SharedLogPutRequestEntry e{std::string(key_cstr), std::string(value_cstr), hash};
+              auto key = std::string(key_cstr);
+#ifdef COMPRESS_SHARED_LOG
+              auto value = "";
+#else
+              auto value = std::string(value_cstr);
+#endif
+              SharedLogPutRequestEntry e{key, value, hash};
               shared_log_put_request_entries[shared_log_put_request_index++] = e;
               if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
               {
