@@ -304,7 +304,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 #endif
 
 #if defined(ENABLE_STREAMING_SHARED_LOG) && defined(COMPRESS_SHARED_LOG)
-      shared_log_num_batches = 4 * 4;
+      shared_log_num_batches = 4 * 8;
       shared_log_batch_get_response_size = 16 * 11;
 #endif
 
@@ -756,7 +756,7 @@ void server_worker(
   }
 
   uint64_t shared_log_put_request_index = 0;
-  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 6;
+  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 8;
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
   std::atomic<uint64_t> every_time = 0;
