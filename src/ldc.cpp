@@ -804,6 +804,7 @@ void server_worker(
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
 
               // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              server.put_response(remote_index, remote_port, ResponseType::OK);
               SharedLogPutRequestEntry e{std::string(key_cstr), std::string(value_cstr), hash};
               shared_log_put_request_entries[shared_log_put_request_index++] = e;
               if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
@@ -812,7 +813,6 @@ void server_worker(
                 server.shared_log_put_request(shared_log_config.index, shared_config_port, shared_log_put_request_entries);
               }
               write_disk(key_cstr, value_cstr);
-              server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
               if (ops_config.writes_linearizable)
