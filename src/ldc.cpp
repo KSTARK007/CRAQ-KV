@@ -762,7 +762,7 @@ void server_worker(
   std::atomic<uint64_t> every_time = 0;
   while (!g_stop)
   {
-    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 8;
+    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 4;
     for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
     {
       if (auto data = shared_log_entry_queues.pull_data_from_queue(thread_index))
