@@ -779,6 +779,7 @@ void server_worker(
         break;
       }
     }
+    auto shared_config_port = shared_log_config.port + thread_index;
     if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
     {
       shared_log_put_request_index = 0;
@@ -805,7 +806,6 @@ void server_worker(
               write_response.remote_port = remote_port;
 
               // Send to shared log
-              auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
 
               // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
