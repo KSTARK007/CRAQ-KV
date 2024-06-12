@@ -601,7 +601,11 @@ void Connection::shared_log_put_request(int index, int port, std::vector<SharedL
     const auto& e = entries[i];
 
     shared_log_entry.setKey(e.key);
+#ifdef COMPRESS_SHARED_LOG
+    shared_log_entry.setValue("");
+#else
     shared_log_entry.setValue(e.value);
+#endif
     shared_log_entry.setHash(e.hash);
   }
   auto m = capnp::messageToFlatArray(message);
