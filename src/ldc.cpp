@@ -762,7 +762,7 @@ void server_worker(
   std::atomic<uint64_t> every_time = 0;
   while (!g_stop)
   {
-    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 16;
+    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 8;
     // for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
     while (true)
     {
