@@ -756,7 +756,11 @@ void server_worker(
   }
 
   uint64_t shared_log_put_request_index = 0;
+#ifdef COMPRESS_SHARED_LOG
   constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 12;
+#else
+  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 16 * 6;
+#endif
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
   std::atomic<uint64_t> every_time = 0;
