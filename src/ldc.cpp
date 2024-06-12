@@ -303,10 +303,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       shared_log_batch_get_response_size = 16 * 3;
 #endif
 
-// #ifdef COMPRESS_SHARED_LOG
-//       shared_log_num_batches = 1;
-//       shared_log_batch_get_response_size = 64 * 2;
-// #endif
+#if defined(ENABLE_STREAMING_SHARED_LOG) && defined(COMPRESS_SHARED_LOG)
+      shared_log_num_batches = 4;
+      shared_log_batch_get_response_size = 64 * 2;
+#endif
 
       while (!g_stop)
       {
