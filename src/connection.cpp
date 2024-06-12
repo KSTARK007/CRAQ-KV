@@ -577,14 +577,33 @@ void Connection::shared_log_forward_response(int index, int port, ResponseType r
 
 void Connection::shared_log_put_request(int index, int port, std::string_view key, std::string_view value, uint64_t hash)
 {
+  SharedLogPutRequestEntry e{std::string(key), std::string(value), hash};
+  shared_log_put_request(index, port, {e});
+}
+
+void Connection::shared_log_put_response(int index, int port, uint64_t shared_log_index, uint64_t hash)
+{
+  SharedLogPutResponseEntry e{shared_log_index, hash};
+  shared_log_put_response(index, port, {e});
+}
+
+void Connection::shared_log_put_request(int index, int port, std::vector<SharedLogPutRequestEntry> entries)
+{
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
   SharedLogPutRequest::Builder request = data.initSharedLogPutRequest();
-  request.setKey(std::string(key));
-  request.setValue(std::string(value));
-  request.setHash(hash);
+  ::capnp::List<SharedLogPutRequestE>::Builder shared_log_entries = request.initE(entries.size());
+  for (auto i = 0; i < entries.size(); i++)
+  {
+    SharedLogPutRequestE::Builder shared_log_entry = shared_log_entries[i];
+    const auto& e = entries[i];
+
+    shared_log_entry.setKey(e.key);
+    shared_log_entry.setValue(e.value);
+    shared_log_entry.setHash(e.hash);
+  }
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
@@ -594,19 +613,26 @@ void Connection::shared_log_put_request(int index, int port, std::string_view ke
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::shared_log_put_response(int index, int port, uint64_t shared_log_index, uint64_t hash)
+void Connection::shared_log_put_response(int index, int port, std::vector<SharedLogPutResponseEntry> entries)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
   SharedLogPutResponse::Builder request = data.initSharedLogPutResponse();
-  request.setIndex(shared_log_index);
-  request.setHash(hash);
+  ::capnp::List<SharedLogPutResponseE>::Builder shared_log_entries = request.initE(entries.size());
+  for (auto i = 0; i < entries.size(); i++)
+  {
+    SharedLogPutResponseE::Builder shared_log_entry = shared_log_entries[i];
+    const auto& e = entries[i];
+
+    shared_log_entry.setIndex(e.index);
+    shared_log_entry.setHash(e.hash);
+  }
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  LOG_STATE("[{}-{}] SharedLogPutResponse [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] SharedLogPutRequest [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 

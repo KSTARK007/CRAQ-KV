@@ -76,15 +76,23 @@ struct SharedLogForwardResponse {
   hash @1 :UInt64;
 }
 
-struct SharedLogPutRequest {
+struct SharedLogPutRequestE {
   key @0 :Text;
   value @1 : Text;
   hash @2 :UInt64;
 }
 
-struct SharedLogPutResponse {
+struct SharedLogPutRequest {
+  e @0: List(SharedLogPutRequestE);
+}
+
+struct SharedLogPutResponseE {
   index @0 :UInt64;
   hash @1 :UInt64;
+}
+
+struct SharedLogPutResponse {
+  e @0: List(SharedLogPutResponseE);
 }
 
 struct SharedLogEntry {

@@ -358,16 +358,25 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             if (data.isSharedLogPutRequest())
             {
               auto p = data.getSharedLogPutRequest();
-              std::string_view key = p.getKey().cStr();
-              std::string_view value = p.getValue().cStr();
-              auto hash = p.getHash();
-
-              // Put this in our list of keys
-              shared_log.append(key, value);
+              auto entries = p.getE();
 
               auto tail = shared_log.get_tail();
-              connection.shared_log_put_response(remote_index, remote_port, tail, hash);
-              num_put_requests.fetch_add(1, std::memory_order::relaxed);
+              std::vector<SharedLogPutResponseEntry> shared_log_put_response_entries(entries.size());
+              for (uint64_t idx = 0; idx < entries.size(); idx++)
+              {
+                const auto& e = entries[idx];
+                std::string_view key = e.getKey().cStr();
+                std::string_view value = e.getValue().cStr();
+                auto hash = e.getHash();
+  
+                // Put this in our list of keys
+                shared_log.append(key, value);
+                shared_log_put_response_entries[idx] = SharedLogPutResponseEntry{tail + idx, hash};
+
+                num_put_requests.fetch_add(1, std::memory_order::relaxed);
+              }
+
+              connection.shared_log_put_response(remote_index, remote_port, shared_log_put_response_entries);
             }
             else if (data.isSharedLogGetRequest())
             {
@@ -746,6 +755,10 @@ void server_worker(
     }
   }
 
+  uint64_t shared_log_put_request_index = 0;
+  constexpr auto SHARED_LOG_PUT_REQUEST_ENTRIES = 8;
+  std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
+
   std::atomic<uint64_t> every_time = 0;
   while (!g_stop)
   {
@@ -789,11 +802,17 @@ void server_worker(
               // Send to shared log
               auto shared_config_port = shared_log_config.port + thread_index;
               LOG_STATE("[PutRequest - shared_log_put_request] Shared log hash {} remote_index {} remote_port {} -> {} {}", hash, remote_index, remote_port, shared_log_config.index, shared_config_port);
-              // if (every_time.fetch_add(1) % 32 == 0)
+
+              // server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+              SharedLogPutRequestEntry e{std::string(key_cstr), std::string(value_cstr), hash};
+              shared_log_put_request_entries[shared_log_put_request_index++] = e;
+              if (shared_log_put_request_index == SHARED_LOG_PUT_REQUEST_ENTRIES)
               {
-                server.shared_log_put_request(shared_log_config.index, shared_config_port, key_cstr, value_cstr, hash);
+                shared_log_put_request_index = 0;
+                server.shared_log_put_request(shared_log_config.index, shared_config_port, shared_log_put_request_entries);
               }
-              // server.put_response(remote_index, remote_port, ResponseType::OK);
+
+              server.put_response(remote_index, remote_port, ResponseType::OK);
 
               // Send to other server nodes (to cache)
               if (ops_config.writes_linearizable)
@@ -1129,12 +1148,16 @@ void server_worker(
           else if (data.isSharedLogPutResponse())
           {
             auto p = data.getSharedLogPutResponse();
-            auto index = p.getIndex();
-            auto hash = p.getHash();
-            auto& write_response = hash_to_write_response[hash];
-            LOG_STATE("[SharedLogPutResponse] Got response for {} [{} + 1]", hash, write_response.shared_log_responses);
+            auto entries = p.getE();
+            for (const auto& e : entries)
+            {
+              auto index = e.getIndex();
+              auto hash = e.getHash();
+              auto& write_response = hash_to_write_response[hash];
+              LOG_STATE("[SharedLogPutResponse] Got response for {} [{} + 1]", hash, write_response.shared_log_responses);
 
-            write_response.shared_log_responses++;
+              write_response.shared_log_responses++;
+            }
           }
           // else if (data.isSharedLogPutRequest())
           // {
