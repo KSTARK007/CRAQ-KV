@@ -763,8 +763,8 @@ void server_worker(
   while (!g_stop)
   {
     constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 32;
-    // for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
-    while (true)
+    for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
+    // while (true)
     {
       if (auto data = shared_log_entry_queues.pull_data_from_queue(thread_index))
       {
