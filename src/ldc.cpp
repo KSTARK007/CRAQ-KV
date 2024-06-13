@@ -768,7 +768,7 @@ void server_worker(
 #endif
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
-  for (auto j = 0; j < FLAGS_threads; j++)
+  // for (auto j = 0; j < FLAGS_threads; j++)
   {
     std::thread t([&, thread_index=thread_index]()
     {
