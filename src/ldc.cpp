@@ -732,7 +732,7 @@ void server_worker(
             }
             servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
               shared_log_consume_idx);
-            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+            // server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
             shared_log_get_request_acked = false;
             num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
           }
