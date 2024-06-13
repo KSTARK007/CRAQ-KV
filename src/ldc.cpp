@@ -248,6 +248,15 @@ struct AppendSharedLogGetRequest
   std::vector<KeyValueEntry> entries;
 };
 
+template<typename T>
+void update_maximum(std::atomic<T>& maximum_value, T const& value) noexcept
+{
+    T prev_value = maximum_value;
+    while (prev_value < value &&
+            !maximum_value.compare_exchange_weak(prev_value, value))
+        {}
+}
+
 void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 {
   const auto& remote_machine_configs = config.remote_machine_configs;
@@ -293,7 +302,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   struct SharedLogMachineInfo
   {
     std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
-    uint64_t index = 0;
+    std::atomic<uint64_t> index = 0;
     uint64_t remaining_ask = 0;
     uint64_t remote_port = 0;
     std::mutex m;
@@ -365,9 +374,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               {
                 continue;
               }
-              auto& index = e.index;
-              std::unique_lock<std::mutex> l(e.m, std::defer_lock);
-              if (l.try_lock())
+              auto index = e.index.load();
+              // std::unique_lock<std::mutex> l(e.m, std::defer_lock);
+              // if (l.try_lock())
               {
                 // info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
                 auto tail = shared_log.get_tail();
@@ -394,6 +403,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
+                    update_maximum(e.index, index);
                   }
                   else
                   {
@@ -439,8 +449,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               auto& e = machine_to_shared_log_info[remote_index];
 
               {
-                std::lock_guard<std::mutex> l(e.m);
-                e.index = std::max(index, e.index);
+                // std::lock_guard<std::mutex> l(e.m);
+                update_maximum(e.index, index);
               }
               e.remaining_ask = shared_log_batch_get_response_size;
               e.remote_port = remote_port;
