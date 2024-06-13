@@ -357,7 +357,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             break;
           }
         }
-            auto tail = shared_log.get_tail();
             // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
             for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
             {
@@ -371,6 +370,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               if (l.try_lock())
               {
                 // info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
+                auto tail = shared_log.get_tail();
                 for (auto j = 0; j < shared_log_num_batches; j++)
                 {
                   if (index + shared_log_batch_get_response_size <= tail)
