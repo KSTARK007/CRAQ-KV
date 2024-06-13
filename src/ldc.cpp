@@ -721,10 +721,9 @@ void server_worker(
           auto now = std::chrono::high_resolution_clock::now();
           auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
 #ifdef ENABLE_STREAMING_SHARED_LOG
-//           if (shared_log_get_request_acked) {
-// #else
+          if (shared_log_get_request_acked) {
+#else
           // if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
-          if (elapsed > 100) {
 #endif
             last = now;
             if (now > print_time) {
