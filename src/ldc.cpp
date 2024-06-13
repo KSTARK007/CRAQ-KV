@@ -1210,7 +1210,7 @@ void server_worker(
             }
 
             // Set the shared log entries to be put in our db
-            for (uint64_t idx = start_index; idx < entries.size(); idx++) {
+            for (uint64_t idx = start_index; idx < 0; idx++) {
               const auto& e = entries[idx];
 
               std::string_view key = e.getKey().cStr();
