@@ -275,20 +275,14 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     int thread_index = i;
     std::thread t([&, i, thread_index]()
     {
-      int server_start_port = 0;
       auto connection = Connection(config, ops_config, machine_index, thread_index);
       connection.listen();
       for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
         const auto& remote_machine_config = remote_machine_configs[i]; 
         const auto& ip = remote_machine_config.ip;
-        const auto& port = remote_machine_config.port;
         if (remote_machine_config.server)
         {
-          if (server_start_port != 0)
-          {
-            server_start_port = port;
-          }
           connection.connect_to_remote_machine(i);
         }
       }
@@ -306,7 +300,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
       auto shared_log_batch_get_response_size = 16;
-      auto to_port = 0;
 #ifdef ENABLE_STREAMING_SHARED_LOG
       shared_log_num_batches = 4;
       shared_log_batch_get_response_size = 16 * 3;
@@ -348,7 +341,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  auto remote_port = server_start_port + (to_port++ % FLAGS_threads);
                   connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                   // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
@@ -616,7 +608,7 @@ void server_worker(
   static const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
   auto cache = block_cache->get_cache();
   auto db = block_cache->get_db();
-  static MPMCQueue<EvictionCallbackData<std::string, std::string>> dirty_entries;
+  static MPMC<EvictionCallbackData<std::string, std::string>> dirty_entries;
 
   if (thread_index == 0)
   {
@@ -738,8 +730,8 @@ void server_worker(
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
-            // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
-            //   shared_log_consume_idx);
+            servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
+              shared_log_consume_idx);
             server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
             shared_log_get_request_acked = false;
             num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
