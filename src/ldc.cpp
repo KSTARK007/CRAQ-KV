@@ -60,6 +60,7 @@ bool shared_log_get_request_acked = true;
 std::mutex shared_log_get_request_lock;
 std::condition_variable shared_log_get_request_cv;
 ExecutionQueue<LogEntry> shared_log_entry_queues;
+std::atomic<uint64_t> shared_log_entry_queue_index = 0;
 
 std::vector<std::shared_ptr<Server>> servers;
 
@@ -343,7 +344,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
                   // auto next_index = (start++ % (FLAGS_threads - 1)) + 1;
-                  auto next_index = 0;
+                  auto next_index = 1;
                   connection.shared_log_get_response(remote_index, e.remote_port + next_index, min_tail, tail, key_values);
                   // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                   // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
@@ -801,7 +802,6 @@ void server_worker(
     t.detach();
   }
 
-  std::atomic<uint64_t> shared_log_entry_queue_index = 0;
   while (!g_stop)
   {
     auto shared_config_port = shared_log_config.port + thread_index;
