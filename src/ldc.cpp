@@ -723,7 +723,8 @@ void server_worker(
 #ifdef ENABLE_STREAMING_SHARED_LOG
 //           if (shared_log_get_request_acked) {
 // #else
-          if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
+          // if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
+          if (elapsed > 1)
 #endif
             last = now;
             if (now > print_time) {
