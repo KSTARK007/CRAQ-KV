@@ -327,7 +327,14 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         {
           if (auto data = append_shared_log_get_request_queues.pull_data_from_queue(thread_index))
           {
-            connection.shared_log_get_response(remote_index, server_base_port + i, min_tail, tail, key_values);
+            const auto& request = *data;
+            const auto& index = request.index;
+            const auto& port = request.port;
+            const auto& shared_log_index = request.shared_log_index;
+            const auto& server_shared_log_index = request.server_shared_log_index;
+            const auto& entries = request.entries;
+            
+            connection.shared_log_get_response(index, port, shared_log_index, server_shared_log_index, entries);
           }
           else
           {
