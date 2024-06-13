@@ -769,6 +769,7 @@ void server_worker(
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
   // for (auto j = 0; j < FLAGS_threads; j++)
+  if (0)
   {
     std::thread t([&, thread_index=thread_index]()
     {
@@ -806,6 +807,24 @@ void server_worker(
     {
       shared_log_put_request_index = 0;
       server.shared_log_put_request(shared_log_config.index, shared_config_port, shared_log_put_request_entries);
+    }
+    constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 32;
+    // for (auto j = 0; j < REPLY_EXECUTION_LIMIT; j++)
+    while (true)
+    {
+      if (auto data = shared_log_entry_queues.pull_data_from_queue(thread_index))
+      {
+        const auto& entry = *data;
+        const KeyValueEntry& e = entry.kvp;
+
+        LOG_STATE("Putting entry {} {} at index {}", e.key, e.value, entry.index);
+        write_disk(e.key, e.value);
+        shared_log_next_apply_idx.fetch_add(1, std::memory_order::relaxed);
+      }
+      else
+      {
+        break;
+      }
     }
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
