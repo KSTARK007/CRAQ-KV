@@ -269,7 +269,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   info("shared log worker started, {} entry shared log initialized", shared_log_size);
   std::vector<std::thread> ts;
   std::atomic<uint64_t> num_get_requests = 0, num_put_requests = 0;
-  SPSCQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queue;
+  // SPSCQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queue;
+  ExecutionQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queues;
+  append_shared_log_get_request_queues.set_num_queues(FLAGS_threads);
 
   for (auto i = 0; i < FLAGS_threads; i++)
   {
@@ -278,12 +280,18 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     {
       auto connection = Connection(config, ops_config, machine_index, thread_index);
       connection.listen();
+      auto server_base_port = 0;
       for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
         const auto& remote_machine_config = remote_machine_configs[i]; 
         const auto& ip = remote_machine_config.ip;
+        const auto& port = remote_machine_config.port;
         if (remote_machine_config.server)
         {
+          if (!server_base_port)
+          {
+            server_base_port = port;
+          }
           connection.connect_to_remote_machine(i);
         }
       }
@@ -315,6 +323,17 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       while (!g_stop)
       {
 #ifdef ENABLE_STREAMING_SHARED_LOG
+        while (true)
+        {
+          if (auto data = append_shared_log_get_request_queues.pull_data_from_queue(thread_index))
+          {
+            connection.shared_log_get_response(remote_index, server_base_port + i, min_tail, tail, key_values);
+          }
+          else
+          {
+            break;
+          }
+        }
             auto tail = shared_log.get_tail();
             // info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
             for (auto& [remote_index, e] : remote_index_to_index)
@@ -343,12 +362,12 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  // auto next_index = (start++ % (FLAGS_threads - 1)) + 1;
-                  auto next_index = 1;
-                  connection.shared_log_get_response(remote_index, e.remote_port + next_index, min_tail, tail, key_values);
+                  auto next_index = (start++ % (FLAGS_threads - 1)) + 1;
+                  // auto next_index = 1;
+                  // connection.shared_log_get_response(remote_index, e.remote_port + next_index, min_tail, tail, key_values);
                   // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
-                  // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
-                  // append_shared_log_get_request_queue.enqueue(request)
+                  AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                  append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                   index = min_tail;
                 }
                 else
