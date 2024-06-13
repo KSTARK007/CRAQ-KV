@@ -613,9 +613,9 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty || config.policy_type == "thread_safe_lru")
       {
-        dirty_entries.enqueue(data);
+        // dirty_entries.enqueue(data);
       }
-    });    
+    });
   }
 
   auto flush_dirty = [&]()
