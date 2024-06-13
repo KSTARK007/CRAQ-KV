@@ -730,7 +730,7 @@ void server_worker(
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
-            servers[server_running_index++ % servers.size()].append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
+            servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
               shared_log_consume_idx);
             shared_log_get_request_acked = false;
             num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
