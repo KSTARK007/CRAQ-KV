@@ -608,7 +608,7 @@ void server_worker(
   auto db = block_cache->get_db();
   static moodycamel::ConcurrentQueue<EvictionCallbackData<std::string, std::string>> dirty_entries;
 
-  if (thread_index == 0)
+  if (thread_index == 0 && client_index_per_thread == 0)
   {
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty || config.policy_type == "thread_safe_lru")
@@ -620,7 +620,7 @@ void server_worker(
 
   auto flush_dirty = [&]()
   {
-    if (thread_index == 0)
+    // if (thread_index == 0 && client_index_per_thread == 0)
     {
       EvictionCallbackData<std::string, std::string> e;
       while (dirty_entries.try_dequeue(e))
