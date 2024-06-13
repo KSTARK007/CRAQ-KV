@@ -342,8 +342,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  // connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
-                  connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                  connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
+                  // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                   // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
                   index = min_tail;
@@ -1232,11 +1232,11 @@ void server_worker(
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
-              auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
-              shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
+              // auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+              // shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
               // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
-              // write_disk(key, value);
+              write_disk(key, value);
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
