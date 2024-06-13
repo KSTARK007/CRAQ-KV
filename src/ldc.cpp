@@ -608,7 +608,7 @@ void server_worker(
   static const auto selective_write_around_hash = std::hash<std::string>{}("selective_write_around");
   auto cache = block_cache->get_cache();
   auto db = block_cache->get_db();
-  static MPMC<EvictionCallbackData<std::string, std::string>> dirty_entries;
+  static MPMCQueue<EvictionCallbackData<std::string, std::string>> dirty_entries;
 
   if (thread_index == 0)
   {
