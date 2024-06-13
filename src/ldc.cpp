@@ -310,6 +310,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   };
 
   std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
+  std::atomic<uint64_t> responder_index = 0;
 
   for (auto i = 0; i < FLAGS_threads; i++)
   {
@@ -366,6 +367,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             break;
           }
         }
+
+        auto responder_i = responder_index.load() % FLAGS_threads;
+        if (responder_i == thread_index)
+        {
             // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
             for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
             {
@@ -413,6 +418,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                 }
               }
             }
+            responder_index.fetch_add(1);
+        }
 #endif
 
         connection.loop(
