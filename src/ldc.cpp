@@ -342,8 +342,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
-                  // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
+                  // connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
+                  AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
                   index = min_tail;
                 }
@@ -731,8 +731,8 @@ void server_worker(
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
-            // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
-            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+            servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+            // server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
             shared_log_get_request_acked = false;
             num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
           }
