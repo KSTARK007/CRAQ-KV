@@ -723,6 +723,8 @@ void server_worker(
           auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
 #ifdef ENABLE_STREAMING_SHARED_LOG
           if (shared_log_get_request_acked) {
+            shared_log_get_request_acked = false;
+            num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
 #else
           // if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
 #endif
@@ -734,8 +736,6 @@ void server_worker(
             }
             // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
             server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
-            shared_log_get_request_acked = false;
-            num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
           }
           // std::this_thread::sleep_for(100us);
         }
