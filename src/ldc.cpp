@@ -264,6 +264,23 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
+  auto server_base_port = 0;
+  auto num_servers = 0;
+  for (auto i = 0; i < remote_machine_configs.size(); i++)
+  {
+    const auto& remote_machine_config = remote_machine_configs[i]; 
+    const auto& ip = remote_machine_config.ip;
+    const auto& port = remote_machine_config.port;
+    if (remote_machine_config.server)
+    {
+      if (!server_base_port)
+      {
+        server_base_port = port;
+      }
+      num_servers++;
+    }
+  }
+
   const auto shared_log_size = 128 * 1024 * 1024;
   SimpleSharedLog shared_log(shared_log_size);
   info("shared log worker started, {} entry shared log initialized", shared_log_size);
@@ -273,6 +290,17 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   ExecutionQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queues;
   append_shared_log_get_request_queues.set_num_queues(FLAGS_threads);
 
+  struct SharedLogMachineInfo
+  {
+    std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
+    uint64_t index = 0;
+    uint64_t remaining_ask = 0;
+    uint64_t remote_port = 0;
+    std::mutex m;
+  };
+
+  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(num_servers);
+
   for (auto i = 0; i < FLAGS_threads; i++)
   {
     int thread_index = i;
@@ -280,7 +308,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     {
       auto connection = Connection(config, ops_config, machine_index, thread_index);
       connection.listen();
-      auto server_base_port = 0;
       for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
         const auto& remote_machine_config = remote_machine_configs[i]; 
@@ -288,23 +315,11 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         const auto& port = remote_machine_config.port;
         if (remote_machine_config.server)
         {
-          if (!server_base_port)
-          {
-            server_base_port = port;
-          }
           connection.connect_to_remote_machine(i);
         }
       }
 
       auto start_time = std::chrono::high_resolution_clock::now();
-      struct SharedLogMachineInfo
-      {
-        std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
-        uint64_t index = 0;
-        uint64_t remaining_ask = 0;
-        uint64_t remote_port = 0;
-      };
-      HashMap<int, SharedLogMachineInfo> remote_index_to_index;
       std::vector<int> remote_indices;
       auto current_remote_index = 0;
       auto shared_log_num_batches = 1;
@@ -342,44 +357,47 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           }
         }
             auto tail = shared_log.get_tail();
-            // info("REMOTE INDEX SIZE {} {}", i, remote_index_to_index.size());
-            for (auto& [remote_index, e] : remote_index_to_index)
-            // if (!remote_indices.empty())
+            // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
+            for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
             {
-              // auto& e = remote_index_to_index[remote_indices[current_remote_index]];
-              current_remote_index++;
-              if (current_remote_index >= remote_indices.size())
+              if (i != 0)
               {
-                current_remote_index = 0;
+                continue;
               }
+              auto& e = machine_to_shared_log_info[i];
               auto& index = e.index;
-              // info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
-              for (auto j = 0; j < shared_log_num_batches; j++)
+              std::unique_lock<std::mutex> l(e.m, std::defer_lock);
+              if (l.try_lock())
               {
-                if (index + shared_log_batch_get_response_size <= tail)
+                // info("SHARED_LOG GET RESPONSE {} {} {} {}", i, remote_index, tail, index);
+                for (auto j = 0; j < shared_log_num_batches; j++)
                 {
-                  auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
-                  std::vector<KeyValueEntry> key_values;
-                  key_values.reserve(min_tail - index);
-                  for (auto i = index; i < min_tail; i++)
+                  if (index + shared_log_batch_get_response_size <= tail)
                   {
-                    auto kv = shared_log.get(i);
-                    key_values.emplace_back(kv);
-                    num_get_requests.fetch_add(1, std::memory_order::relaxed);
-                  }
+                    auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                    std::vector<KeyValueEntry> key_values;
+                    key_values.reserve(min_tail - index);
+                    for (auto i = index; i < min_tail; i++)
+                    {
+                      auto kv = shared_log.get(i);
+                      key_values.emplace_back(kv);
+                      num_get_requests.fetch_add(1, std::memory_order::relaxed);
+                    }
 
-                  // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  auto next_index = (start++ % (FLAGS_threads - 1)) + 1;
-                  // auto next_index = 1;
-                  // connection.shared_log_get_response(remote_index, e.remote_port + next_index, min_tail, tail, key_values);
-                  connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
-                  // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                  // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
-                  index = min_tail;
-                }
-                else
-                {
-                  break;
+                    // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
+                    auto next_index = (start++ % (FLAGS_threads - 1)) + 1;
+                    auto remote_index = i;
+                    // auto next_index = 1;
+                    // connection.shared_log_get_response(remote_index, e.remote_port + next_index, min_tail, tail, key_values);
+                    // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                    AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                    append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
+                    index = min_tail;
+                  }
+                  else
+                  {
+                    break;
+                  }
                 }
               }
             }
@@ -417,21 +435,14 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               uint64_t index = p.getIndex();
 
 #ifdef ENABLE_STREAMING_SHARED_LOG
-              if (auto found = remote_index_to_index.find(remote_index); found != std::end(remote_index_to_index))
+              auto& e = machine_to_shared_log_info[remote_index];
+
               {
-                auto& e = found->second;
+                std::lock_guard<std::mutex> l(e.m);
                 e.index = std::max(index, e.index);
-                e.remaining_ask = shared_log_batch_get_response_size;
               }
-              else
-              {
-                auto e = SharedLogMachineInfo{};
-                e.index = index;
-                e.remaining_ask = shared_log_batch_get_response_size;
-                e.remote_port = remote_port;
-                remote_index_to_index.emplace(remote_index, e);
-                remote_indices.emplace_back(remote_index);
-              }
+              e.remaining_ask = shared_log_batch_get_response_size;
+              e.remote_port = remote_port;
 #else
               // Respond with all entries
               auto tail = shared_log.get_tail();
