@@ -385,6 +385,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   if (index + shared_log_batch_get_response_size <= tail)
                   {
                     auto min_tail = std::min(tail, index + shared_log_batch_get_response_size);
+                    update_maximum(e.index, min_tail);
                     std::vector<KeyValueEntry> key_values;
                     key_values.reserve(min_tail - index);
                     for (auto i = index; i < min_tail; i++)
@@ -404,7 +405,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
-                    update_maximum(e.index, index);
                   }
                   else
                   {
