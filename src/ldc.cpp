@@ -296,7 +296,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   std::vector<std::thread> ts;
   std::atomic<uint64_t> num_get_requests = 0, num_put_requests = 0;
   // SPSCQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queue;
-  ExecutionQueue<AppendSharedLogGetRequest> append_shared_log_get_request_queues;
+  ExecutionQueue<AppendSharedLogGetRequest, MPMCQueue<AppendSharedLogGetRequest>> append_shared_log_get_request_queues;
   append_shared_log_get_request_queues.set_num_queues(FLAGS_threads);
 
   struct SharedLogMachineInfo

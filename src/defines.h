@@ -333,7 +333,7 @@ private:
     std::array<std::array<RotatingVectorEntry<std::optional<T>>, N>, ROWS> data;
 };
 
-template<typename T>
+template<typename T, typename QueueT = SingleProducerSingleConsumerQueue<T>>
 struct ExecutionQueue
 {
     void set_num_queues(std::size_t num)
@@ -400,7 +400,7 @@ struct ExecutionQueue
 
 private:
     std::size_t num_queues = 0;
-    std::vector<SingleProducerSingleConsumerQueue<T>> execution_queues;    
+    std::vector<QueueT> execution_queues;    
 };
 
 using DurIndex = uint64_t;
