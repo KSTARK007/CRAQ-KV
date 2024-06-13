@@ -724,7 +724,7 @@ void server_worker(
 //           if (shared_log_get_request_acked) {
 // #else
           // if (num_shared_log_get_request_acked.load(std::memory_order::relaxed) > 0) {
-          if (elapsed > 10) {
+          if (elapsed > 100) {
 #endif
             last = now;
             if (now > print_time) {
