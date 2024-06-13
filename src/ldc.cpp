@@ -310,6 +310,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       shared_log_batch_get_response_size = 16 * 11;
 #endif
 
+      uint64_t start = 0;
       while (!g_stop)
       {
 #ifdef ENABLE_STREAMING_SHARED_LOG
@@ -341,7 +342,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                  connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
                   // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
                   index = min_tail;
@@ -622,7 +623,7 @@ void server_worker(
 
   auto flush_dirty = [&]()
   {
-    if (thread_index == 0)
+    // if (thread_index == 0)
     {
       EvictionCallbackData<std::string, std::string> e;
       while (dirty_entries.try_dequeue(e))
