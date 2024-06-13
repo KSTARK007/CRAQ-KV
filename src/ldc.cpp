@@ -622,7 +622,7 @@ void server_worker(
 
   auto flush_dirty = [&]()
   {
-    if (thread_index == 0 && client_index_per_thread == 0)
+    if (thread_index == 0)
     {
       EvictionCallbackData<std::string, std::string> e;
       while (dirty_entries.try_dequeue(e))
