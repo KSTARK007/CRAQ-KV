@@ -297,9 +297,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     uint64_t remaining_ask = 0;
     uint64_t remote_port = 0;
     std::mutex m;
+    bool enabled = false;
   };
 
-  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(num_servers);
+  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
 
   for (auto i = 0; i < FLAGS_threads; i++)
   {
@@ -360,11 +361,11 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
             // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
             for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
             {
-              if (i != 0)
+              auto& e = machine_to_shared_log_info[i];
+              if (!e.enabled)
               {
                 continue;
               }
-              auto& e = machine_to_shared_log_info[i];
               auto& index = e.index;
               std::unique_lock<std::mutex> l(e.m, std::defer_lock);
               if (l.try_lock())
@@ -443,6 +444,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               }
               e.remaining_ask = shared_log_batch_get_response_size;
               e.remote_port = remote_port;
+              e.enabled = true;
 #else
               // Respond with all entries
               auto tail = shared_log.get_tail();
