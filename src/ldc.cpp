@@ -763,7 +763,7 @@ void server_worker(
 #endif
   std::vector<SharedLogPutRequestEntry> shared_log_put_request_entries(SHARED_LOG_PUT_REQUEST_ENTRIES);
 
-  std::atomic<uint64_t> every_time = 0;
+  std::atomic<uint64_t> shared_log_entry_queue_index = 0;
   while (!g_stop)
   {
     constexpr std::size_t REPLY_EXECUTION_LIMIT = 128 * 32;
@@ -1227,7 +1227,8 @@ void server_worker(
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
-              shared_log_entry_queues.send_data_to_queue(key, entry);
+              auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+              shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
               // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
               // write_disk(key, value);
