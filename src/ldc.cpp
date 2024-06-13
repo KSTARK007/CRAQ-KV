@@ -339,7 +339,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                   }
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
-                  // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                  connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                   // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
                   index = min_tail;
@@ -613,9 +613,9 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty || config.policy_type == "thread_safe_lru")
       {
-        // dirty_entries.enqueue(data);
+        dirty_entries.enqueue(data);
       }
-    });
+    });    
   }
 
   auto flush_dirty = [&]()
@@ -708,9 +708,10 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index == 3 && machine_index != server_start_index) {
+    if (thread_index == 0 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
+        uint64_t server_running_index = 0;
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
         auto last = std::chrono::high_resolution_clock::now();
         while (!g_stop) {
@@ -727,7 +728,7 @@ void server_worker(
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
-            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
+            server[server_running_index++ % servers.size()].append_shared_log_get_request(shared_log_config.index, shared_log_config.port,
               shared_log_consume_idx);
             shared_log_get_request_acked = false;
             num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
