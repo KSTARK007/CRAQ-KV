@@ -343,7 +343,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 
                   // info("Sending {} {} {} {} | {}", i, min_tail, index, tail, key_values.size());
                   // connection.shared_log_get_response(remote_index, e.remote_port + (start++ % FLAGS_threads), min_tail, tail, key_values);
-                  AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
+                  connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                  // AppendSharedLogGetRequest request(remote_index, remote_port, min_tail, tail, key_values);
                   // append_shared_log_get_request_queue.enqueue(request)
                   index = min_tail;
                 }
