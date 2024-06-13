@@ -708,7 +708,7 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index == 0 && machine_index != server_start_index) {
+    if (thread_index == 3 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
         auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
