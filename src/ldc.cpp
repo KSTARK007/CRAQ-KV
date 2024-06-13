@@ -61,6 +61,8 @@ std::mutex shared_log_get_request_lock;
 std::condition_variable shared_log_get_request_cv;
 ExecutionQueue<LogEntry> shared_log_entry_queues;
 
+std::vector<std::shared_ptr<Server>> servers;
+
 void exec(std::string command, bool print_output = true)
 {
   // set up file redirection
@@ -1596,7 +1598,6 @@ int main(int argc, char *argv[])
   std::vector<std::thread> worker_threads;
   std::vector<std::thread> RDMA_Server_threads;
   std::vector<std::shared_ptr<Client>> clients;
-  std::vector<std::shared_ptr<Server>> servers;
 
   if (is_server)
   {
