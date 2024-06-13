@@ -309,7 +309,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     bool enabled = false;
   };
 
-  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
+  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(100 + remote_machine_configs.size());
 
   for (auto i = 0; i < FLAGS_threads; i++)
   {
