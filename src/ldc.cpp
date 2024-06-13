@@ -615,7 +615,7 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty || config.policy_type == "thread_safe_lru")
       {
-        // dirty_entries.enqueue(data);
+        dirty_entries.enqueue(data);
       }
     });
   }
@@ -710,7 +710,7 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index == 0 && machine_index != server_start_index) {
+    if (thread_index == 1 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
         uint64_t server_running_index = 0;
