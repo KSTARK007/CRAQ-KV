@@ -1955,6 +1955,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  info("HAS SHARED {} {}", has_shared_log, is_server);
   if (has_shared_log && is_server)
   {
     std::thread t(shared_log_communication_worker, config, ops_config);
