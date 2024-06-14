@@ -563,7 +563,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
     return;
   }
 
-  auto thread_index = FLAGS_threads + 1;
+  auto thread_index = FLAGS_threads;
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
   auto connection = Connection(config, ops_config, machine_index, thread_index);
