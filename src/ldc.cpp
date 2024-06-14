@@ -415,8 +415,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     auto remote_index = i;
                     // auto next_index = 1;
                     // connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
-                    connection.shared_log_get_response(remote_index, server_base_port + FLAGS_threads, min_tail, tail, key_values);
+                    connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                    // connection.shared_log_get_response(remote_index, server_base_port + FLAGS_threads, min_tail, tail, key_values);
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
@@ -433,7 +433,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         }
 #endif
 
-        connection.loop(
+        connection.receive_and_execute_pending(
           [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
           {
             if (data.isSharedLogPutRequest())
@@ -567,9 +567,9 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   auto thread_index = FLAGS_threads;
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
-  auto this_config = machine_config;
-  this_config.index = remote_machine_configs.size();
-  remote_machine_configs.emplace_back(this_config);
+  // auto this_config = machine_config;
+  // this_config.index = remote_machine_configs.size();
+  // remote_machine_configs.emplace_back(this_config);
   auto connection = Connection(config, ops_config, machine_index, thread_index);
   info("LISTEN TO SHARED {} {}", shared_log_config.index, communication_port);
   connection.listen();
@@ -603,7 +603,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
     }
     // std::this_thread::sleep_for(100us);
 
-    connection.loop(
+    connection.receive_and_execute_pending(
       [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
       {
         if (data.isSharedLogGetResponse())
@@ -975,7 +975,7 @@ void server_worker(
         break;
       }
     }
-    server.loop(
+    server.receive_and_execute_pending(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
           if (data.isPutRequest())

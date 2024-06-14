@@ -104,6 +104,12 @@ struct Connection
     }
   }
 
+   void receive_and_execute_pending(auto &&handler)
+  {
+    execute_pending_operations();
+    receive(handler);
+  }
+
   virtual void execute_pending_operations()
   {
     for (const auto& pending_function : pending_functions)
