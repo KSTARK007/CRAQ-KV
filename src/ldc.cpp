@@ -414,13 +414,13 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     auto next_index = (start++ % FLAGS_threads);
                     auto remote_index = i;
                     // auto next_index = 1;
-                    connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                    // connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                    connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                     // connection.shared_log_get_response(remote_index, server_base_port + thread_index, min_tail, tail, key_values);
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
-                    info("SEND SHIT TO {} {}", remote_index, thread_index);
+                    info("SEND SHIT TO {} {}", remote_index, e.remote_port);
                   }
                   else
                   {
@@ -600,34 +600,52 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
     }
     // std::this_thread::sleep_for(100us);
 
-    // connection.loop(
-    //   [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
-    //   {
-    //     if (data.isSharedLogPutRequest())
-    //     {
-    //       auto p = data.getSharedLogPutRequest();
-    //       auto entries = p.getE();
+    connection.loop(
+      [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
+      {
+        if (data.isSharedLogGetResponse())
+        {
+          auto p = data.getSharedLogGetResponse();
+          auto old_shared_log_consume_idx = shared_log_consume_idx.load(std::memory_order_relaxed);
+          shared_log_consume_idx = std::max(p.getIndex(), old_shared_log_consume_idx);
+          shared_log_server_idx.store(p.getLogIndex(), std::memory_order_relaxed);
+          auto entries = p.getE();
 
-    //       auto tail = shared_log.get_tail();
-    //       std::vector<SharedLogPutResponseEntry> shared_log_put_response_entries(entries.size());
-    //       for (uint64_t idx = 0; idx < entries.size(); idx++)
-    //       {
-    //         const auto& e = entries[idx];
-    //         std::string_view key = e.getKey().cStr();
-    //         std::string_view value = e.getValue().cStr();
-    //         auto hash = e.getHash();
+          auto start_index = 0;
+          if (old_shared_log_consume_idx > p.getIndex())
+          {
+            start_index = old_shared_log_consume_idx - p.getIndex();
+          }
 
-    //         // Put this in our list of keys
-    //         shared_log.append(key, value);
-    //         shared_log_put_response_entries[idx] = SharedLogPutResponseEntry{tail + idx, hash};
+          // Set the shared log entries to be put in our db
+          for (uint64_t idx = start_index; idx < entries.size(); idx++) {
+            const auto& e = entries[idx];
 
-    //         num_put_requests.fetch_add(1, std::memory_order::relaxed);
-    //       }
+            std::string_view key = e.getKey().cStr();
+#ifndef COMPRESS_SHARED_LOG
+            std::string_view value = e.getValue().cStr();
+#else
+            std::string_view value = default_value;
+#endif
 
-    //       connection.shared_log_put_response(remote_index, remote_port, shared_log_put_response_entries);
-    //     }
-    //   }
-    // );
+            LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
+            // Add to unprocessed list of key value pairs
+            LogEntry entry;
+            entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
+            entry.index = shared_log_consume_idx + idx;
+            // busy-wait until we can enqueue
+            // unprocessed_log_entries.enqueue(entry);
+            auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+            shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
+            // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
+
+            // write_disk(key, value);
+          }
+          shared_log_get_request_acked = true;
+          num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
+        }
+      }
+    );
   }
 }
 
