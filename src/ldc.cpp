@@ -415,12 +415,12 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     auto remote_index = i;
                     // auto next_index = 1;
                     // connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
-                    // connection.shared_log_get_response(remote_index, server_base_port + thread_index, min_tail, tail, key_values);
+                    // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                    connection.shared_log_get_response(remote_index, server_base_port + thread_index, min_tail, tail, key_values);
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
-                    info("SEND SHIT TO {} {}", remote_index, e.remote_port);
+                    info("SEND SHIT TO {} {} {}", remote_index, e.remote_port, thread_index);
                   }
                   else
                   {
@@ -568,7 +568,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
   auto connection = Connection(config, ops_config, machine_index, thread_index);
-  info("LISTEN TO SHARED {} ", shared_log_config.index);
+  info("LISTEN TO SHARED {} {}", shared_log_config.index, communication_port);
   connection.listen();
   info("LISTENED TO SHARED {} ", shared_log_config.index);
   info("CONNECTING TO SHARED {} ", shared_log_config.index);
