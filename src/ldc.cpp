@@ -595,7 +595,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
           print_time = now + std::chrono::seconds(5);
       }
       // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
-      connection.shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+      connection.shared_log_get_request(shared_log_config.index, shared_log_config.port + thread_index, shared_log_consume_idx);
       info("SENT GET REQUEST");
     }
     // std::this_thread::sleep_for(100us);
