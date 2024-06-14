@@ -309,7 +309,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     bool enabled = false;
   };
 
-  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
   std::atomic<uint64_t> responder_index = 0;
 
   for (auto i = 0; i < FLAGS_threads; i++)
@@ -344,6 +343,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       shared_log_num_batches = 4 * 8;
       shared_log_batch_get_response_size = 16 * 11;
 #endif
+
+      std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
 
       uint64_t start = 0;
       while (!g_stop)
