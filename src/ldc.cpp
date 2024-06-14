@@ -119,7 +119,7 @@ std::vector<T> get_chunk(std::vector<T> const &vec, std::size_t n, std::size_t i
   return std::vector<T>(begin, end);
 }
 
-#define DEBUG_W info
+// #define DEBUG_W info
 
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
