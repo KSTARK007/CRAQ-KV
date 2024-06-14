@@ -775,10 +775,10 @@ void server_worker(
   auto start_time = std::chrono::high_resolution_clock::now();
 
   static bool owning = false;
-  if (config.policy_type == "thread_safe_lru")
-  {
-    owning = true;
-  }
+  // if (config.policy_type == "thread_safe_lru")
+  // {
+  //   owning = true;
+  // }
 
   struct WriteResponse
   {
