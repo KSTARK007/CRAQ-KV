@@ -415,6 +415,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
+                    info("SEND SHIT TO {} {}", remote_index, thread_index);
                   }
                   else
                   {
