@@ -119,6 +119,8 @@ std::vector<T> get_chunk(std::vector<T> const &vec, std::size_t n, std::size_t i
   return std::vector<T>(begin, end);
 }
 
+#define DEBUG_W info
+
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
 {
@@ -318,9 +320,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     {
       bind_this_thread_to_core(thread_index);
       auto connection = Connection(config, ops_config, machine_index, thread_index);
-      info("LISTENING FOR {}", thread_index);
+      DEBUG_W("LISTENING FOR {}", thread_index);
       connection.listen();
-      info("LISTENED FOR {}", thread_index);
+      DEBUG_W("LISTENED FOR {}", thread_index);
       for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
         const auto& remote_machine_config = remote_machine_configs[i]; 
@@ -332,9 +334,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           {
             continue;
           }
-          info("CONNECTING TO {} {}", thread_index, i);
+          DEBUG_W("CONNECTING TO {} {}", thread_index, i);
           connection.connect_to_remote_machine(i);
-          info("CONNECTED TO {} {}", thread_index, i);
+          DEBUG_W("CONNECTED TO {} {}", thread_index, i);
         }
       }
 
@@ -420,7 +422,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
-                    info("SEND SHIT TO {} {} {}", remote_index, e.remote_port, thread_index);
+                    DEBUG_W("SEND SHIT TO {} {} {}", remote_index, e.remote_port, thread_index);
                   }
                   else
                   {
@@ -571,12 +573,12 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   // this_config.index = remote_machine_configs.size();
   // remote_machine_configs.emplace_back(this_config);
   auto connection = Connection(config, ops_config, machine_index, thread_index);
-  info("LISTEN TO SHARED {} {}", shared_log_config.index, communication_port);
+  DEBUG_W("LISTEN TO SHARED {} {}", shared_log_config.index, communication_port);
   connection.listen();
-  info("LISTENED TO SHARED {} ", shared_log_config.index);
-  info("CONNECTING TO SHARED {} ", shared_log_config.index);
+  DEBUG_W("LISTENED TO SHARED {} ", shared_log_config.index);
+  DEBUG_W("CONNECTING TO SHARED {} ", shared_log_config.index);
   connection.connect_to_remote_machine(shared_log_config.index);
-  info("CONNECTED TO SHARED {} ", shared_log_config.index);
+  DEBUG_W("CONNECTED TO SHARED {} ", shared_log_config.index);
 
   uint64_t server_running_index = 0;
   auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
@@ -599,7 +601,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
       }
       // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
       connection.shared_log_get_request(shared_log_config.index, shared_log_config.port + thread_index, shared_log_consume_idx);
-      info("SENT GET REQUEST");
+      DEBUG_W("SENT GET REQUEST");
     }
     // std::this_thread::sleep_for(100us);
 
