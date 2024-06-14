@@ -331,7 +331,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           {
             continue;
           }
+          info("CONNECTING TO {} {}", thread_index, i);
           connection.connect_to_remote_machine(i);
+          info("CONNECTED TO {} {}", thread_index, i);
         }
       }
 
