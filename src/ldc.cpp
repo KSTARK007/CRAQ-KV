@@ -316,6 +316,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     int thread_index = i;
     std::thread t([&, i, thread_index]()
     {
+      bind_this_thread_to_core(thread_index);
       auto connection = Connection(config, ops_config, machine_index, thread_index);
       info("LISTENING FOR {}", thread_index);
       connection.listen();
