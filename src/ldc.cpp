@@ -581,7 +581,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
     auto now = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
 #ifdef ENABLE_STREAMING_SHARED_LOG
-    if (shared_log_get_request_acked) {
+    if (shared_log_get_request_acked || elapsed > 1000) {
       shared_log_get_request_acked = false;
       num_shared_log_get_request_acked.fetch_sub(1, std::memory_order::relaxed);
 #else
