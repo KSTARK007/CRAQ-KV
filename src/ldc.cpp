@@ -567,11 +567,12 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
   auto connection = Connection(config, ops_config, machine_index, thread_index);
-  info("CONNECTING TO SHARED {} ", shared_log_config.index);
-  connection.connect_to_remote_machine(shared_log_config.index);
   info("LISTEN TO SHARED {} ", shared_log_config.index);
   connection.listen();
   info("LISTENED TO SHARED {} ", shared_log_config.index);
+  info("CONNECTING TO SHARED {} ", shared_log_config.index);
+  connection.connect_to_remote_machine(shared_log_config.index);
+  info("CONNECTED TO SHARED {} ", shared_log_config.index);
 
   uint64_t server_running_index = 0;
   auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
