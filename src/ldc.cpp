@@ -368,8 +368,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           }
         }
 
-        auto responder_i = responder_index.load() % FLAGS_threads;
-        if (responder_i == thread_index)
+        // auto responder_i = responder_index.load() % FLAGS_threads;
+        // if (responder_i == thread_index)
         {
             // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
             for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
@@ -772,7 +772,7 @@ void server_worker(
   MPMCQueue<LogEntry> unprocessed_log_entries(1024 * 1024);
   if (has_shared_log) {
     server.connect_to_remote_machine(shared_log_config.index);
-    if (thread_index == 5 && machine_index != server_start_index) {
+    if (thread_index == 0 && machine_index != server_start_index) {
       // periodically gets the latest log entries from the shared log, entries not applied yet
       static std::thread background_get_thread([&]() {
         uint64_t server_running_index = 0;
@@ -794,8 +794,8 @@ void server_worker(
                 shared_log_consume_idx.load(), shared_log_next_apply_idx.load(), shared_log_server_idx.load(std::memory_order::relaxed));
                 print_time = now + std::chrono::seconds(5);
             }
-            servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
-            // server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+            // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+            server.append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
           }
           // std::this_thread::sleep_for(100us);
         }
