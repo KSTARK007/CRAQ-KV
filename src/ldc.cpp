@@ -327,7 +327,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
         const auto& port = remote_machine_config.port;
         if (remote_machine_config.server)
         {
-          if (remote_machine_config.index != server_start_index && thread_index == FLAGS_threads)
+          if (thread_index == FLAGS_threads && remote_machine_config.index != server_start_index)
           {
             continue;
           }
