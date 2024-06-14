@@ -978,7 +978,7 @@ void server_worker(
         break;
       }
     }
-    server.receive_and_execute_pending(
+    server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
         {
           if (data.isPutRequest())
