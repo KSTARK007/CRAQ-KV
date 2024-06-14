@@ -313,7 +313,6 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
   };
 
   std::atomic<uint64_t> responder_index = 0;
-  std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
 
   for (auto i = 0; i < FLAGS_threads + 1; i++)
   {
@@ -357,6 +356,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       shared_log_batch_get_response_size = 16 * 11;
 #endif
 
+      std::vector<SharedLogMachineInfo> machine_to_shared_log_info(remote_machine_configs.size());
+
       uint64_t start = 0;
       while (!g_stop)
       {
@@ -380,8 +381,8 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
           }
         }
 
-        auto responder_i = responder_index.load() % FLAGS_threads;
-        if (responder_i == thread_index)
+        // auto responder_i = responder_index.load() % FLAGS_threads;
+        // if (responder_i == thread_index)
         {
             // info("REMOTE INDEX SIZE {} {}", i, machine_to_shared_log_info;.size());
             for (auto i = 0; i < machine_to_shared_log_info.size(); i++)
@@ -416,11 +417,11 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     auto next_index = (start++ % FLAGS_threads);
                     auto remote_index = i;
                     // auto next_index = 1;
-                    connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                    // connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
                     // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                     // connection.shared_log_get_response(remote_index, server_base_port + FLAGS_threads, min_tail, tail, key_values);
-                    // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
+                    AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                    append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
                     DEBUG_W("SEND SHIT TO {} {} {}", remote_index, e.remote_port, thread_index);
                   }
