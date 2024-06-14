@@ -1415,11 +1415,11 @@ void server_worker(
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
-              auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
-              shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
+              // auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+              // shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
               // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
-              // write_disk(key, value);
+              write_disk(key, value);
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
