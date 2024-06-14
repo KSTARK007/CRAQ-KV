@@ -362,7 +362,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
       while (!g_stop)
       {
 #ifdef ENABLE_STREAMING_SHARED_LOG
-        // while (true)
+        while (true)
         {
           if (auto data = append_shared_log_get_request_queues.pull_data_from_queue(thread_index))
           {
@@ -418,10 +418,10 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
                     auto remote_index = i;
                     // auto next_index = 1;
                     // connection.shared_log_get_response(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    // connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
+                    connection.shared_log_get_response(remote_index, e.remote_port, min_tail, tail, key_values);
                     // connection.shared_log_get_response(remote_index, server_base_port + FLAGS_threads, min_tail, tail, key_values);
-                    AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
-                    append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
+                    // AppendSharedLogGetRequest request(remote_index, server_base_port + next_index, min_tail, tail, key_values);
+                    // append_shared_log_get_request_queues.send_data_to_queue(next_index, request);
                     index = min_tail;
                     DEBUG_W("SEND SHIT TO {} {} {}", remote_index, e.remote_port, thread_index);
                   }
@@ -1415,11 +1415,11 @@ void server_worker(
               entry.index = shared_log_consume_idx + idx;
               // busy-wait until we can enqueue
               // unprocessed_log_entries.enqueue(entry);
-              // auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
-              // shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
+              auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+              shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
               // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
-              write_disk(key, value);
+              // write_disk(key, value);
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
