@@ -562,8 +562,11 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
   auto connection = Connection(config, ops_config, machine_index, thread_index);
+  info("CONNECTING TO SHARED {} ", shared_log_config.index);
   connection.connect_to_remote_machine(shared_log_config.index);
+  info("LISTEN TO SHARED {} ", shared_log_config.index);
   connection.listen();
+  info("LISTENED TO SHARED {} ", shared_log_config.index);
 
   uint64_t server_running_index = 0;
   auto print_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(5);
@@ -586,8 +589,38 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
       }
       // servers[server_running_index++ % servers.size()]->append_shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
       connection.shared_log_get_request(shared_log_config.index, shared_log_config.port, shared_log_consume_idx);
+      info("SENT GET REQUEST");
     }
     // std::this_thread::sleep_for(100us);
+
+    // connection.loop(
+    //   [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
+    //   {
+    //     if (data.isSharedLogPutRequest())
+    //     {
+    //       auto p = data.getSharedLogPutRequest();
+    //       auto entries = p.getE();
+
+    //       auto tail = shared_log.get_tail();
+    //       std::vector<SharedLogPutResponseEntry> shared_log_put_response_entries(entries.size());
+    //       for (uint64_t idx = 0; idx < entries.size(); idx++)
+    //       {
+    //         const auto& e = entries[idx];
+    //         std::string_view key = e.getKey().cStr();
+    //         std::string_view value = e.getValue().cStr();
+    //         auto hash = e.getHash();
+
+    //         // Put this in our list of keys
+    //         shared_log.append(key, value);
+    //         shared_log_put_response_entries[idx] = SharedLogPutResponseEntry{tail + idx, hash};
+
+    //         num_put_requests.fetch_add(1, std::memory_order::relaxed);
+    //       }
+
+    //       connection.shared_log_put_response(remote_index, remote_port, shared_log_put_response_entries);
+    //     }
+    //   }
+    // );
   }
 }
 
