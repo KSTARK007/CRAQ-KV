@@ -317,7 +317,9 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     std::thread t([&, i, thread_index]()
     {
       auto connection = Connection(config, ops_config, machine_index, thread_index);
+      info("LISTENING FOR {}", thread_index);
       connection.listen();
+      info("LISTENED FOR {}", thread_index);
       for (auto i = 0; i < remote_machine_configs.size(); i++)
       {
         const auto& remote_machine_config = remote_machine_configs[i]; 
