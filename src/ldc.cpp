@@ -476,7 +476,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
               e.remaining_ask = shared_log_batch_get_response_size;
               e.remote_port = remote_port;
               e.enabled = true;
-              info ("GOT SHARED REQUEST {} {}", remote_index, remote_port);
+              DEBUG_W ("GOT SHARED REQUEST {} {}", remote_index, remote_port);
 #else
               // Respond with all entries
               auto tail = shared_log.get_tail();
