@@ -528,7 +528,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
 // Puts it into queue
 void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_config)
 {
-  const auto& remote_machine_configs = config.remote_machine_configs;
+  auto& remote_machine_configs = config.remote_machine_configs;
   auto machine_index = FLAGS_machine_index;
   const auto& machine_config = remote_machine_configs[machine_index];
   const auto& shared_log_config = remote_machine_configs[remote_machine_configs.size() - 1];
@@ -567,6 +567,9 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
   auto thread_index = FLAGS_threads;
   bind_this_thread_to_core(thread_index);
   auto communication_port = machine_config.port + thread_index;
+  auto this_config = machine_config;
+  this_config.index = remote_machine_configs.size();
+  remote_machine_configs.emplace_back(this_config);
   auto connection = Connection(config, ops_config, machine_index, thread_index);
   info("LISTEN TO SHARED {} {}", shared_log_config.index, communication_port);
   connection.listen();
