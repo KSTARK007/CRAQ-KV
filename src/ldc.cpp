@@ -1502,7 +1502,7 @@ int main(int argc, char *argv[])
   {
     if (is_server)
     {
-      if (ops_config.write_percent > 0.0)
+      if (ops_config.write_percent > 0.0 && ops_config.write_policy != "write_around")
       {
         auto read_config = config;
 
