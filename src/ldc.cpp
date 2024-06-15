@@ -817,7 +817,7 @@ void server_worker(
   if (thread_index == 0)
   {
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
-      if (data.dirty)
+      if (data.dirty || config.policy_type == "thread_safe_lru")
       {
         dirty_entries.enqueue(data);
       }
