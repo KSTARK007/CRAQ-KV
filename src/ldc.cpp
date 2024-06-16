@@ -1698,18 +1698,23 @@ int main(int argc, char *argv[])
           });
 
           info("adding keys to the blockcache");
-          for (const auto &k : keys)
+          // for (const auto &k : keys)
+          // {
+          //   auto key_index = convert_string<uint64_t>(k);
+          //   // if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
+          //   // {
+          //   //   block_cache->put(k, value);
+          //   //   count_expected++;
+          //   // }
+          //   // else
+          //   // {
+          //     block_cache->get_db()->put(k, value);
+          //   // }
+          // }
+          for (auto j = 0; j < config.db.block_db.num_entries; j++)
           {
-            auto key_index = convert_string<uint64_t>(k);
-            // if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru")
-            // {
-            //   block_cache->put(k, value);
-            //   count_expected++;
-            // }
-            // else
-            // {
-              block_cache->get_db()->put(k, value);
-            // }
+            auto k = std::to_string(j);
+            block_cache->get_db()->put(k, value);
           }
 
           std::this_thread::sleep_for(std::chrono::milliseconds(1000));
