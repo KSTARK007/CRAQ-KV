@@ -825,6 +825,7 @@ void server_worker(
     cache->add_callback_on_eviction([&, db, cache, ops_config](const EvictionCallbackData<std::string, std::string>& data){
       if (data.dirty)
       {
+        info("ENQUEUE");
         dirty_entries.enqueue(data);
       }
     });
