@@ -988,6 +988,10 @@ void server_worker(
       {
         break;
       }
+      if (write_policy_hash == write_around_hash)
+      {
+        break;
+      }
     }
     server.loop(
         [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
