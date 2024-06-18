@@ -688,7 +688,7 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
   if (ops_config.DISTRIBUTION_TYPE != DistributionType::YCSB) {
     ops_chunk = get_chunk(ops, FLAGS_threads * FLAGS_clients_per_threads, client_index);
   } else {
-    std::string file_name = "/mydata/client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_clientPerThread_" + std::to_string(client_index_per_thread) + ".txt";
+    std::string file_name = "client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_clientPerThread_" + std::to_string(client_index_per_thread) + ".txt";
     info("Using {} file for operations on client {} thread {} clientPerThread {}", file_name, machine_index, thread_index, client_index_per_thread);
     ops_chunk = loadOperationSetFromFile(file_name);
   }
