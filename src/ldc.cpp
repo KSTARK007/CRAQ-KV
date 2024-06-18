@@ -651,7 +651,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
 
             if (write_policy_hash == write_around_hash)
             {
-              if (i % 2 == 0)
+              if (shared_log_entry_queue_i % 2 == 0)
               {
                 continue;
               }
