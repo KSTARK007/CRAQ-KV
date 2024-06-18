@@ -646,8 +646,18 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
             entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
             entry.index = shared_log_consume_idx + idx;
             // busy-wait until we can enqueue
-            // unprocessed_log_entries.enqueue(entry);
+            // unprocessed_log_entries.enqueue(entry);            
             auto shared_log_entry_queue_i = shared_log_entry_queue_index.fetch_add(1, std::memory_order::relaxed) % shared_log_entry_queues.get_num_queues();
+
+            if (write_policy_hash == write_around_hash)
+            {
+              if (i % 2 == 0)
+              {
+                continue;
+              }
+            }
+
+
             shared_log_entry_queues.send_data_to_queue(shared_log_entry_queue_i, entry);
             // info("GOT IT!!! {} {}", shared_log_consume_idx.load(), shared_log_consume_idx.load());
 
@@ -985,10 +995,6 @@ void server_worker(
         shared_log_next_apply_idx.fetch_add(1, std::memory_order::relaxed);
       }
       else
-      {
-        break;
-      }
-      if (write_policy_hash == write_around_hash)
       {
         break;
       }
