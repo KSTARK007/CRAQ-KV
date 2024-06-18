@@ -612,6 +612,9 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
     }
     // std::this_thread::sleep_for(100us);
 
+    static const auto& write_policy = ops_config.write_policy;
+    static const auto write_policy_hash = std::hash<std::string>{}(write_policy);
+    static const auto write_around_hash = std::hash<std::string>{}("write_around");
     connection.receive_and_execute_pending(
       [&](auto remote_index, auto remote_port, MachnetFlow &tx_flow, auto &&data)
       {
