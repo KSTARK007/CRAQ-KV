@@ -124,7 +124,7 @@ void get_and_sort_freq(std::shared_ptr<BlockCache<std::string, std::string>> cac
     }
     for (uint64_t i = 1; i <= total_keys; i++) {
         if (!key_map[i]) {
-            sorted_key_freq.push_back(std::make_pair(1, std::to_string(i)));
+            sorted_key_freq.push_back(std::make_pair(0, std::to_string(i)));
         }
     }
     auto missing_keys_end = std::chrono::high_resolution_clock::now();

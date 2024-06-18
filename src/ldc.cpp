@@ -688,7 +688,7 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
   if (ops_config.DISTRIBUTION_TYPE != DistributionType::YCSB) {
     ops_chunk = get_chunk(ops, FLAGS_threads * FLAGS_clients_per_threads, client_index);
   } else {
-    std::string file_name = "client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_clientPerThread_" + std::to_string(client_index_per_thread) + ".txt";
+    std::string file_name = "/mydata/client_" + std::to_string(machine_index) + "_thread_" + std::to_string(thread_index) + "_clientPerThread_" + std::to_string(client_index_per_thread) + ".txt";
     info("Using {} file for operations on client {} thread {} clientPerThread {}", file_name, machine_index, thread_index, client_index_per_thread);
     ops_chunk = loadOperationSetFromFile(file_name);
   }
@@ -1123,9 +1123,12 @@ void server_worker(
                   LOG_STATE("Fetching from disk {} {}", skey, value);
                   if (ops_config.DISK_ASYNC) {
                     LDCTimer disk_timer;
-                    block_cache->get_db()->get_async_submit(skey, [server, remote_index, remote_port, skey, disk_timer](auto value) {
+                    block_cache->get_db()->get_async_submit(skey, [block_cache, server, remote_index, remote_port, skey, disk_timer](auto value) {
                       disk_ns = disk_timer.time_elapsed();
                       
+                      if(std::stoull(skey) >= key_min && std::stoull(skey) < key_max){
+                        block_cache->get_cache()->put(skey, value);
+                      }
                       // Send the response
                       server->append_to_rdma_block_cache_request_queue(remote_index, remote_port, ResponseType::OK, skey, value);
                     });
@@ -1596,21 +1599,23 @@ int main(int argc, char *argv[])
       access_rate_thread.detach();
     }
 
-      // Load the database and operations
-      // load the cache with part of database
-      auto start_client_index = 0;
-      for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+    // Load the database and operations
+    // load the cache with part of database
+    auto start_client_index = 0;
+    for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+    {
+      auto remote_machine_config = config.remote_machine_configs[i];
+      if (remote_machine_config.server)
       {
-        auto remote_machine_config = config.remote_machine_configs[i];
-        if (remote_machine_config.server)
-        {
-          break;
-        }
-        start_client_index++;
+        break;
       }
-      auto server_index = FLAGS_machine_index - start_client_index;
-      auto start_keys = server_index * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
-      auto end_keys = (server_index + 1) * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
+      start_client_index++;
+    }
+    auto server_index = FLAGS_machine_index - start_client_index;
+    auto start_keys = server_index * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
+    auto end_keys = (server_index + 1) * (static_cast<float>(ops_config.NUM_KEY_VALUE_PAIRS) / ops_config.NUM_NODES);
+    key_min = start_keys;
+    key_max = end_keys;
 
       info("[{}] Loading database for server index {} starting at key {} and ending at {}", machine_index, server_index, start_keys, end_keys);
       std::vector<std::string> keys = readKeysFromFile(ops_config.DATASET_FILE);

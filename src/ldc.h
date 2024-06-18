@@ -6,6 +6,9 @@
 #include "heap.h"
 #include "async_rdma.h"
 
+static uint64_t key_min;
+static uint64_t key_max;
+
 struct SnapshotEntry
 {
   uint64_t key_index;

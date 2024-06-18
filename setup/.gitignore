@@ -6,3 +6,4 @@ backup_pre_buckets
 backup_everything
 data_series_plot
 testing_data
+tmp

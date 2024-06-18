@@ -45,7 +45,7 @@ execute_cmd_with_timeout() {
     echo "Executing: $CMD"
     # eval $CMD
 
-    timeout 15m bash -c "eval $CMD" || (
+    timeout 45m bash -c "eval $CMD" || (
         echo "Command timed out after 15 minutes. Restarting..."
         execute_cmd_with_timeout $num_clients $num_threads $num_clients_per_thread $step $distribution $system_name $policy $cache_size_for_this_run $access_rate $WORKLOAD
     )
@@ -71,6 +71,13 @@ function scp_ycsb_workload {
     for i in {1..3}
     do
         scp -r $1/* 10.10.1.$i:/mnt/sda4/LDC/build
+    done
+}
+
+function scp_ycsb_workload_mydata {
+    for i in {1..3}
+    do
+        scp -r $1/* 10.10.1.$i:/mydata/
     done
 }
 
@@ -281,6 +288,55 @@ function hotspot_95_5 {
     sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/hotspot_95_5
 }
 
+function hotspot_100_30_perfect_routing {
+    WORKLOAD="YCSB"
+    scp_ycsb_workload "/mydata/ycsb/hotspot_100_30_perfect_routing"
+    WORKLOAD_TYPE="hotspot"
+
+    for system_name in "${SYSTEM_NAMES[@]}"; do
+        if [[ $system_name == "C" ]]; then
+            for policy in "${POLICY_TYPES[@]}"; do
+                if [[ $policy == "access_rate" ]]; then
+                    for access_rate in "${ACCESS_RATE[@]}"; do
+                        iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                    done
+                else
+                    access_rate=30000000
+                    iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                fi
+            done
+        else
+            iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name "thread_safe_lru" 0
+        fi
+    done
+    sudo mkdir -p /mnt/sda4/LDC/setup/results/hotspot_100_30_perfect_routing
+    sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/hotspot_100_30_perfect_routing
+}
+function hotspot_100_30 {
+    WORKLOAD="YCSB"
+    scp_ycsb_workload "/mydata/ycsb/hotspot_100_30"
+    WORKLOAD_TYPE="hotspot"
+
+    for system_name in "${SYSTEM_NAMES[@]}"; do
+        if [[ $system_name == "C" ]]; then
+            for policy in "${POLICY_TYPES[@]}"; do
+                if [[ $policy == "access_rate" ]]; then
+                    for access_rate in "${ACCESS_RATE[@]}"; do
+                        iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                    done
+                else
+                    access_rate=30000000
+                    iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                fi
+            done
+        else
+            iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name "thread_safe_lru" 0
+        fi
+    done
+    sudo mkdir -p /mnt/sda4/LDC/setup/results/hotspot_100_30
+    sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/hotspot_100_30
+}
+
 function hotspot_99_30 {
     WORKLOAD="YCSB"
     scp_ycsb_workload "/mydata/ycsb/hotspot_99_30"
@@ -304,6 +360,31 @@ function hotspot_99_30 {
     done
     sudo mkdir -p /mnt/sda4/LDC/setup/results/hotspot_99_30
     sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/hotspot_99_30
+}
+
+function run {
+    WORKLOAD="YCSB"
+    # scp_ycsb_workload "/mydata/ycsb/uniform"
+    WORKLOAD_TYPE="uniform"
+
+    for system_name in "${SYSTEM_NAMES[@]}"; do
+        if [[ $system_name == "C" ]]; then
+            for policy in "${POLICY_TYPES[@]}"; do
+                if [[ $policy == "access_rate" ]]; then
+                    for access_rate in "${ACCESS_RATE[@]}"; do
+                        iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                    done
+                else
+                    access_rate=30000000
+                    iterate_and_execute 3 3 1 1 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                fi
+            done
+        else
+            iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name "thread_safe_lru" 0
+        fi
+    done
+    sudo mkdir -p /mnt/sda4/LDC/setup/results/runs
+    # sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/runs
 }
 
 function uniform {
@@ -356,6 +437,55 @@ function mixed_10 {
     sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/mixed_10
 }
 
+function throughput_extream_single_node {
+    WORKLOAD="YCSB"
+    WORKLOAD_TYPE="uniform"
+    scp_ycsb_workload "/mydata/throughput_extream/48_0"
+    for system_name in "${SYSTEM_NAMES[@]}"; do
+        if [[ $system_name == "C" ]]; then
+            for policy in "${POLICY_TYPES[@]}"; do
+                if [[ $policy == "access_rate" ]]; then
+                    for access_rate in "${ACCESS_RATE[@]}"; do
+                        iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                    done
+                else
+                    access_rate=30000000
+                    iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                fi
+            done
+        else
+            iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name "thread_safe_lru" 0
+        fi
+    done
+    sudo mkdir -p /mnt/sda4/LDC/setup/results/throughput_extream_single_node
+    sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/throughput_extream_single_node
+}
+
+function throughput_extream_all_node {
+    WORKLOAD="YCSB"
+    WORKLOAD_TYPE="uniform"
+    scp_ycsb_workload "/mydata/throughput_extream/42_6"
+    for system_name in "${SYSTEM_NAMES[@]}"; do
+        if [[ $system_name == "C" ]]; then
+            for policy in "${POLICY_TYPES[@]}"; do
+                if [[ $policy == "access_rate" ]]; then
+                    for access_rate in "${ACCESS_RATE[@]}"; do
+                        iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                    done
+                else
+                    access_rate=30000000
+                    iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name $policy $access_rate
+                fi
+            done
+        else
+            iterate_and_execute 3 3 8 8 2 2 $WORKLOAD_TYPE $system_name "thread_safe_lru" 0
+        fi
+    done
+    sudo mkdir -p /mnt/sda4/LDC/setup/results/throughput_extream_all_node
+    sudo mv /mnt/sda4/LDC/setup/results/*::* /mnt/sda4/LDC/setup/results/throughput_extream_all_node
+}
+
+
 function SINGLE_NODE_HOT_KEYS {
     WORKLOAD="SINGLE_NODE_HOT_KEYS"
     WORKLOAD_TYPE="uniform"
@@ -386,17 +516,20 @@ SYSTEM_NAMES=("C")
 POLICY_TYPES=("access_rate_dynamic")
 ACCESS_RATE=(50000)
 
-WORKLOAD="SINGLE_NODE_HOT_KEYS"
+# WORKLOAD="SINGLE_NODE_HOT_KEYS"
 # SINGLE_NODE_HOT_KEYS
+
+WORKLOAD="SINGLE_NODE_HOT_KEYS_TO_SECOND_NODE_SPLIT"
 
 
 WORKLOAD="YCSB"
 # mixed_10
 
-# zipfian_0.999
-# zipfian_0.90
+# zipfian_0.99
 # hotspot_80_20
-uniform
+# uniform
+
+# zipfian_0.999
 # hotspot_95_5
 # hotspot_90_10
 # hotspot_99_30
@@ -404,29 +537,44 @@ uniform
 # CACHE_SIZE=(0.10 0.20)
 # uniform
 
-CACHE_SIZE=(0.10 0.20 0.30 0.334)
-# CACHE_SIZE=(0.30)
+# CACHE_SIZE=(0.10 0.20 0.30 0.334)
+# CACHE_SIZE=(0.334)
 # SYSTEM_NAMES=("A" "B" "C")
 SYSTEM_NAMES=("C")
-POLICY_TYPES=("thread_safe_lru" "nchance")
+# POLICY_TYPES=("thread_safe_lru" "nchance" "access_rate")
 # POLICY_TYPES=("thread_safe_lru")
-# POLICY_TYPES=("access_rate")
-# ACCESS_RATE=(10 1000)
+POLICY_TYPES=("access_rate")
 # ACCESS_RATE=(10)
+ACCESS_RATE=(1 25)
 
 WORKLOAD="YCSB"
-# zipfian_0.90
-# zipfian_0.90
+
+# zipfian_0.99
+# hotspot_80_20
+# uniform
+# hotspot_95_5
+
 # WORKLOAD="SINGLE_NODE_HOT_KEYS"
 # SINGLE_NODE_HOT_KEYS
 
 # WORKLOAD="SINGLE_NODE_HOT_KEYS"
-SYSTEM_NAMES=("A" "B" "C")
-POLICY_TYPES=("thread_safe_lru" "nchance")
-# zipfian_0.999
-# hotspot_99_30
-# hotspot_80_20
-# uniform
+# SYSTEM_NAMES=("A" "B") 
+WORKLOAD="YCSB"
+# CACHE_SIZE=(0.10)
+CACHE_SIZE=(0.10 0.20 0.30 0.334)
+SYSTEM_NAMES=("B")
+POLICY_TYPES=("thread_safe_lru")
+# POLICY_TYPES=("access_rate_dynamic")
+
+# run
+zipfian_0.99
+hotspot_80_20
+uniform
 # hotspot_95_5
-# hotspot_90_10
+
+# hotspot_100_30
+# hotspot_100_30_perfect_routing
+
 # scp_ycsb_workload "/mydata/ycsb/mixed_10"
+echo "SCP started"
+# scp_ycsb_workload "/mydata/throughput_extream/16_32"
