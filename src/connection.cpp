@@ -63,7 +63,7 @@ void Connection::connect_to_remote_machine(int remote_index)
   int ret = 0;
   auto port = 0;
 
-  constexpr auto MACHNET_CONNECT_RETRIES = 100000000;
+  constexpr auto MACHNET_CONNECT_RETRIES = 1000000;
   for (auto i = 0; i < MACHNET_CONNECT_RETRIES; i++)
   {
     LOG_STATE("[{}-{}] {} Connecting from [{}:{}] to [{}:{}]", machine_index,
