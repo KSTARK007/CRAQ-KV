@@ -1772,7 +1772,7 @@ int main(int argc, char *argv[])
             }
           }
         }
-        db->set_batch_max_pending_requests(block_cache_config.db.block_db.batch_max_pending_requests);
+        db->set_batch_max_pending_requests(config.db.block_db.batch_max_pending_requests);
 
         // Fill in each buffer with value
         std::array<uint8_t, BLKSZ> write_buffer;
