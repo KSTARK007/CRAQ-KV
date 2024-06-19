@@ -1734,6 +1734,10 @@ int main(int argc, char *argv[])
           for (auto j = 0; j < config.db.block_db.num_entries; j++)
           {
             auto k = std::to_string(j);
+            if (j % 10000 == 0)
+            {
+              info("Loaded into DB {}/{} [{}]", j, config.db.block_db.num_entries, float(j)/config.db.block_db.num_entries);
+            }
             block_cache->get_db()->put_async_submit(k, value, [](auto v){});
             // block_cache->get_db()->put(k, value);
           }
