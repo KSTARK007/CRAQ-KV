@@ -299,7 +299,7 @@ void shared_log_worker(BlockCacheConfig config, Configuration ops_config)
     }
   }
 
-  const auto shared_log_size = 128 * 1024 * 1024;
+  const auto shared_log_size = 1024 * 1024 * 1024;
   SimpleSharedLog shared_log(shared_log_size);
   info("shared log worker started, {} entry shared log initialized", shared_log_size);
   std::vector<std::thread> ts;
