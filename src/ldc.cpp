@@ -1738,6 +1738,10 @@ int main(int argc, char *argv[])
           std::iota(std::begin(kvs),std::end(kvs), 0);
           std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
           {
+            if (k % 10000 == 0)
+            {
+              info("Loaded into DB {}/{} [{}]", k, config.db.block_db.num_entries, float(k)/config.db.block_db.num_entries);
+            }
             auto ks = std::to_string(k);
             block_cache->get_db()->put(ks, value);
           });
