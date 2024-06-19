@@ -1667,7 +1667,7 @@ int main(int argc, char *argv[])
 
         auto cache = block_cache->get_cache();
         auto db = block_cache->get_db();
-        db->set_batch_max_pending_requests(8);
+        db->set_batch_max_pending_requests(2);
 
         if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
         {
@@ -1742,8 +1742,8 @@ int main(int argc, char *argv[])
             {
               info("Loaded into DB {}/{} [{}]", j, config.db.block_db.num_entries, float(j)/config.db.block_db.num_entries);
             }
-            // block_cache->get_db()->put_async_submit(k, value, [](auto v){});
-            block_cache->get_db()->put(k, value);
+            block_cache->get_db()->put_async_submit(k, value, [](auto v){});
+            // block_cache->get_db()->put(k, value);
           }
 
           std::this_thread::sleep_for(std::chrono::milliseconds(1000));
