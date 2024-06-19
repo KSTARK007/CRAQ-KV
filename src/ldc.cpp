@@ -1665,6 +1665,9 @@ int main(int argc, char *argv[])
         }
         info("print RDMA Connect completed"); 
 
+        auto cache = block_cache->get_cache();
+        auto db = block_cache->get_db();
+        db->set_batch_max_pending_requests(0);
 
         if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
         {
@@ -1731,6 +1734,7 @@ int main(int argc, char *argv[])
           //     block_cache->get_db()->put(k, value);
           //   // }
           // }
+
           for (auto j = 0; j < config.db.block_db.num_entries; j++)
           {
             auto k = std::to_string(j);
@@ -1768,6 +1772,7 @@ int main(int argc, char *argv[])
             }
           }
         }
+        db->set_batch_max_pending_requests(block_cache_config.db.block_db.batch_max_pending_requests);
 
         // Fill in each buffer with value
         std::array<uint8_t, BLKSZ> write_buffer;
