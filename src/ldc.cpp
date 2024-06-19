@@ -1667,7 +1667,7 @@ int main(int argc, char *argv[])
 
         auto cache = block_cache->get_cache();
         auto db = block_cache->get_db();
-        db->set_batch_max_pending_requests(2);
+        db->set_batch_max_pending_requests(1);
 
         if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
         {
