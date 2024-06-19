@@ -1734,17 +1734,23 @@ int main(int argc, char *argv[])
           //     block_cache->get_db()->put(k, value);
           //   // }
           // }
-
-          for (auto j = 0; j < config.db.block_db.num_entries; j++)
+          std::vector<uint64_t> kvs(config.db.block_db.num_entries);
+          std::iota(std::begin(kvs),std::end(kvs), 0);
+          std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
           {
-            auto k = std::to_string(j);
-            if (j % 10000 == 0)
-            {
-              info("Loaded into DB {}/{} [{}]", j, config.db.block_db.num_entries, float(j)/config.db.block_db.num_entries);
-            }
-            block_cache->get_db()->put_async_submit(k, value, [](auto v){});
-            // block_cache->get_db()->put(k, value);
-          }
+            block_cache->get_db()->put(k, value);
+          });
+
+          // for (auto j = 0; j < config.db.block_db.num_entries; j++)
+          // {
+          //   auto k = std::to_string(j);
+          //   if (j % 10000 == 0)
+          //   {
+          //     info("Loaded into DB {}/{} [{}]", j, config.db.block_db.num_entries, float(j)/config.db.block_db.num_entries);
+          //   }
+          //   block_cache->get_db()->put_async_submit(k, value, [](auto v){});
+          //   // block_cache->get_db()->put(k, value);
+          // }
 
           std::this_thread::sleep_for(std::chrono::milliseconds(1000));
           while (count_expected > count_finished)
