@@ -1734,19 +1734,22 @@ int main(int argc, char *argv[])
           //     block_cache->get_db()->put(k, value);
           //   // }
           // }
-          std::vector<uint64_t> kvs(config.db.block_db.num_entries);
-          std::iota(std::begin(kvs),std::end(kvs), 0);
-          std::atomic<uint64_t> loading_counter;
-          std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
+          if (config.db.block_db.copied_filename.empty())
           {
-            auto ll = loading_counter.fetch_add(1, std::memory_order::relaxed);
-            if (ll % 10000 == 0)
+            std::vector<uint64_t> kvs(config.db.block_db.num_entries);
+            std::iota(std::begin(kvs),std::end(kvs), 0);
+            std::atomic<uint64_t> loading_counter;
+            std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
             {
-              info("Loaded into DB {}/{} [{}]", ll, config.db.block_db.num_entries, float(ll)/config.db.block_db.num_entries);
-            }
-            auto ks = std::to_string(k);
-            block_cache->get_db()->put(ks, value);
-          });
+              auto ll = loading_counter.fetch_add(1, std::memory_order::relaxed);
+              if (ll % 10000 == 0)
+              {
+                info("Loaded into DB {}/{} [{}]", ll, config.db.block_db.num_entries, float(ll)/config.db.block_db.num_entries);
+              }
+              auto ks = std::to_string(k);
+              block_cache->get_db()->put(ks, value);
+            });
+          }
 
           // for (auto j = 0; j < config.db.block_db.num_entries; j++)
           // {
