@@ -237,7 +237,7 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
   }
   if (thread_index == 0 && client_index_per_thread == 0)
   {
-    client.sync_with_other_clients();
+    // client.sync_with_other_clients();
     workload_done.store(true, std::memory_order::relaxed);
   }
 
