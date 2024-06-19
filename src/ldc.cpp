@@ -1736,11 +1736,13 @@ int main(int argc, char *argv[])
           // }
           std::vector<uint64_t> kvs(config.db.block_db.num_entries);
           std::iota(std::begin(kvs),std::end(kvs), 0);
+          std::atomic<uint64_t> loading_counter;
           std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
           {
-            if (k % 10000 == 0)
+            auto ll = loading_counter.fetch_add(1, std::memory_order::relaxed);
+            if (ll % 10000 == 0)
             {
-              info("Loaded into DB {}/{} [{}]", k, config.db.block_db.num_entries, float(k)/config.db.block_db.num_entries);
+              info("Loaded into DB {}/{} [{}]", ll, config.db.block_db.num_entries, float(ll)/config.db.block_db.num_entries);
             }
             auto ks = std::to_string(k);
             block_cache->get_db()->put(ks, value);
