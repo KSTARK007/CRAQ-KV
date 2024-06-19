@@ -1738,7 +1738,8 @@ int main(int argc, char *argv[])
           std::iota(std::begin(kvs),std::end(kvs), 0);
           std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
           {
-            block_cache->get_db()->put(k, value);
+            auto ks = std::to_string(k);
+            block_cache->get_db()->put(ks, value);
           });
 
           // for (auto j = 0; j < config.db.block_db.num_entries; j++)
