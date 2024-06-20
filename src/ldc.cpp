@@ -1746,6 +1746,14 @@ int main(int argc, char *argv[])
           //     block_cache->get_db()->put(k, value);
           //   // }
           // }
+          for (const auto &k : keys)
+          {
+            auto key_index = convert_string<uint64_t>(k);
+            if (key_index >= start_keys && key_index < end_keys)
+            {
+              cache->put(k, value);
+            }
+          }
           if (config.db.block_db.copied_filename.empty())
           {
             std::vector<uint64_t> kvs(config.db.block_db.num_entries);
