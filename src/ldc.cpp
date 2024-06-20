@@ -1704,7 +1704,6 @@ int main(int argc, char *argv[])
             start_client_index++;
           }
 
-          info("Make key value")
           auto rdma_key_value_cache = std::make_shared<RDMAKeyValueCache>(config, ops_config, machine_index - start_client_index, context1, qpf1,
             block_cache->get_rdma_key_value_storage(), block_cache);
           for (auto &[t, node] : rdma_nodes) {
