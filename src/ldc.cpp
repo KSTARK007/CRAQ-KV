@@ -1508,10 +1508,10 @@ int main(int argc, char *argv[])
   exec("sudo pkill -9 machnet");
 
   bool owning = false;
-  // if (config.policy_type == "thread_safe_lru")
-  // {
-  //   owning = true;
-  // }
+  if (config.policy_type == "thread_safe_lru")
+  {
+    owning = true;
+  }
 
   std::shared_ptr<BlockCache<std::string, std::string>> block_cache = nullptr;
   std::shared_ptr<CachePolicy<std::string, std::string>> write_cache = nullptr;
