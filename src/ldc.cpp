@@ -1550,9 +1550,7 @@ int main(int argc, char *argv[])
         block_cache = std::make_shared<BlockCache<std::string, std::string>>(config);
       }
 
-    info("Ready snap???");
     snapshot = std::make_shared<Snapshot>(config, ops_config);
-    info("Ready snap");
 
     if(config.policy_type == "access_rate_dynamic"){
       static std::thread access_rate_thread([&, block_cache]()
