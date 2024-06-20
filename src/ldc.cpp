@@ -1173,7 +1173,11 @@ void server_worker(
                     rdma_ns = rdma_timer.time_elapsed();
 
                     uint64_t key_index = kv.key_index;
+#ifdef COMPRESS_RDMA_INDEX_KEY_VALUE
+                    auto value_view = std::string_view(default_value);
+#else
                     auto value_view = std::string_view((const char*)kv.data, ops_config.VALUE_SIZE);
+#endif
                     std::string value(value_view);
                     LOG_RDMA_DATA("[Read RDMA Callback] [{}] key {} value {}", remote_index, key_index, value);
                     if (key_index == expected_key)
@@ -1717,7 +1721,11 @@ int main(int argc, char *argv[])
               {
                 const auto& [kv, _, remote_index, __] = v;
                 auto key_index = kv->key_index;
+#ifdef COMPRESS_RDMA_INDEX_KEY_VALUE
+                auto value = default_value;
+#else
                 auto value = std::string_view((const char*)kv->data, ops_config.VALUE_SIZE);
+#endif
                 info("[Execute pending for RDMA] [{}] key {} value {}", remote_index, key_index, value);
               }, [&](){
               });
