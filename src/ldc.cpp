@@ -1667,7 +1667,10 @@ int main(int argc, char *argv[])
 
         auto cache = block_cache->get_cache();
         auto db = block_cache->get_db();
-        db->set_batch_max_pending_requests(1);
+        if (config.db.block_db.copied_filename.empty())
+        {
+          db->set_batch_max_pending_requests(1);
+        }
 
         if (config.baseline.one_sided_rdma_enabled && config.baseline.use_cache_indexing)
         {
@@ -1739,7 +1742,7 @@ int main(int argc, char *argv[])
             std::vector<uint64_t> kvs(config.db.block_db.num_entries);
             std::iota(std::begin(kvs),std::end(kvs), 0);
             std::atomic<uint64_t> loading_counter;
-            std::for_each(std::execution::par_unseq, std::begin(kvs),std::end(kvs), [&](auto k)
+            std::for_each(std::execution::par_unseq, std::begin(kvs), std::end(kvs), [&](auto k)
             {
               auto ll = loading_counter.fetch_add(1, std::memory_order::relaxed);
               if (ll % 10000 == 0)
@@ -1788,7 +1791,10 @@ int main(int argc, char *argv[])
             }
           }
         }
-        db->set_batch_max_pending_requests(config.db.block_db.batch_max_pending_requests);
+        if (config.db.block_db.copied_filename.empty())
+        {
+          db->set_batch_max_pending_requests(config.db.block_db.batch_max_pending_requests);
+        }
 
         // Fill in each buffer with value
         std::array<uint8_t, BLKSZ> write_buffer;
