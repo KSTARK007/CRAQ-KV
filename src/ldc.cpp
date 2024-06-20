@@ -1542,6 +1542,7 @@ int main(int argc, char *argv[])
 
         read_config.cache.thread_safe_lru.cache_size = read_cache_size;
         block_cache = std::make_shared<BlockCache<std::string, std::string>>(read_config);
+        info("Block cache ready");
         config = read_config;
       }
       else
@@ -1549,6 +1550,7 @@ int main(int argc, char *argv[])
         block_cache = std::make_shared<BlockCache<std::string, std::string>>(config);
       }
 
+    info("Ready snap???");
     snapshot = std::make_shared<Snapshot>(config, ops_config);
     info("Ready snap");
 
