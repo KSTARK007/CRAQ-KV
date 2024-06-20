@@ -39,8 +39,6 @@
 // #undef ENABLE_STREAMING_SHARED_LOG
 // #endif
 
-#define COMPRESS_RDMA_INDEX_KEY_VALUE
-
 // Stop the program, check this if we get SIGINT
 extern std::atomic<bool> g_stop;
 
