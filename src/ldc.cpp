@@ -128,6 +128,12 @@ std::vector<T> get_chunk(std::vector<T> const &vec, std::size_t n, std::size_t i
 // #define DEBUG_W info
 #define DEBUG_W
 
+void signalHandler(int signal) {
+    if (signal == SIGALRM) {
+      g_stop = true;
+    }
+}
+
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
 {
@@ -168,6 +174,12 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
   auto op_start = std::chrono::high_resolution_clock::now();
   auto now = std::chrono::high_resolution_clock::now();
   auto op_end = now - op_start;
+
+  signal(SIGALRM, signalHandler);
+  if (ops_config.TOTAL_RUNTIME_IN_SECONDS + ops_config.WARMUP_TIME_IN_SECONDS > 0)
+  {
+    alarm(static_cast<int>(ops_config.TOTAL_RUNTIME_IN_SECONDS + ops_config.WARMUP_TIME_IN_SECONDS) + 5);
+  }
   do
   {
     auto io_start = std::chrono::high_resolution_clock::now();
@@ -194,6 +206,10 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         wrong_value++;
         LOG_STATE("[{}] unexpected data {} {} for key {} wrong_values till now {}", index, v, value, key, wrong_value);
+      }
+      if (g_stop)
+      {
+        break;
       }
       auto now = std::chrono::high_resolution_clock::now();
       auto elapsed = now - io_start;
