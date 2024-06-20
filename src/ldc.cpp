@@ -1751,7 +1751,7 @@ int main(int argc, char *argv[])
             auto key_index = convert_string<uint64_t>(k);
             if (key_index >= start_keys && key_index < end_keys)
             {
-              cache->put(k, value);
+              cache->put(k, value, owning);
             }
           }
           if (config.db.block_db.copied_filename.empty())
