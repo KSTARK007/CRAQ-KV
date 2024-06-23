@@ -1841,18 +1841,18 @@ int main(int argc, char *argv[])
       }
       else
       {
-        for (const auto &k : keys)
-        {
-          auto key_index = convert_string<uint64_t>(k);
-          if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru" && !ops_config.operations_pollute_cache)
-          {
-            block_cache->get_cache()->put(k, value, false);
-          }
-          if (config.db.block_db.copied_filename.empty())
-          {
-            block_cache->get_db()->put(k, value);
-          }
-        }
+        // for (const auto &k : keys)
+        // {
+        //   auto key_index = convert_string<uint64_t>(k);
+        //   if (key_index >= start_keys && key_index < end_keys && config.policy_type == "thread_safe_lru" && !ops_config.operations_pollute_cache)
+        //   {
+        //     block_cache->get_cache()->put(k, value, false);
+        //   }
+        //   if (config.db.block_db.copied_filename.empty())
+        //   {
+        //     block_cache->get_db()->put(k, value);
+        //   }
+        // }
       }
       info("Running server");
     }
