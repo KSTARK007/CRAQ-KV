@@ -110,6 +110,25 @@ struct SharedLogGetResponse {
   e @2: List(SharedLogEntry);
 }
 
+# TODO: Set up craq requests and responses
+struct CraqForwardPropagateRequest {
+  key @0 :Text;
+  value @1 :Text;
+}
+
+struct CraqForwardPropagateResponse {
+  text @0 : Text;
+}
+
+struct CraqBackwardPropagateRequest {
+  key @0 :Text;
+  value @1 :Text;
+}
+
+struct CraqBackwardPropagateResponse {
+  text @0 : Text;
+}
+
 struct Packet {
   data :union {
     putRequest @0 :PutRequest;
@@ -130,6 +149,10 @@ struct Packet {
     sharedLogPutResponse @15: SharedLogPutResponse;
     sharedLogGetRequest @16: SharedLogGetRequest;
     sharedLogGetResponse @17: SharedLogGetResponse;
+    craqForwardPropagateRequest @18: CraqForwardPropagateRequest;
+    craqForwardPropagateResponse @19: CraqForwardPropagateResponse;
+    craqBackwardPropagateRequest @20: CraqBackwardPropagateRequest;
+    craqBackwardPropagateResponse @21: CraqBackwardPropagateResponse;
   }
 }
 

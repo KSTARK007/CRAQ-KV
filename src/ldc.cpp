@@ -199,7 +199,12 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       }
       else if (op == INSERT_OP || op == UPDATE_OP)
       {
-        client.put(index + client_start_index, thread_index, key, value);
+        // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
+        if (config.craq_enabled) {
+          client.put(client_start_index, thread_index, key, value);
+        } else {
+          client.put(index + client_start_index, thread_index, key, value);
+        }
       }
       LOG_STATE("[{}] [{}] Client received [{}] [{}]", machine_index, client_index, key, v);
       if (op == READ_OP && v != value)
@@ -1061,6 +1066,17 @@ void server_worker(
                 }
               }
             }
+            // TODO: Add check here for craq and forward propagate if we're not at the tail
+            else if (config.craq_enabled) {
+              // write_disk(key_cstr, value_cstr);
+              server.put_response(remote_index, remote_port, ResponseType::OK);
+
+              if (machine_index != 0) {
+                panic("Put requests for craq should only be sent to the first server");
+              }
+
+              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
+            }
             else
             {
               write_disk(key_cstr, value_cstr);
@@ -1088,7 +1104,11 @@ void server_worker(
             auto key = key_.cStr();
             auto key_index = convert_string<uint64_t>(key);
             auto exists_in_cache = block_cache->exists_in_cache(key);
-            if (exists_in_cache)
+            // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
+            if (config.craq_enabled) {
+              server.get_response(remote_index, remote_port, ResponseType::OK, "");
+            }
+            else if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
@@ -1461,6 +1481,46 @@ void server_worker(
             }
             shared_log_get_request_acked = true;
             num_shared_log_get_request_acked.fetch_add(1, std::memory_order::relaxed);
+          }
+          // TODO: Add additional checks for craq calls
+          else if (data.isCraqForwardPropagateRequest())
+          {
+            auto p = data.getCraqForwardPropagateRequest();
+            std::string_view key = p.getKey().cStr();
+            std::string_view value = p.getValue().cStr();
+
+            // Check if key exists
+            // If key exists, then we manage the versions
+            // For versioning, maintain an in memory map
+            // Also write to disk in this first iteration
+            // If its the tail, then we commit, then remove previous value
+
+            info("[CraqForwardPropagateRequest] Got request for {}", key);
+            // Response
+            server.craq_forward_propagate_response(ResponseType::OK);
+
+            if (machine_index == server_configs.size() - 1) {
+              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+            } else {
+              server.craq_forward_propagate_request(machine_index + 1, port, key, value);
+            }
+          }
+          else if (data.isCraqBackwardPropagateRequest())
+          {
+            auto p = data.getCraqBackwardPropagateRequest();
+            std::string_view key = p.getKey().cStr();
+            std::string_view value = p.getValue().cStr();
+
+            // Commit the most up to date key, aka mark it as clean
+            // Remove previous versions
+
+            info("[CraqBackwardPropagateRequest] Got request for {}", key);
+            // Response
+            server.craq_backward_propagate_response(ResponseType::OK);
+
+            if (machine_index != 0) {
+              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+            }
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)

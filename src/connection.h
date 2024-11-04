@@ -173,6 +173,10 @@ struct Connection
     return true;
   }
 
+  // TODO: Add rpc functions for craq
+  void craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value);
+  void craq_backward_propagate_request(int index, int port, std::string_view key, std::string_view value);
+
   void shared_log_forward_request(int index, int port, std::string_view key, uint64_t hash);
   void shared_log_forward_response(int index, int port, ResponseType response_type, uint64_t hash);
   void shared_log_put_request(int index, int port, std::string_view key, std::string_view value, uint64_t hash);
