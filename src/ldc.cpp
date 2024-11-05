@@ -1075,7 +1075,7 @@ void server_worker(
                 panic("Put requests for craq should only be sent to the first server");
               }
 
-              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
+              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
             }
             else
             {
@@ -1496,13 +1496,11 @@ void server_worker(
             // If its the tail, then we commit, then remove previous value
 
             info("[CraqForwardPropagateRequest] Got request for {}", key);
-            // Response
-            server.craq_forward_propagate_response(ResponseType::OK);
 
             if (machine_index == server_configs.size() - 1) {
-              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+              server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
             } else {
-              server.craq_forward_propagate_request(machine_index + 1, port, key, value);
+              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key, value);
             }
           }
           else if (data.isCraqBackwardPropagateRequest())
@@ -1515,8 +1513,6 @@ void server_worker(
             // Remove previous versions
 
             info("[CraqBackwardPropagateRequest] Got request for {}", key);
-            // Response
-            server.craq_backward_propagate_response(ResponseType::OK);
 
             if (machine_index != 0) {
               server.craq_backward_propagate_request(machine_index - 1, port, key, value);

@@ -699,7 +699,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
-  SharedLogForwardRequest::Builder request = data.initCraqForwardPropagateRequest();
+  CraqForwardPropagateRequest::Builder request = data.initCraqForwardPropagateRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
   auto m = capnp::messageToFlatArray(message);
@@ -717,7 +717,7 @@ void Connection::craq_backward_propagate_request(int index, int port, std::strin
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
-  SharedLogForwardRequest::Builder request = data.initCraqBackwardPropagateRequest();
+  CraqBackwardPropagateRequest::Builder request = data.initCraqBackwardPropagateRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
   auto m = capnp::messageToFlatArray(message);
