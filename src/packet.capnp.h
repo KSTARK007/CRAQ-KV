@@ -382,7 +382,7 @@ struct CraqForwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 0, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -412,7 +412,7 @@ struct CraqBackwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 0, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -2314,8 +2314,11 @@ public:
   }
 #endif  // !CAPNP_LITE
 
-  inline bool hasText() const;
-  inline  ::capnp::Text::Reader getText() const;
+  inline bool hasKey() const;
+  inline  ::capnp::Text::Reader getKey() const;
+
+  inline bool hasValue() const;
+  inline  ::capnp::Text::Reader getValue() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -2345,12 +2348,19 @@ public:
   inline ::kj::StringTree toString() const { return asReader().toString(); }
 #endif  // !CAPNP_LITE
 
-  inline bool hasText();
-  inline  ::capnp::Text::Builder getText();
-  inline void setText( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initText(unsigned int size);
-  inline void adoptText(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownText();
+  inline bool hasKey();
+  inline  ::capnp::Text::Builder getKey();
+  inline void setKey( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initKey(unsigned int size);
+  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline bool hasValue();
+  inline  ::capnp::Text::Builder getValue();
+  inline void setValue( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initValue(unsigned int size);
+  inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownValue();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -2476,8 +2486,11 @@ public:
   }
 #endif  // !CAPNP_LITE
 
-  inline bool hasText() const;
-  inline  ::capnp::Text::Reader getText() const;
+  inline bool hasKey() const;
+  inline  ::capnp::Text::Reader getKey() const;
+
+  inline bool hasValue() const;
+  inline  ::capnp::Text::Reader getValue() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -2507,12 +2520,19 @@ public:
   inline ::kj::StringTree toString() const { return asReader().toString(); }
 #endif  // !CAPNP_LITE
 
-  inline bool hasText();
-  inline  ::capnp::Text::Builder getText();
-  inline void setText( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initText(unsigned int size);
-  inline void adoptText(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownText();
+  inline bool hasKey();
+  inline  ::capnp::Text::Builder getKey();
+  inline void setKey( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initKey(unsigned int size);
+  inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline bool hasValue();
+  inline  ::capnp::Text::Builder getValue();
+  inline void setValue( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initValue(unsigned int size);
+  inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownValue();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -4066,38 +4086,72 @@ inline ::capnp::Orphan< ::capnp::List< ::SharedLogEntry,  ::capnp::Kind::STRUCT>
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline bool CraqForwardPropagateRequest::Reader::hasText() const {
+inline bool CraqForwardPropagateRequest::Reader::hasKey() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline bool CraqForwardPropagateRequest::Builder::hasText() {
+inline bool CraqForwardPropagateRequest::Builder::hasKey() {
   return !_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline  ::capnp::Text::Reader CraqForwardPropagateRequest::Reader::getText() const {
+inline  ::capnp::Text::Reader CraqForwardPropagateRequest::Reader::getKey() const {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::getText() {
+inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::getKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline void CraqForwardPropagateRequest::Builder::setText( ::capnp::Text::Reader value) {
+inline void CraqForwardPropagateRequest::Builder::setKey( ::capnp::Text::Reader value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), value);
 }
-inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::initText(unsigned int size) {
+inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::initKey(unsigned int size) {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), size);
 }
-inline void CraqForwardPropagateRequest::Builder::adoptText(
+inline void CraqForwardPropagateRequest::Builder::adoptKey(
     ::capnp::Orphan< ::capnp::Text>&& value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateRequest::Builder::disownText() {
+inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateRequest::Builder::disownKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool CraqForwardPropagateRequest::Reader::hasValue() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool CraqForwardPropagateRequest::Builder::hasValue() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader CraqForwardPropagateRequest::Reader::getValue() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::getValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void CraqForwardPropagateRequest::Builder::setValue( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder CraqForwardPropagateRequest::Builder::initValue(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void CraqForwardPropagateRequest::Builder::adoptValue(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateRequest::Builder::disownValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline bool CraqForwardPropagateResponse::Reader::hasText() const {
@@ -4134,38 +4188,72 @@ inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateResponse::Builder::di
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline bool CraqBackwardPropagateRequest::Reader::hasText() const {
+inline bool CraqBackwardPropagateRequest::Reader::hasKey() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline bool CraqBackwardPropagateRequest::Builder::hasText() {
+inline bool CraqBackwardPropagateRequest::Builder::hasKey() {
   return !_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline  ::capnp::Text::Reader CraqBackwardPropagateRequest::Reader::getText() const {
+inline  ::capnp::Text::Reader CraqBackwardPropagateRequest::Reader::getKey() const {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::getText() {
+inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::getKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline void CraqBackwardPropagateRequest::Builder::setText( ::capnp::Text::Reader value) {
+inline void CraqBackwardPropagateRequest::Builder::setKey( ::capnp::Text::Reader value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), value);
 }
-inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::initText(unsigned int size) {
+inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::initKey(unsigned int size) {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), size);
 }
-inline void CraqBackwardPropagateRequest::Builder::adoptText(
+inline void CraqBackwardPropagateRequest::Builder::adoptKey(
     ::capnp::Orphan< ::capnp::Text>&& value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::capnp::Text> CraqBackwardPropagateRequest::Builder::disownText() {
+inline ::capnp::Orphan< ::capnp::Text> CraqBackwardPropagateRequest::Builder::disownKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool CraqBackwardPropagateRequest::Reader::hasValue() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool CraqBackwardPropagateRequest::Builder::hasValue() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader CraqBackwardPropagateRequest::Reader::getValue() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::getValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void CraqBackwardPropagateRequest::Builder::setValue( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder CraqBackwardPropagateRequest::Builder::initValue(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void CraqBackwardPropagateRequest::Builder::adoptValue(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> CraqBackwardPropagateRequest::Builder::disownValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline bool CraqBackwardPropagateResponse::Reader::hasText() const {

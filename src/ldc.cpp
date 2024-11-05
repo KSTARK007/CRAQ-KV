@@ -1515,7 +1515,7 @@ void server_worker(
             info("[CraqBackwardPropagateRequest] Got request for {}", key);
 
             if (machine_index != 0) {
-              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+              server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
             }
           }
 

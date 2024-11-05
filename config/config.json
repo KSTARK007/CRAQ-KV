@@ -3,6 +3,7 @@
     "policy_type": "thread_safe_lru",
     "db_type": "block_db",
     "rdma_port": 50000,
+    "craq_enabled": true,
     "db": {
         "block_db": {
             "filename": "database.db",
