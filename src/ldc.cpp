@@ -1081,7 +1081,7 @@ void server_worker(
               // }
 
               info("Forwarding put request to next server from head");
-              // server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
+              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
             }
             else
             {
@@ -1503,11 +1503,11 @@ void server_worker(
 
             info("[CraqForwardPropagateRequest] Got request for {}", key);
 
-            if (machine_index == server_configs.size() - 1) {
-              server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
-            } else {
-              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key, value);
-            }
+            // if (machine_index == server_configs.size() - 1) {
+            //   server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
+            // } else {
+            //   server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key, value);
+            // }
           }
           else if (data.isCraqBackwardPropagateRequest())
           {
