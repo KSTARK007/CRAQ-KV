@@ -1072,7 +1072,7 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             else if (config.craq_enabled) {
-              // write_disk(key_cstr, value_cstr);
+              write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
               if (machine_index != 0) {
@@ -1110,10 +1110,10 @@ void server_worker(
             auto key_index = convert_string<uint64_t>(key);
             auto exists_in_cache = block_cache->exists_in_cache(key);
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled) {
-              server.get_response(remote_index, remote_port, ResponseType::OK, "");
-            }
-            else if (exists_in_cache)
+            // if (config.craq_enabled) {
+            //   server.get_response(remote_index, remote_port, ResponseType::OK, "");
+            // }
+            if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
