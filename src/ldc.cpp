@@ -200,12 +200,12 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       else if (op == INSERT_OP || op == UPDATE_OP)
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
-        // if (config.craq_enabled) {
-        //   client.put(client_start_index, thread_index, key, value);
-        // } else {
-        //   client.put(index + client_start_index, thread_index, key, value);
-        // }
-        client.put(index + client_start_index, thread_index, key, value);
+        if (config.craq_enabled) {
+          client.put(client_start_index, thread_index, key, value);
+        } else {
+          client.put(index + client_start_index, thread_index, key, value);
+        }
+        // client.put(index + client_start_index, thread_index, key, value);
       }
       LOG_STATE("[{}] [{}] Client received [{}] [{}]", machine_index, client_index, key, v);
       if (op == READ_OP && v != value)
