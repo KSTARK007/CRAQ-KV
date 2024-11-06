@@ -380,7 +380,7 @@ struct CraqForwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 1, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 2, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -395,7 +395,7 @@ struct CraqBackwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 1, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 2, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -2288,6 +2288,8 @@ public:
 
   inline  ::uint64_t getClientIndex() const;
 
+  inline  ::uint64_t getClientPort() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2332,6 +2334,9 @@ public:
 
   inline  ::uint64_t getClientIndex();
   inline void setClientIndex( ::uint64_t value);
+
+  inline  ::uint64_t getClientPort();
+  inline void setClientPort( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -2384,6 +2389,8 @@ public:
 
   inline  ::uint64_t getClientIndex() const;
 
+  inline  ::uint64_t getClientPort() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2428,6 +2435,9 @@ public:
 
   inline  ::uint64_t getClientIndex();
   inline void setClientIndex( ::uint64_t value);
+
+  inline  ::uint64_t getClientPort();
+  inline void setClientPort( ::uint64_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -3958,6 +3968,20 @@ inline void CraqForwardPropagateRequest::Builder::setClientIndex( ::uint64_t val
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
+inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientPort() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientPort() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+inline void CraqForwardPropagateRequest::Builder::setClientPort( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
+}
+
 inline bool CraqBackwardPropagateRequest::Reader::hasKey() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
@@ -4038,6 +4062,20 @@ inline  ::uint64_t CraqBackwardPropagateRequest::Builder::getClientIndex() {
 inline void CraqBackwardPropagateRequest::Builder::setClientIndex( ::uint64_t value) {
   _builder.setDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint64_t CraqBackwardPropagateRequest::Reader::getClientPort() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t CraqBackwardPropagateRequest::Builder::getClientPort() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+inline void CraqBackwardPropagateRequest::Builder::setClientPort( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
 }
 
 inline typename Packet::Data::Reader Packet::Reader::getData() const {

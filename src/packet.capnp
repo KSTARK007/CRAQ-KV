@@ -115,12 +115,14 @@ struct CraqForwardPropagateRequest {
   key @0 :Text;
   value @1 :Text;
   clientIndex @2: UInt64;
+  clientPort @3: UInt64;
 }
 
 struct CraqBackwardPropagateRequest {
   key @0 :Text;
   value @1 :Text;
   clientIndex @2: UInt64;
+  clientPort @3: UInt64;
 }
 
 struct Packet {
