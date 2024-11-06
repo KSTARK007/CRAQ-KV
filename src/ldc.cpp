@@ -1542,6 +1542,7 @@ void server_worker(
             info("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
 
             if (machine_index != num_client_nodes) {
+              info("Continuing back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
               server.craq_backward_propagate_request(machine_index - 1, port, key, value);
             }
