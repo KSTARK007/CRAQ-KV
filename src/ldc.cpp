@@ -1099,7 +1099,7 @@ void server_worker(
               info("Forwarding put request to next server from head on port: {}", port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, remote_index);
 
-              server.put_response(remote_index, ResponseType::OK);
+              server.put_response(remote_index, remote_port, ResponseType::OK);
             }
             else
             {
