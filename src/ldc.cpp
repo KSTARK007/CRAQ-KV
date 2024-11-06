@@ -175,6 +175,16 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
   auto now = std::chrono::high_resolution_clock::now();
   auto op_end = now - op_start;
 
+  // TONY: Fetch num client nodes
+  auto num_client_nodes = 0;
+  for (auto i = 0; i < config.remote_machine_configs.size(); i++)
+  {
+    if (!config.remote_machine_configs[i].server)
+    {
+      num_client_nodes++;
+    }
+  }
+
   signal(SIGALRM, signalHandler);
   if (ops_config.TOTAL_RUNTIME_IN_SECONDS + ops_config.WARMUP_TIME_IN_SECONDS > 0)
   {
@@ -202,7 +212,8 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
           info("Client start index: {}, actual index: {}", client_start_index, client_start_index + index);
-          client.put(client_start_index, thread_index, key, value);
+          info("Num client nodes: {}, new index {}", num_client_nodes, client_start_index + num_client_nodes);
+          client.put(num_client_nodes + client_start_index, thread_index, key, value);
         } else {
           client.put(index + client_start_index, thread_index, key, value);
         }
