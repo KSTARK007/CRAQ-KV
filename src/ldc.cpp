@@ -1519,7 +1519,7 @@ void server_worker(
             // Also write to disk in this first iteration
             // If its the tail, then we commit, then remove previous value
 
-            info("[CraqForwardPropagateRequest] Got request for {}", key);
+            info("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
 
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
               info("Starting back propagation for key {}", key);
@@ -1539,11 +1539,12 @@ void server_worker(
             // Commit the most up to date key, aka mark it as clean
             // Remove previous versions
 
-            info("[CraqBackwardPropagateRequest] Got request for {}", key);
+            info("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
 
-            // if (machine_index != 0) {
-            //   server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
-            // }
+            if (machine_index != num_client_nodes) {
+              int port = find_server_port(machine_index - 1, thread_index, server_configs);
+              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+            }
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
