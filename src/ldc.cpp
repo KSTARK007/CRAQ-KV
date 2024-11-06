@@ -1025,6 +1025,9 @@ void server_worker(
             auto key_cstr = key_.cStr();
             auto value_cstr = value_.cStr();
 
+            info("Received put request for key {} value {}", key_cstr, value_cstr);
+            info("has shared log {} and craq enabled {}", has_shared_log, config.craq_enabled);
+
             if (has_shared_log)
             {
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
