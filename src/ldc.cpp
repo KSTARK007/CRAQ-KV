@@ -724,6 +724,7 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
   execute_operations(client, ops_chunk, start_client_index - 1, config, ops_config, client_index_per_thread, machine_index, thread_index);
 }
 
+// TONY
 int find_server_port(int machine_index, int thread_index, const std::vector<RemoteMachineConfig>& server_configs) {
   int port;
   for (auto i = 0; i < server_configs.size(); i++)
@@ -754,12 +755,17 @@ void server_worker(
   auto has_shared_log = shared_log_config.shared_log;
 
   std::vector<RemoteMachineConfig> server_configs;
+  int num_client_nodes = 0;
   for (auto i = 0; i < config.remote_machine_configs.size(); i++)
   {
     auto remote_machine_config = config.remote_machine_configs[i];
     if (remote_machine_config.server)
     {
       server_configs.push_back(remote_machine_config);
+    } 
+    else
+    {
+      num_client_nodes++;
     }
   }
 
@@ -1515,7 +1521,7 @@ void server_worker(
 
             info("[CraqForwardPropagateRequest] Got request for {}", key);
 
-            if (machine_index == server_configs.size() - 1) {
+            if (machine_index - num_client_nodes == server_configs.size() - 1) {
               info("Starting back propagation for key {}", key);
               // server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
             } else {
