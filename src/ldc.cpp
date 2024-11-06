@@ -1026,10 +1026,6 @@ void server_worker(
             auto key_cstr = key_.cStr();
             auto value_cstr = value_.cStr();
 
-            info("Received put request for key {} value {}", key_cstr, value_cstr);
-            info("has shared log {} and craq enabled {}", has_shared_log, config.craq_enabled);
-            info("policy type {}", config.policy_type);
-
             if (has_shared_log)
             {
               uint64_t hash = static_cast<uint64_t>(remote_index) << 32 | static_cast<uint64_t>(remote_port);
@@ -1094,7 +1090,7 @@ void server_worker(
               }
 
               info("Forwarding put request to next server from head on port: {}", port);
-              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
+              server.craq_forward_propagate_request(machine_index + 1, 8000, key_cstr, value_cstr);
             }
             else
             {
