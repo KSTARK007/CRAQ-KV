@@ -200,11 +200,12 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       else if (op == INSERT_OP || op == UPDATE_OP)
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
-        if (config.craq_enabled) {
-          client.put(client_start_index, thread_index, key, value);
-        } else {
-          client.put(index + client_start_index, thread_index, key, value);
-        }
+        // if (config.craq_enabled) {
+        //   client.put(client_start_index, thread_index, key, value);
+        // } else {
+        //   client.put(index + client_start_index, thread_index, key, value);
+        // }
+        client.put(index + client_start_index, thread_index, key, value);
       }
       LOG_STATE("[{}] [{}] Client received [{}] [{}]", machine_index, client_index, key, v);
       if (op == READ_OP && v != value)
@@ -1071,7 +1072,7 @@ void server_worker(
               }
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
-            else if (config.craq_enabled) {
+            else if (config.craq_enabled && machine_index == 0) {
               write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
@@ -1566,7 +1567,6 @@ int main(int argc, char *argv[])
 
   // Cache & DB
   auto config_path = fs::path(FLAGS_config);
-  info("config path {}", config_path.string());
   std::ifstream ifs(config_path);
   if (!ifs)
   {
@@ -1575,8 +1575,6 @@ int main(int argc, char *argv[])
   json j = json::parse(ifs);
   auto config = j.template get<BlockCacheConfig>();
   printBlockCacheConfig(config);
-  bool craq_enabled = config.craq_enabled;
-  info("craq enabled {}", craq_enabled);
   int machine_index = FLAGS_machine_index;
   auto machine_config = config.remote_machine_configs[machine_index];
   auto is_server = machine_config.server;
