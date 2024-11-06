@@ -736,6 +736,8 @@ int find_server_port(int machine_index, int thread_index, const std::vector<Remo
       break;
     }
   }
+
+  return port;
 }
 
 void server_worker(
