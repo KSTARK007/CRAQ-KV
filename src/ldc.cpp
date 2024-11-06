@@ -1098,6 +1098,8 @@ void server_worker(
 
               info("Forwarding put request to next server from head on port: {}", port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, remote_index);
+
+              server.put_response(remote_index, ResponseType::OK);
             }
             else
             {
@@ -1548,7 +1550,6 @@ void server_worker(
             } else {
               // Send response back to client
               info("Sending response back to client {} for key {}", client_index, key);
-              server.put_response(client_index, ResponseType::OK);
             }
           }
 
