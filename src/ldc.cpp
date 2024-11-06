@@ -1513,7 +1513,19 @@ void server_worker(
               info("Starting back propagation for key {}", key);
               // server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
             } else {
-              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key, value);
+              int port;
+              for (auto i = 0; i < server_configs.size(); i++)
+              {
+                auto& server_config = server_configs[i];
+                auto index = server_config.index;
+                if (index == machine_index + 1)
+                {
+                  port = server_config.port + thread_index;
+                  break;
+                }
+              }
+
+              server.craq_forward_propagate_request(machine_index + 1, port, key, value);
             }
           }
           else if (data.isCraqBackwardPropagateRequest())
