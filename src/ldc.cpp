@@ -1566,6 +1566,7 @@ int main(int argc, char *argv[])
 
   // Cache & DB
   auto config_path = fs::path(FLAGS_config);
+  info("config path {}", config_path.string());
   std::ifstream ifs(config_path);
   if (!ifs)
   {
