@@ -1027,6 +1027,7 @@ void server_worker(
 
             info("Received put request for key {} value {}", key_cstr, value_cstr);
             info("has shared log {} and craq enabled {}", has_shared_log, config.craq_enabled);
+            info("policy type {}", config.policy_type);
 
             if (has_shared_log)
             {
