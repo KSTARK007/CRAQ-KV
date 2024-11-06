@@ -1575,6 +1575,8 @@ int main(int argc, char *argv[])
   json j = json::parse(ifs);
   auto config = j.template get<BlockCacheConfig>();
   printBlockCacheConfig(config);
+  bool craq_enabled = config.craq_enabled;
+  info("craq enabled {}", craq_enabled);
   int machine_index = FLAGS_machine_index;
   auto machine_config = config.remote_machine_configs[machine_index];
   auto is_server = machine_config.server;
