@@ -724,6 +724,20 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
   execute_operations(client, ops_chunk, start_client_index - 1, config, ops_config, client_index_per_thread, machine_index, thread_index);
 }
 
+int find_server_port(int machine_index, int thread_index, const std::vector<RemoteMachineConfig>& server_configs) {
+  int port;
+  for (auto i = 0; i < server_configs.size(); i++)
+  {
+    auto& server_config = server_configs[i];
+    auto index = server_config.index;
+    if (index == machine_index)
+    {
+      port = server_config.port + thread_index;
+      break;
+    }
+  }
+}
+
 void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
     int thread_index,
@@ -1072,17 +1086,7 @@ void server_worker(
             else if (config.craq_enabled) {
               write_disk(key_cstr, value_cstr);
 
-              int port;
-              for (auto i = 0; i < server_configs.size(); i++)
-              {
-                auto& server_config = server_configs[i];
-                auto index = server_config.index;
-                if (index == machine_index + 1)
-                {
-                  port = server_config.port + thread_index;
-                  break;
-                }
-              }
+              int port = find_server_port(machine_index + 1, thread_index, server_configs);
 
               info("Forwarding put request to next server from head on port: {}", port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
@@ -1513,18 +1517,7 @@ void server_worker(
               info("Starting back propagation for key {}", key);
               // server.craq_backward_propagate_request(machine_index - 1, remote_port - 1, key, value);
             } else {
-              int port;
-              for (auto i = 0; i < server_configs.size(); i++)
-              {
-                auto& server_config = server_configs[i];
-                auto index = server_config.index;
-                if (index == machine_index + 1)
-                {
-                  port = server_config.port + thread_index;
-                  break;
-                }
-              }
-
+              int port = find_server_port(machine_index + 1, thread_index, server_configs);
               server.craq_forward_propagate_request(machine_index + 1, port, key, value);
             }
           }
