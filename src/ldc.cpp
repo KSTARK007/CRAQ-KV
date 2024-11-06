@@ -211,8 +211,6 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
-          info("Client start index: {}, actual index: {}", client_start_index, client_start_index + index);
-          info("Num client nodes: {}, new index {}", num_client_nodes, client_start_index + num_client_nodes);
           client.put(num_client_nodes + client_start_index, thread_index, key, value);
         } else {
           client.put(index + client_start_index, thread_index, key, value);
@@ -1081,7 +1079,7 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             // Temp check machine_index == 1 for testing
-            else if (config.craq_enabled && machine_index == 1) {
+            else if (config.craq_enabled) {
               write_disk(key_cstr, value_cstr);
 
               int port;
@@ -1100,10 +1098,6 @@ void server_worker(
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
 
               server.put_response(remote_index, remote_port, ResponseType::OK);
-
-              // if (machine_index != 0) {
-              //   panic("Put requests for craq should only be sent to the first server");
-              // }
             }
             else
             {
