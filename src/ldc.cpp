@@ -1071,11 +1071,6 @@ void server_worker(
             // Temp check machine_index == 1 for testing
             else if (config.craq_enabled && machine_index == 1) {
               write_disk(key_cstr, value_cstr);
-              server.put_response(remote_index, remote_port, ResponseType::OK);
-
-              // if (machine_index != 0) {
-              //   panic("Put requests for craq should only be sent to the first server");
-              // }
 
               int port;
               for (auto i = 0; i < server_configs.size(); i++)
@@ -1090,7 +1085,13 @@ void server_worker(
               }
 
               info("Forwarding put request to next server from head on port: {}", port);
-              server.craq_forward_propagate_request(machine_index + 1, 8000, key_cstr, value_cstr);
+              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
+
+              server.put_response(remote_index, remote_port, ResponseType::OK);
+
+              // if (machine_index != 0) {
+              //   panic("Put requests for craq should only be sent to the first server");
+              // }
             }
             else
             {
