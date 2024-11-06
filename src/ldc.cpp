@@ -1076,9 +1076,9 @@ void server_worker(
               write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
-              if (machine_index != 0) {
-                panic("Put requests for craq should only be sent to the first server");
-              }
+              // if (machine_index != 0) {
+              //   panic("Put requests for craq should only be sent to the first server");
+              // }
 
               info("Forwarding put request to next server from head");
               // server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
