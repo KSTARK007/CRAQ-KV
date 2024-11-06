@@ -1244,6 +1244,7 @@ inline void printBlockCacheConfig(const BlockCacheConfig &config)
   std::cout << "BlockCacheConfig: {" << std::endl
             << "  ingest_block_index: " << (config.ingest_block_index ? "true" : "false") << std::endl
             << "  policy_type: " << config.policy_type << std::endl
+            << "  craq_enabled: " << config.craq_enabled << std::endl
             << "  rdma_port: " << config.rdma_port << std::endl
             << "  db_type: " << config.db_type << std::endl;
   std::cout << "  DBConfig: " << std::endl;
