@@ -693,7 +693,7 @@ void Connection::shared_log_get_response(int index, int port, uint64_t shared_lo
 }
 
 // TODO: Add craq functions here
-void Connection::craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value)
+void Connection::craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -702,6 +702,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   CraqForwardPropagateRequest::Builder request = data.initCraqForwardPropagateRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
+  request.setClientIndex(client_index);
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
@@ -711,7 +712,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, std::string_view value)
+void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -720,6 +721,7 @@ void Connection::craq_backward_propagate_request(int index, int port, std::strin
   CraqBackwardPropagateRequest::Builder request = data.initCraqBackwardPropagateRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
+  request.setClientIndex(client_index);
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 

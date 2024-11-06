@@ -1097,9 +1097,7 @@ void server_worker(
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
 
               info("Forwarding put request to next server from head on port: {}", port);
-              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
-
-              server.put_response(remote_index, remote_port, ResponseType::OK);
+              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, remote_index);
             }
             else
             {
@@ -1512,6 +1510,7 @@ void server_worker(
             auto p = data.getCraqForwardPropagateRequest();
             std::string_view key = p.getKey().cStr();
             std::string_view value = p.getValue().cStr();
+            uint64_t client_index = p.getClientIndex();
 
             // Check if key exists
             // If key exists, then we manage the versions
@@ -1524,10 +1523,10 @@ void server_worker(
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
               info("Starting back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
-              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+              server.craq_backward_propagate_request(machine_index - 1, port, key, value, client_index);
             } else {
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
-              server.craq_forward_propagate_request(machine_index + 1, port, key, value);
+              server.craq_forward_propagate_request(machine_index + 1, port, key, value, client_index);
             }
           }
           else if (data.isCraqBackwardPropagateRequest())
@@ -1535,6 +1534,7 @@ void server_worker(
             auto p = data.getCraqBackwardPropagateRequest();
             std::string_view key = p.getKey().cStr();
             std::string_view value = p.getValue().cStr();
+            uint64_t client_index = p.getClientIndex();
 
             // Commit the most up to date key, aka mark it as clean
             // Remove previous versions
@@ -1544,7 +1544,11 @@ void server_worker(
             if (machine_index != num_client_nodes) {
               info("Continuing back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
-              server.craq_backward_propagate_request(machine_index - 1, port, key, value);
+              server.craq_backward_propagate_request(machine_index - 1, port, key, value, client_index);
+            } else {
+              // Send response back to client
+              info("Sending response back to client {} for key {}", client_index, key);
+              server.put_response(client_index, ResponseType::OK);
             }
           }
 

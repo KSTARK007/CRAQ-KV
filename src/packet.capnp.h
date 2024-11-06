@@ -46,9 +46,7 @@ CAPNP_DECLARE_SCHEMA(a95322c67cbf4d00);
 CAPNP_DECLARE_SCHEMA(b74c1186fa94955a);
 CAPNP_DECLARE_SCHEMA(83b7ecc25270e0af);
 CAPNP_DECLARE_SCHEMA(d66ee313fb69e7e4);
-CAPNP_DECLARE_SCHEMA(fb4b70df212fd734);
 CAPNP_DECLARE_SCHEMA(9e5b01cd92a83c05);
-CAPNP_DECLARE_SCHEMA(e4f9c4b5e508a6d8);
 CAPNP_DECLARE_SCHEMA(b36ecfe36db7d4ef);
 CAPNP_DECLARE_SCHEMA(a9a1635b25f07a7b);
 CAPNP_DECLARE_SCHEMA(9cc4c008dd1d858e);
@@ -382,22 +380,7 @@ struct CraqForwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 0, 2)
-    #if !CAPNP_LITE
-    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
-    #endif  // !CAPNP_LITE
-  };
-};
-
-struct CraqForwardPropagateResponse {
-  CraqForwardPropagateResponse() = delete;
-
-  class Reader;
-  class Builder;
-  class Pipeline;
-
-  struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(fb4b70df212fd734, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 1, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -412,22 +395,7 @@ struct CraqBackwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 0, 2)
-    #if !CAPNP_LITE
-    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
-    #endif  // !CAPNP_LITE
-  };
-};
-
-struct CraqBackwardPropagateResponse {
-  CraqBackwardPropagateResponse() = delete;
-
-  class Reader;
-  class Builder;
-  class Pipeline;
-
-  struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(e4f9c4b5e508a6d8, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(9e5b01cd92a83c05, 1, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -476,9 +444,7 @@ struct Packet::Data {
     SHARED_LOG_GET_REQUEST,
     SHARED_LOG_GET_RESPONSE,
     CRAQ_FORWARD_PROPAGATE_REQUEST,
-    CRAQ_FORWARD_PROPAGATE_RESPONSE,
     CRAQ_BACKWARD_PROPAGATE_REQUEST,
-    CRAQ_BACKWARD_PROPAGATE_RESPONSE,
   };
 
   struct _capnpPrivate {
@@ -2320,6 +2286,8 @@ public:
   inline bool hasValue() const;
   inline  ::capnp::Text::Reader getValue() const;
 
+  inline  ::uint64_t getClientIndex() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2362,6 +2330,9 @@ public:
   inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownValue();
 
+  inline  ::uint64_t getClientIndex();
+  inline void setClientIndex( ::uint64_t value);
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -2375,87 +2346,6 @@ private:
 class CraqForwardPropagateRequest::Pipeline {
 public:
   typedef CraqForwardPropagateRequest Pipelines;
-
-  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
-  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
-      : _typeless(kj::mv(typeless)) {}
-
-private:
-  ::capnp::AnyPointer::Pipeline _typeless;
-  friend class ::capnp::PipelineHook;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-};
-#endif  // !CAPNP_LITE
-
-class CraqForwardPropagateResponse::Reader {
-public:
-  typedef CraqForwardPropagateResponse Reads;
-
-  Reader() = default;
-  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
-
-  inline ::capnp::MessageSize totalSize() const {
-    return _reader.totalSize().asPublic();
-  }
-
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const {
-    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
-  }
-#endif  // !CAPNP_LITE
-
-  inline bool hasText() const;
-  inline  ::capnp::Text::Reader getText() const;
-
-private:
-  ::capnp::_::StructReader _reader;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::List;
-  friend class ::capnp::MessageBuilder;
-  friend class ::capnp::Orphanage;
-};
-
-class CraqForwardPropagateResponse::Builder {
-public:
-  typedef CraqForwardPropagateResponse Builds;
-
-  Builder() = delete;  // Deleted to discourage incorrect usage.
-                       // You can explicitly initialize to nullptr instead.
-  inline Builder(decltype(nullptr)) {}
-  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
-  inline operator Reader() const { return Reader(_builder.asReader()); }
-  inline Reader asReader() const { return *this; }
-
-  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const { return asReader().toString(); }
-#endif  // !CAPNP_LITE
-
-  inline bool hasText();
-  inline  ::capnp::Text::Builder getText();
-  inline void setText( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initText(unsigned int size);
-  inline void adoptText(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownText();
-
-private:
-  ::capnp::_::StructBuilder _builder;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  friend class ::capnp::Orphanage;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-};
-
-#if !CAPNP_LITE
-class CraqForwardPropagateResponse::Pipeline {
-public:
-  typedef CraqForwardPropagateResponse Pipelines;
 
   inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
@@ -2491,6 +2381,8 @@ public:
 
   inline bool hasValue() const;
   inline  ::capnp::Text::Reader getValue() const;
+
+  inline  ::uint64_t getClientIndex() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -2534,6 +2426,9 @@ public:
   inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownValue();
 
+  inline  ::uint64_t getClientIndex();
+  inline void setClientIndex( ::uint64_t value);
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -2547,87 +2442,6 @@ private:
 class CraqBackwardPropagateRequest::Pipeline {
 public:
   typedef CraqBackwardPropagateRequest Pipelines;
-
-  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
-  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
-      : _typeless(kj::mv(typeless)) {}
-
-private:
-  ::capnp::AnyPointer::Pipeline _typeless;
-  friend class ::capnp::PipelineHook;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-};
-#endif  // !CAPNP_LITE
-
-class CraqBackwardPropagateResponse::Reader {
-public:
-  typedef CraqBackwardPropagateResponse Reads;
-
-  Reader() = default;
-  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
-
-  inline ::capnp::MessageSize totalSize() const {
-    return _reader.totalSize().asPublic();
-  }
-
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const {
-    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
-  }
-#endif  // !CAPNP_LITE
-
-  inline bool hasText() const;
-  inline  ::capnp::Text::Reader getText() const;
-
-private:
-  ::capnp::_::StructReader _reader;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::List;
-  friend class ::capnp::MessageBuilder;
-  friend class ::capnp::Orphanage;
-};
-
-class CraqBackwardPropagateResponse::Builder {
-public:
-  typedef CraqBackwardPropagateResponse Builds;
-
-  Builder() = delete;  // Deleted to discourage incorrect usage.
-                       // You can explicitly initialize to nullptr instead.
-  inline Builder(decltype(nullptr)) {}
-  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
-  inline operator Reader() const { return Reader(_builder.asReader()); }
-  inline Reader asReader() const { return *this; }
-
-  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const { return asReader().toString(); }
-#endif  // !CAPNP_LITE
-
-  inline bool hasText();
-  inline  ::capnp::Text::Builder getText();
-  inline void setText( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initText(unsigned int size);
-  inline void adoptText(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownText();
-
-private:
-  ::capnp::_::StructBuilder _builder;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  friend class ::capnp::Orphanage;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-};
-
-#if !CAPNP_LITE
-class CraqBackwardPropagateResponse::Pipeline {
-public:
-  typedef CraqBackwardPropagateResponse Pipelines;
 
   inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
@@ -2812,17 +2626,9 @@ public:
   inline bool hasCraqForwardPropagateRequest() const;
   inline  ::CraqForwardPropagateRequest::Reader getCraqForwardPropagateRequest() const;
 
-  inline bool isCraqForwardPropagateResponse() const;
-  inline bool hasCraqForwardPropagateResponse() const;
-  inline  ::CraqForwardPropagateResponse::Reader getCraqForwardPropagateResponse() const;
-
   inline bool isCraqBackwardPropagateRequest() const;
   inline bool hasCraqBackwardPropagateRequest() const;
   inline  ::CraqBackwardPropagateRequest::Reader getCraqBackwardPropagateRequest() const;
-
-  inline bool isCraqBackwardPropagateResponse() const;
-  inline bool hasCraqBackwardPropagateResponse() const;
-  inline  ::CraqBackwardPropagateResponse::Reader getCraqBackwardPropagateResponse() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -3005,14 +2811,6 @@ public:
   inline void adoptCraqForwardPropagateRequest(::capnp::Orphan< ::CraqForwardPropagateRequest>&& value);
   inline ::capnp::Orphan< ::CraqForwardPropagateRequest> disownCraqForwardPropagateRequest();
 
-  inline bool isCraqForwardPropagateResponse();
-  inline bool hasCraqForwardPropagateResponse();
-  inline  ::CraqForwardPropagateResponse::Builder getCraqForwardPropagateResponse();
-  inline void setCraqForwardPropagateResponse( ::CraqForwardPropagateResponse::Reader value);
-  inline  ::CraqForwardPropagateResponse::Builder initCraqForwardPropagateResponse();
-  inline void adoptCraqForwardPropagateResponse(::capnp::Orphan< ::CraqForwardPropagateResponse>&& value);
-  inline ::capnp::Orphan< ::CraqForwardPropagateResponse> disownCraqForwardPropagateResponse();
-
   inline bool isCraqBackwardPropagateRequest();
   inline bool hasCraqBackwardPropagateRequest();
   inline  ::CraqBackwardPropagateRequest::Builder getCraqBackwardPropagateRequest();
@@ -3020,14 +2818,6 @@ public:
   inline  ::CraqBackwardPropagateRequest::Builder initCraqBackwardPropagateRequest();
   inline void adoptCraqBackwardPropagateRequest(::capnp::Orphan< ::CraqBackwardPropagateRequest>&& value);
   inline ::capnp::Orphan< ::CraqBackwardPropagateRequest> disownCraqBackwardPropagateRequest();
-
-  inline bool isCraqBackwardPropagateResponse();
-  inline bool hasCraqBackwardPropagateResponse();
-  inline  ::CraqBackwardPropagateResponse::Builder getCraqBackwardPropagateResponse();
-  inline void setCraqBackwardPropagateResponse( ::CraqBackwardPropagateResponse::Reader value);
-  inline  ::CraqBackwardPropagateResponse::Builder initCraqBackwardPropagateResponse();
-  inline void adoptCraqBackwardPropagateResponse(::capnp::Orphan< ::CraqBackwardPropagateResponse>&& value);
-  inline ::capnp::Orphan< ::CraqBackwardPropagateResponse> disownCraqBackwardPropagateResponse();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -4154,38 +3944,18 @@ inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateRequest::Builder::dis
       ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
-inline bool CraqForwardPropagateResponse::Reader::hasText() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientIndex() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
-inline bool CraqForwardPropagateResponse::Builder::hasText() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+
+inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientIndex() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
-inline  ::capnp::Text::Reader CraqForwardPropagateResponse::Reader::getText() const {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::capnp::Text::Builder CraqForwardPropagateResponse::Builder::getText() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void CraqForwardPropagateResponse::Builder::setText( ::capnp::Text::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::Text::Builder CraqForwardPropagateResponse::Builder::initText(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
-}
-inline void CraqForwardPropagateResponse::Builder::adoptText(
-    ::capnp::Orphan< ::capnp::Text>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateResponse::Builder::disownText() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline void CraqForwardPropagateRequest::Builder::setClientIndex( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool CraqBackwardPropagateRequest::Reader::hasKey() const {
@@ -4256,38 +4026,18 @@ inline ::capnp::Orphan< ::capnp::Text> CraqBackwardPropagateRequest::Builder::di
       ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
-inline bool CraqBackwardPropagateResponse::Reader::hasText() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline  ::uint64_t CraqBackwardPropagateRequest::Reader::getClientIndex() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
-inline bool CraqBackwardPropagateResponse::Builder::hasText() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+
+inline  ::uint64_t CraqBackwardPropagateRequest::Builder::getClientIndex() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
-inline  ::capnp::Text::Reader CraqBackwardPropagateResponse::Reader::getText() const {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::capnp::Text::Builder CraqBackwardPropagateResponse::Builder::getText() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void CraqBackwardPropagateResponse::Builder::setText( ::capnp::Text::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::Text::Builder CraqBackwardPropagateResponse::Builder::initText(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
-}
-inline void CraqBackwardPropagateResponse::Builder::adoptText(
-    ::capnp::Orphan< ::capnp::Text>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::Text> CraqBackwardPropagateResponse::Builder::disownText() {
-  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline void CraqBackwardPropagateRequest::Builder::setClientIndex( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
 inline typename Packet::Data::Reader Packet::Reader::getData() const {
@@ -5341,60 +5091,6 @@ inline ::capnp::Orphan< ::CraqForwardPropagateRequest> Packet::Data::Builder::di
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline bool Packet::Data::Reader::isCraqForwardPropagateResponse() const {
-  return which() == Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE;
-}
-inline bool Packet::Data::Builder::isCraqForwardPropagateResponse() {
-  return which() == Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE;
-}
-inline bool Packet::Data::Reader::hasCraqForwardPropagateResponse() const {
-  if (which() != Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE) return false;
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline bool Packet::Data::Builder::hasCraqForwardPropagateResponse() {
-  if (which() != Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE) return false;
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline  ::CraqForwardPropagateResponse::Reader Packet::Data::Reader::getCraqForwardPropagateResponse() const {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::CraqForwardPropagateResponse::Builder Packet::Data::Builder::getCraqForwardPropagateResponse() {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void Packet::Data::Builder::setCraqForwardPropagateResponse( ::CraqForwardPropagateResponse::Reader value) {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE);
-  ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::CraqForwardPropagateResponse::Builder Packet::Data::Builder::initCraqForwardPropagateResponse() {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE);
-  return ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void Packet::Data::Builder::adoptCraqForwardPropagateResponse(
-    ::capnp::Orphan< ::CraqForwardPropagateResponse>&& value) {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE);
-  ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::CraqForwardPropagateResponse> Packet::Data::Builder::disownCraqForwardPropagateResponse() {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_FORWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqForwardPropagateResponse>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-
 inline bool Packet::Data::Reader::isCraqBackwardPropagateRequest() const {
   return which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_REQUEST;
 }
@@ -5446,60 +5142,6 @@ inline ::capnp::Orphan< ::CraqBackwardPropagateRequest> Packet::Data::Builder::d
   KJ_IREQUIRE((which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_REQUEST),
               "Must check which() before get()ing a union member.");
   return ::capnp::_::PointerHelpers< ::CraqBackwardPropagateRequest>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-
-inline bool Packet::Data::Reader::isCraqBackwardPropagateResponse() const {
-  return which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE;
-}
-inline bool Packet::Data::Builder::isCraqBackwardPropagateResponse() {
-  return which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE;
-}
-inline bool Packet::Data::Reader::hasCraqBackwardPropagateResponse() const {
-  if (which() != Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE) return false;
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline bool Packet::Data::Builder::hasCraqBackwardPropagateResponse() {
-  if (which() != Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE) return false;
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline  ::CraqBackwardPropagateResponse::Reader Packet::Data::Reader::getCraqBackwardPropagateResponse() const {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::CraqBackwardPropagateResponse::Builder Packet::Data::Builder::getCraqBackwardPropagateResponse() {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void Packet::Data::Builder::setCraqBackwardPropagateResponse( ::CraqBackwardPropagateResponse::Reader value) {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE);
-  ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::CraqBackwardPropagateResponse::Builder Packet::Data::Builder::initCraqBackwardPropagateResponse() {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE);
-  return ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void Packet::Data::Builder::adoptCraqBackwardPropagateResponse(
-    ::capnp::Orphan< ::CraqBackwardPropagateResponse>&& value) {
-  _builder.setDataField<Packet::Data::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE);
-  ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::CraqBackwardPropagateResponse> Packet::Data::Builder::disownCraqBackwardPropagateResponse() {
-  KJ_IREQUIRE((which() == Packet::Data::CRAQ_BACKWARD_PROPAGATE_RESPONSE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::CraqBackwardPropagateResponse>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
