@@ -1088,7 +1088,7 @@ void server_worker(
                 auto index = server_config.index;
                 if (index == machine_index + 1)
                 {
-                  port = server_config.port + thread_index;
+                  port = server_config.port;
                   break;
                 }
               }
