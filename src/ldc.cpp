@@ -1075,6 +1075,7 @@ void server_worker(
                 panic("Put requests for craq should only be sent to the first server");
               }
 
+              info("Forwarding put request to next server from head");
               server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
             }
             else
