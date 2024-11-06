@@ -1072,7 +1072,7 @@ void server_worker(
               }
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
-            else if (config.craq_enabled && machine_index == 0) {
+            else if (config.craq_enabled) {
               write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
 
