@@ -1072,6 +1072,7 @@ void server_worker(
               }
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
+            // Temp check machine_index == 1 for testing
             else if (config.craq_enabled && machine_index == 1) {
               write_disk(key_cstr, value_cstr);
               server.put_response(remote_index, remote_port, ResponseType::OK);
@@ -1080,8 +1081,20 @@ void server_worker(
               //   panic("Put requests for craq should only be sent to the first server");
               // }
 
-              info("Forwarding put request to next server from head");
-              server.craq_forward_propagate_request(machine_index + 1, remote_port + 1, key_cstr, value_cstr);
+              int port;
+              for (auto i = 0; i < server_configs.size(); i++)
+              {
+                auto& server_config = server_configs[i];
+                auto index = server_config.index;
+                if (index == machine_index + 1)
+                {
+                  port = server_config.port + thread_index;
+                  break;
+                }
+              }
+
+              info("Forwarding put request to next server from head on port: {}", port);
+              server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr);
             }
             else
             {
