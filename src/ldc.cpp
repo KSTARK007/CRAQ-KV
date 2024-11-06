@@ -201,6 +201,7 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
+          info("Client start index: {}, actual index: {}", client_start_index, client_start_index + index);
           client.put(client_start_index, thread_index, key, value);
         } else {
           client.put(index + client_start_index, thread_index, key, value);
@@ -1079,7 +1080,7 @@ void server_worker(
                 auto index = server_config.index;
                 if (index == machine_index + 1)
                 {
-                  port = server_config.port;
+                  port = server_config.port + thread_index;
                   break;
                 }
               }
