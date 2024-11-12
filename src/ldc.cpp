@@ -1105,7 +1105,7 @@ void server_worker(
               if (craq_map.find(key) == craq_map.end())
               {
                 // If the key doesn't exist, we initially mark it as clean
-                craq_map[key] = std::map<int, std::pair<std::string, bool>>();
+                craq_map[key] = std::map<uint64_t, std::pair<std::string, bool>>();
                 craq_map[key][0] = std::make_pair(value, true);
                 craq_latest_key_version[key] = 0;
               } else {
@@ -1571,7 +1571,7 @@ void server_worker(
               if (craq_map.find(key_string) == craq_map.end())
               {
                 // If key doesn't exist yet, simply initialize
-                craq_map[key_string] = std::map<int, std::pair<std::string, bool>>();
+                craq_map[key_string] = std::map<uint64_t, std::pair<std::string, bool>>();
                 craq_map[key_string][0] = std::make_pair(value_string, true);
                 craq_latest_key_version[key_string] = 0;
                 latest_clean_version = 0;
@@ -1602,7 +1602,7 @@ void server_worker(
               if (craq_map.find(key_string) == craq_map.end())
               {
                 // If the key doesn't exist, we initially mark it as clean
-                craq_map[key_string] = std::map<int, std::pair<std::string, bool>>();
+                craq_map[key_string] = std::map<uint64_t, std::pair<std::string, bool>>();
                 craq_map[key_string][0] = std::make_pair(value_string, true);
                 craq_latest_key_version[key_string] = 0;
               } else {
