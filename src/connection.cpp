@@ -713,7 +713,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index, uint64_t client_port)
+void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, int latest_clean_version, uint64_t client_index, uint64_t client_port)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -721,13 +721,51 @@ void Connection::craq_backward_propagate_request(int index, int port, std::strin
   Packet::Data::Builder data = packet[0].initData();
   CraqBackwardPropagateRequest::Builder request = data.initCraqBackwardPropagateRequest();
   request.setKey(std::string(key));
-  request.setValue(std::string(value));
+  request.setLatestCleanVersion(latest_clean_version);
   request.setClientIndex(client_index);
   request.setClientPort(client_port);
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
   info("[{}-{}] CraqBackwardPropagateRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Connection::craq_version_request(int index, int port, std::string_view key, uint64_t client_index, uint64_t client_port)
+{
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  CraqVersionRequest::Builder request = data.initCraqVersionRequest();
+  request.setKey(std::string(key));
+  request.setClientIndex(client_index);
+  request.setClientPort(client_port);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  info("[{}-{}] CraqVersionRequest [{}]", machine_index, index,
+            kj::str(message.getRoot<Packets>()).cStr());
+
+  send(index, port, std::string_view(p.begin(), p.end())); 
+}
+
+void Connection::craq_version_response(int index, int port, std::string_view key, int version, uint64_t client_index, uint64_t client_port) {
+  ::capnp::MallocMessageBuilder message;
+  Packets::Builder packets = message.initRoot<Packets>();
+  ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
+  Packet::Data::Builder data = packet[0].initData();
+  CraqVersionResponse::Builder request = data.initCraqVersionResponse();
+  request.setKey(std::string(key));
+  request.setVersion(version);
+  request.setClientIndex(client_index);
+  request.setClientPort(client_port);
+  auto m = capnp::messageToFlatArray(message);
+  auto p = m.asChars();
+
+  info("[{}-{}] CraqVersionResponse [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 

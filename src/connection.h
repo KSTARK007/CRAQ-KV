@@ -176,6 +176,8 @@ struct Connection
   // TODO: Add rpc functions for craq
   void craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index, uint64_t client_port);
   void craq_backward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index, uint64_t client_port);
+  void craq_version_request(int index, int port, std::string_view key);
+  void craq_version_response(int index, int port, std::string_view key, int version);
 
   void shared_log_forward_request(int index, int port, std::string_view key, uint64_t hash);
   void shared_log_forward_response(int index, int port, ResponseType response_type, uint64_t hash);
