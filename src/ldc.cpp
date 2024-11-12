@@ -771,9 +771,9 @@ void server_worker(
 
   // TONY CRAQ
   // key[version[value, clean]]
-  std::map<std::string, std::map<int, std::pair<std::string, bool>>> craq_map;
+  std::map<std::string, std::map<uint64_t, std::pair<std::string, bool>>> craq_map;
   // key[version]
-  std::map<std::string, int> craq_latest_key_version;
+  std::map<std::string, uint64_t> craq_latest_key_version;
   std::mutex craq_mutex;
 
   void *read_buffer = malloc(BLKSZ);
@@ -1155,7 +1155,7 @@ void server_worker(
               craq_mutex.lock();
               
               auto key_string = std::string(key);
-              int latest_version = craq_latest_key_version[key];
+              uint64_t latest_version = craq_latest_key_version[key];
 
               if (craq_map.find(key_string) == craq_map.end())
               {
@@ -1670,7 +1670,7 @@ void server_worker(
 
             craq_mutex.lock();
             auto key_string = std::string(key);
-            int latest_version = craq_latest_key_version[key_string];
+            uint64_t latest_version = craq_latest_key_version[key_string];
             craq_mutex.unlock();
 
             info("[CraqVersionRequest] Got version request for key {} with latest version {}", key, latest_version);
@@ -1681,7 +1681,7 @@ void server_worker(
           {
             auto p = data.getCraqVersionResponse();
             std::string_view key = p.getKey().cStr();
-            int latest_version = p.getLatestVersion();
+            uint64_t latest_version = p.getVersion();
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 

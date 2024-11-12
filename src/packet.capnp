@@ -133,7 +133,7 @@ struct CraqVersionRequest {
 
 struct CraqVersionResponse {
   key @0 :Text;
-  version @1 :Text;
+  version @1: UInt64;
   clientIndex @2: UInt64;
   clientPort @3: UInt64;
 }

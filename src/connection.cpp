@@ -752,7 +752,7 @@ void Connection::craq_version_request(int index, int port, std::string_view key,
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::craq_version_response(int index, int port, std::string_view key, int version, uint64_t client_index, uint64_t client_port) {
+void Connection::craq_version_response(int index, int port, std::string_view key, uint64_t version, uint64_t client_index, uint64_t client_port) {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
