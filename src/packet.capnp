@@ -127,8 +127,8 @@ struct CraqBackwardPropagateRequest {
 
 struct CraqVersionRequest {
   key @0 :Text;
-  clientIndex @2: UInt64;
-  clientPort @3: UInt64;
+  clientIndex @1: UInt64;
+  clientPort @2: UInt64;
 }
 
 struct CraqVersionResponse {

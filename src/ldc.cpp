@@ -1650,7 +1650,7 @@ void server_worker(
             if (machine_index != num_client_nodes) {
               info("Continuing back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
-              server.craq_backward_propagate_request(machine_index - 1, port, key, value, client_index, client_port);
+              server.craq_backward_propagate_request(machine_index - 1, port, key, latest_clean_version, client_index, client_port);
             } else {
               // Send response back to client
               info("Sending response back to client {} on port {} for key {}", client_index, client_port, key);
