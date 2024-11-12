@@ -713,7 +713,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, int latest_clean_version, uint64_t client_index, uint64_t client_port)
+void Connection::craq_backward_propagate_request(int index, int port, std::string_view key, uint64_t latest_clean_version, uint64_t client_index, uint64_t client_port)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();

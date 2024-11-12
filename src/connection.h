@@ -178,6 +178,8 @@ struct Connection
   void craq_backward_propagate_request(int index, int port, std::string_view key, int latest_clean_version, uint64_t client_index, uint64_t client_port);
   void craq_version_request(int index, int port, std::string_view key);
   void craq_version_response(int index, int port, std::string_view key, int version);
+  void craq_version_request(int index, int port, std::string_view key, uint64_t client_index, uint64_t client_port);
+  void craq_version_response(int index, int port, std::string_view key, int version, uint64_t client_index, uint64_t client_port);
 
   void shared_log_forward_request(int index, int port, std::string_view key, uint64_t hash);
   void shared_log_forward_response(int index, int port, ResponseType response_type, uint64_t hash);

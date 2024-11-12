@@ -1567,7 +1567,7 @@ void server_worker(
               craq_mutex.lock();
               auto key_string = std::string(key);
               auto value_string = std::string(value);
-              int latest_clean_version;
+              uint64_t latest_clean_version;
               if (craq_map.find(key_string) == craq_map.end())
               {
                 // If key doesn't exist yet, simply initialize
@@ -1621,7 +1621,7 @@ void server_worker(
           {
             auto p = data.getCraqBackwardPropagateRequest();
             std::string_view key = p.getKey().cStr();
-            int latest_clean_version = p.getLatestCleanVersion();
+            uint64_t latest_clean_version = p.getLatestCleanVersion();
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
@@ -1633,7 +1633,7 @@ void server_worker(
               craq_map[key_string][latest_clean_version].second = true;
 
               // Remove previous versions
-              for (int i = latest_clean_version - 1; i >= 0; i--) {
+              for (uint64_t i = latest_clean_version - 1; i >= 0; i--) {
                 if (craq_map[key_string].find(i) != craq_map[key_string].end()) {
                   craq_map[key_string].erase(i);
                 } else {
