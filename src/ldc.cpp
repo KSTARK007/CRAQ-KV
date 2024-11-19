@@ -1764,7 +1764,7 @@ void server_worker(
             uint64_t client_port = p.getClientPort();
 
             if (num_client_nodes + server_configs.size() - 1 != machine_index) {
-              info("Only the tail should receive version requests");
+              panic("Only the tail should receive version requests");
             }
 
             auto key_cstr = p.getKey().cStr();
@@ -1772,7 +1772,7 @@ void server_worker(
 
             auto latest_version = CRAQ_START_VERSION_INDEX;
             std::string value;
-            craq_key_to_versions.if_contains(key_index,
+            if(!craq_key_to_versions.if_contains(key_index,
                 [&](auto& kv) {
                   // If present, add key to our set
                   auto& versions = kv.second;
@@ -1785,7 +1785,10 @@ void server_worker(
                     }
                   }
                 }
-              );
+              ))
+            {
+              value = block_cache->get(key_cstr);
+            }
 
             // craq_mutex.lock();
             // auto key_string = std::string(key);
