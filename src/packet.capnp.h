@@ -382,7 +382,7 @@ struct CraqForwardPropagateRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 2, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(d66ee313fb69e7e4, 3, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -427,7 +427,7 @@ struct CraqVersionResponse {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(dbc827be19342cc7, 3, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(dbc827be19342cc7, 3, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -2320,6 +2320,8 @@ public:
   inline bool hasValue() const;
   inline  ::capnp::Text::Reader getValue() const;
 
+  inline  ::uint64_t getVersion() const;
+
   inline  ::uint64_t getClientIndex() const;
 
   inline  ::uint64_t getClientPort() const;
@@ -2365,6 +2367,9 @@ public:
   inline  ::capnp::Text::Builder initValue(unsigned int size);
   inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownValue();
+
+  inline  ::uint64_t getVersion();
+  inline void setVersion( ::uint64_t value);
 
   inline  ::uint64_t getClientIndex();
   inline void setClientIndex( ::uint64_t value);
@@ -2605,6 +2610,9 @@ public:
   inline bool hasKey() const;
   inline  ::capnp::Text::Reader getKey() const;
 
+  inline bool hasValue() const;
+  inline  ::capnp::Text::Reader getValue() const;
+
   inline  ::uint64_t getVersion() const;
 
   inline  ::uint64_t getClientIndex() const;
@@ -2645,6 +2653,13 @@ public:
   inline  ::capnp::Text::Builder initKey(unsigned int size);
   inline void adoptKey(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownKey();
+
+  inline bool hasValue();
+  inline  ::capnp::Text::Builder getValue();
+  inline void setValue( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initValue(unsigned int size);
+  inline void adoptValue(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownValue();
 
   inline  ::uint64_t getVersion();
   inline void setVersion( ::uint64_t value);
@@ -4194,32 +4209,46 @@ inline ::capnp::Orphan< ::capnp::Text> CraqForwardPropagateRequest::Builder::dis
       ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
-inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientIndex() const {
+inline  ::uint64_t CraqForwardPropagateRequest::Reader::getVersion() const {
   return _reader.getDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
 
-inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientIndex() {
+inline  ::uint64_t CraqForwardPropagateRequest::Builder::getVersion() {
   return _builder.getDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS);
 }
-inline void CraqForwardPropagateRequest::Builder::setClientIndex( ::uint64_t value) {
+inline void CraqForwardPropagateRequest::Builder::setVersion( ::uint64_t value) {
   _builder.setDataField< ::uint64_t>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
-inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientPort() const {
+inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientIndex() const {
   return _reader.getDataField< ::uint64_t>(
       ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
 
-inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientPort() {
+inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientIndex() {
   return _builder.getDataField< ::uint64_t>(
       ::capnp::bounded<1>() * ::capnp::ELEMENTS);
 }
-inline void CraqForwardPropagateRequest::Builder::setClientPort( ::uint64_t value) {
+inline void CraqForwardPropagateRequest::Builder::setClientIndex( ::uint64_t value) {
   _builder.setDataField< ::uint64_t>(
       ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint64_t CraqForwardPropagateRequest::Reader::getClientPort() const {
+  return _reader.getDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint64_t CraqForwardPropagateRequest::Builder::getClientPort() {
+  return _builder.getDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+inline void CraqForwardPropagateRequest::Builder::setClientPort( ::uint64_t value) {
+  _builder.setDataField< ::uint64_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool CraqBackwardPropagateRequest::Reader::hasKey() const {
@@ -4392,6 +4421,40 @@ inline void CraqVersionResponse::Builder::adoptKey(
 inline ::capnp::Orphan< ::capnp::Text> CraqVersionResponse::Builder::disownKey() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool CraqVersionResponse::Reader::hasValue() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool CraqVersionResponse::Builder::hasValue() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader CraqVersionResponse::Reader::getValue() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder CraqVersionResponse::Builder::getValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void CraqVersionResponse::Builder::setValue( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder CraqVersionResponse::Builder::initValue(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void CraqVersionResponse::Builder::adoptValue(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> CraqVersionResponse::Builder::disownValue() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline  ::uint64_t CraqVersionResponse::Reader::getVersion() const {

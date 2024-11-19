@@ -14,6 +14,7 @@
 #include "infinity/infinity.h"
 #include <hdr/hdr_histogram.h>
 #include <infiniband/verbs.h>
+#include <parallel_hashmap/phmap.h>
 
 // Generated
 #include "packet.capnp.h"
@@ -57,6 +58,12 @@ using namespace std::chrono_literals;
 // Alias
 template <typename T, typename T2>
 using HashMap = ankerl::unordered_dense::map<T, T2>;
+
+template <typename T>
+using HashSet = ankerl::unordered_dense::set<T>;
+
+template <typename T, typename T2>
+using ParallelFlatHashMap = phmap::parallel_flat_hash_map<T, T2>;
 
 template <typename T>
 using MPMCQueue = moodycamel::ConcurrentQueue<T>;
