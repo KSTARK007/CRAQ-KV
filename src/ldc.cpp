@@ -1745,7 +1745,7 @@ void server_worker(
                 }
               );
 
-            if (machine_index != num_client_nodes) {
+            if (machine_index != 0) {
               info("Continuing back propagation for key {}", key);
 
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
