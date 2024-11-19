@@ -114,8 +114,9 @@ struct SharedLogGetResponse {
 struct CraqForwardPropagateRequest {
   key @0 :Text;
   value @1 :Text;
-  clientIndex @2: UInt64;
-  clientPort @3: UInt64;
+  version @2 :UInt64;
+  clientIndex @3 :UInt64;
+  clientPort @4 :UInt64;
 }
 
 struct CraqBackwardPropagateRequest {
@@ -133,9 +134,10 @@ struct CraqVersionRequest {
 
 struct CraqVersionResponse {
   key @0 :Text;
-  version @1: UInt64;
-  clientIndex @2: UInt64;
-  clientPort @3: UInt64;
+  value @1 :Text;
+  version @2: UInt64;
+  clientIndex @3: UInt64;
+  clientPort @4: UInt64;
 }
 
 struct Packet {

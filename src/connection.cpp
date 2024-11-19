@@ -693,7 +693,7 @@ void Connection::shared_log_get_response(int index, int port, uint64_t shared_lo
 }
 
 // TODO: Add craq functions here
-void Connection::craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t client_index, uint64_t client_port)
+void Connection::craq_forward_propagate_request(int index, int port, std::string_view key, std::string_view value, uint64_t version, uint64_t client_index, uint64_t client_port)
 {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
@@ -702,6 +702,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   CraqForwardPropagateRequest::Builder request = data.initCraqForwardPropagateRequest();
   request.setKey(std::string(key));
   request.setValue(std::string(value));
+  request.setVersion(version);
   request.setClientIndex(client_index);
   request.setClientPort(client_port);
   auto m = capnp::messageToFlatArray(message);
@@ -752,13 +753,14 @@ void Connection::craq_version_request(int index, int port, std::string_view key,
   send(index, port, std::string_view(p.begin(), p.end())); 
 }
 
-void Connection::craq_version_response(int index, int port, std::string_view key, uint64_t version, uint64_t client_index, uint64_t client_port) {
+void Connection::craq_version_response(int index, int port, std::string_view key, std::string_view value, uint64_t version, uint64_t client_index, uint64_t client_port) {
   ::capnp::MallocMessageBuilder message;
   Packets::Builder packets = message.initRoot<Packets>();
   ::capnp::List<Packet>::Builder packet = packets.initPackets(1);
   Packet::Data::Builder data = packet[0].initData();
   CraqVersionResponse::Builder request = data.initCraqVersionResponse();
   request.setKey(std::string(key));
+  request.setValue(std::string(value));
   request.setVersion(version);
   request.setClientIndex(client_index);
   request.setClientPort(client_port);
