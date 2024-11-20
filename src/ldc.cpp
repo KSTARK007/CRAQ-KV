@@ -134,6 +134,9 @@ void signalHandler(int signal) {
     }
 }
 
+//#define CRAQ_INFO(...) info(__VA_ARGS__)
+#define CRAQ_INFO(...)
+
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
 {
@@ -726,8 +729,6 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
 
   execute_operations(client, ops_chunk, start_client_index - 1, config, ops_config, client_index_per_thread, machine_index, thread_index);
 }
-
-#define CRAQ_INFO(...) info(__VA_ARGS__)
 
 // TONY
 int find_server_port(int machine_index, int thread_index, const std::vector<RemoteMachineConfig>& server_configs) {
