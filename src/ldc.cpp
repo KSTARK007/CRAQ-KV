@@ -201,10 +201,10 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
-          info("[{}] [{}] Client executing [{}] [{}]", machine_index, client_index, key, index);
-          info("[Client CRAQ Put] {} Start {}: {}", client_start_index + 1, thread_index, key);
+          CRAQ_INFO("[{}] [{}] Client executing [{}] [{}]", machine_index, client_index, key, index);
+          CRAQ_INFO("[Client CRAQ Put] {} Start {}: {}", client_start_index + 1, thread_index, key);
           client.put(client_start_index + 1, thread_index, key, value);
-          info("[Client CRAQ Put] {} End {}: {}", client_start_index + 1, thread_index, key);
+          CRAQ_INFO("[Client CRAQ Put] {} End {}: {}", client_start_index + 1, thread_index, key);
         } else {
           client.put(index + client_start_index, thread_index, key, value);
         }
@@ -727,6 +727,8 @@ void client_worker(std::shared_ptr<Client> client_, BlockCacheConfig config, Con
   execute_operations(client, ops_chunk, start_client_index - 1, config, ops_config, client_index_per_thread, machine_index, thread_index);
 }
 
+#define CRAQ_INFO(...) info(__VA_ARGS__)
+
 // TONY
 int find_server_port(int machine_index, int thread_index, const std::vector<RemoteMachineConfig>& server_configs) {
   int port;
@@ -1136,8 +1138,6 @@ void server_worker(
                   ctor(key_index, std::move(versions));
                 }
               );
-
-#define CRAQ_INFO(...) info(__VA_ARGS__)
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               info("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
