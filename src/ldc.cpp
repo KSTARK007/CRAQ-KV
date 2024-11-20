@@ -1137,6 +1137,8 @@ void server_worker(
                 }
               );
 
+#define CRAQ_INFO(...) info(__VA_ARGS__)
+
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               info("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
@@ -1171,21 +1173,23 @@ void server_worker(
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
             if (config.craq_enabled) {
               auto ping_last_server = false;
-              craq_key_to_versions.if_contains(key_index,
-                [&](const auto& kv) {
-                  const auto& versions = kv.second;
-                  // If last item dirty, we should ping the tail for the latest version
-                  if (!versions.values.back().clean) {
-                    ping_last_server = true;
+              int tail_machine_index = num_client_nodes + server_configs.size() - 1;
+              if (machine_index != tail_machine_index) {
+                craq_key_to_versions.if_contains(key_index,
+                  [&](const auto& kv) {
+                    const auto& versions = kv.second;
+                    // If last item dirty, we should ping the tail for the latest version
+                    if (!versions.values.back().clean) {
+                      ping_last_server = true;
+                    }
                   }
+                );
+                if (ping_last_server) {
+                    int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                    CRAQ_INFO("[CraqGet] craq version request: {}", port);
+                    server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                    return;
                 }
-              );
-              if (ping_last_server) {
-                  int tail_machine_index = num_client_nodes + server_configs.size() - 1;
-                  int port = find_server_port(tail_machine_index, thread_index, server_configs);
-                  info("[CraqGet] craq version request: {}", port);
-                  server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                  return;
               }
 
               // if (craq_map.find(key_string) == craq_map.end())
@@ -1598,33 +1602,33 @@ void server_worker(
 
             write_disk(key, value);
 
-            info("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
+            CRAQ_INFO("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
             // Check if it's tail
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
-              // craq_key_to_versions.lazy_emplace_l(key_index,
-              //   [&](auto& kv) {
-              //     // If present, add key to our set
-              //     auto& versions = kv.second;
-              //     auto& latest_version = versions.latest_version;
-              //     auto& values = versions.values;
-              //     // Remove any values less than our version
-              //     values.erase(
-              //         std::remove_if(values.begin(), values.end(),
-              //             [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version; }),
-              //         values.end()
-              //     );
-              //     values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
-              //     latest_version = std::max(latest_version, version);
-              //   },
-              //   [&](const auto& ctor) {
-              //     // else, construct the new key
-              //     auto versions = CraqVersions{version, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{version, CRAQ_CLEAN_KEY, value_cstr}}};
-              //     ctor(key_index, std::move(versions));
-              //   }
-              // );
+              craq_key_to_versions.lazy_emplace_l(key_index,
+                [&](auto& kv) {
+                  // If present, add key to our set
+                  auto& versions = kv.second;
+                  auto& latest_version = versions.latest_version;
+                  auto& values = versions.values;
+                  // Remove any values less than our version
+                  values.erase(
+                      std::remove_if(values.begin(), values.end(),
+                          [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
+                      values.end()
+                  );
+                  values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
+                  latest_version = std::max(latest_version, version);
+                },
+                [&](const auto& ctor) {
+                  // else, construct the new key
+                  auto versions = CraqVersions{version, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{version, CRAQ_CLEAN_KEY, value_cstr}}};
+                  ctor(key_index, std::move(versions));
+                }
+              );
             
               auto version = 0;
-              info("[CraqForwardPropagateRequest] Starting back propagation for key {}", key);
+              CRAQ_INFO("[CraqForwardPropagateRequest] Starting back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
 
               // Send back latest clean version to previous servers
@@ -1728,7 +1732,7 @@ void server_worker(
             // craq_mutex.unlock();
             auto key_index = convert_string<uint64_t>(key_cstr);
 
-            info("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
+            CRAQ_INFO("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
 
             craq_key_to_versions.modify_if(key_index,
                 [&](auto& kv) {
@@ -1751,13 +1755,13 @@ void server_worker(
               );
 
             if (machine_index != server_start_index) {
-              info("[CraqBackwardPropagateRequest] Continuing back propagation for key {}", key);
+              CRAQ_INFO("[CraqBackwardPropagateRequest] Continuing back propagation for key {}", key);
 
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
               server.craq_backward_propagate_request(machine_index - 1, port, key, latest_clean_version, client_index, client_port);
             } else {
               // Send response back to client
-              info("[CraqBackwardPropagateRequest] Sending response back to client {} on port {} for key {}", client_index, client_port, key);
+              CRAQ_INFO("[CraqBackwardPropagateRequest] Sending response back to client {} on port {} for key {}", client_index, client_port, key);
               server.put_response(client_index, client_port, ResponseType::OK);
             }
           }
@@ -1803,7 +1807,7 @@ void server_worker(
               panic("[CraqVersionRequest] Value should not be empty");
             }
 
-            info("[CraqVersionRequest] Got version request for key {} with latest version {}", key, latest_version);
+            CRAQ_INFO("[CraqVersionRequest] Got version request for key {} with latest version {}", key, latest_version);
             server.craq_version_response(remote_index, remote_port, key, value, latest_version, client_index, client_port);
           }
           else if (data.isCraqVersionResponse())
