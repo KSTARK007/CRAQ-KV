@@ -1742,7 +1742,7 @@ void server_worker(
                   // Remove any values less than our version
                   values.erase(
                       std::remove_if(values.begin(), values.end(),
-                          [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version; }),
+                          [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
                       values.end()
                   );
 
