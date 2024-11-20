@@ -201,6 +201,7 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
+          info("[{}] [{}] Client executing [{}] [{}]", machine_index, client_index, key, index);
           info("[Client CRAQ Put] {} Start {}: {}", client_start_index + 1, thread_index, key);
           client.put(client_start_index + 1, thread_index, key, value);
           info("[Client CRAQ Put] {} End {}: {}", client_start_index + 1, thread_index, key);
