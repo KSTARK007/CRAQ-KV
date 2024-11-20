@@ -1135,7 +1135,7 @@ void server_worker(
               );
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
-              info("Forwarding put request to next server from head on port: {}", port);
+              info("[CraqPut] Forwarding put request to next server from head on port: {}", port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
             }
             else
@@ -1180,6 +1180,7 @@ void server_worker(
               if (ping_last_server) {
                   int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                   int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                  info("[CraqGet] craq version request: {}", port);
                   server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
                   return;
               }
@@ -1619,7 +1620,7 @@ void server_worker(
                 }
               );
             
-              info("Starting back propagation for key {}", key);
+              info("[CraqForwardPropagateRequest] Starting back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
 
               // Send back latest clean version to previous servers
@@ -1746,13 +1747,13 @@ void server_worker(
               );
 
             if (machine_index != server_start_index) {
-              info("Continuing back propagation for key {}", key);
+              info("[CraqBackwardPropagateRequest] Continuing back propagation for key {}", key);
 
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
               server.craq_backward_propagate_request(machine_index - 1, port, key, latest_clean_version, client_index, client_port);
             } else {
               // Send response back to client
-              info("Sending response back to client {} on port {} for key {}", client_index, client_port, key);
+              info("[CraqBackwardPropagateRequest] Sending response back to client {} on port {} for key {}", client_index, client_port, key);
               server.put_response(client_index, client_port, ResponseType::OK);
             }
           }
@@ -1764,7 +1765,7 @@ void server_worker(
             uint64_t client_port = p.getClientPort();
 
             if (num_client_nodes + server_configs.size() - 1 != machine_index) {
-              panic("Only the tail should receive version requests");
+              panic("[CraqVersionRequest] Only the tail should receive version requests");
             }
 
             auto key_cstr = p.getKey().cStr();
