@@ -201,9 +201,9 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       {
         // TODO: If craq if enabled, we dont have to add the "index", aka only send requests to head node
         if (config.craq_enabled) {
-          info("[Client CRAQ Put] Start {}: {}", thread_index, key);
+          info("[Client CRAQ Put] {} Start {}: {}", client_start_index + 1, thread_index, key);
           client.put(client_start_index + 1, thread_index, key, value);
-          info("[Client CRAQ Put] End {}: {}", thread_index, key);
+          info("[Client CRAQ Put] {} End {}: {}", client_start_index + 1, thread_index, key);
         } else {
           client.put(index + client_start_index, thread_index, key, value);
         }
@@ -1137,7 +1137,7 @@ void server_worker(
               );
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
-              info("[CraqPut] Forwarding put request to next server from head on port: {}", port);
+              info("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
             }
             else
