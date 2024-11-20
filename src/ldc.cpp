@@ -1141,7 +1141,7 @@ void server_worker(
               );
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
-              info("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
+              CRAQ_INFO("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
             }
             else
