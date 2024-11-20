@@ -708,7 +708,7 @@ void Connection::craq_forward_propagate_request(int index, int port, std::string
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  info("[{}-{}] CraqForwardPropagateRequest [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] CraqForwardPropagateRequest [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 
@@ -728,7 +728,7 @@ void Connection::craq_backward_propagate_request(int index, int port, std::strin
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  info("[{}-{}] CraqBackwardPropagateRequest [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] CraqBackwardPropagateRequest [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 
@@ -747,7 +747,7 @@ void Connection::craq_version_request(int index, int port, std::string_view key,
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  info("[{}-{}] CraqVersionRequest [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] CraqVersionRequest [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 
@@ -767,7 +767,7 @@ void Connection::craq_version_response(int index, int port, std::string_view key
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  info("[{}-{}] CraqVersionResponse [{}]", machine_index, index,
+  LOG_STATE("[{}-{}] CraqVersionResponse [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   send(index, port, std::string_view(p.begin(), p.end())); 
