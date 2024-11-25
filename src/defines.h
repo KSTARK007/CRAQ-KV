@@ -62,8 +62,11 @@ using HashMap = ankerl::unordered_dense::map<T, T2>;
 template <typename T>
 using HashSet = ankerl::unordered_dense::set<T>;
 
-template <typename T, typename T2>
-using ParallelFlatHashMap = phmap::parallel_flat_hash_map<T, T2>;
+template <typename K, typename V>
+using ParallelFlatHashMap = phmap::parallel_flat_hash_map<K, V,
+                            phmap::priv::hash_default_hash<K>,
+                            phmap::priv::hash_default_eq<K>,
+                            std::allocator<std::pair<const K, V>>, 4, std::mutex>;
 
 template <typename T>
 using MPMCQueue = moodycamel::ConcurrentQueue<T>;
