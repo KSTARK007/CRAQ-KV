@@ -1440,7 +1440,8 @@ void server_worker(
                           else
                           {
                             // If we are tail node, fetch from disk
-                            fetch_from_disk(false);
+                            // fetch_from_disk(false);
+                            server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
                         }
                         else
