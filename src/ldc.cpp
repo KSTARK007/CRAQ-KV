@@ -198,7 +198,9 @@ void execute_operations(Client &client, const Operations &operation_set, int cli
       std::string v;
       if (op == READ_OP)
       {
+        CRAQ_INFO("[Client CRAQ Get] {} Start {}: {}", index + client_start_index, thread_index, key);
         v = client.get(index + client_start_index, thread_index, key);
+        CRAQ_INFO("[Client CRAQ Get] {} End {}: {}", index + client_start_index, thread_index, key);
       }
       else if (op == INSERT_OP || op == UPDATE_OP)
       {
@@ -1987,7 +1989,7 @@ void server_worker(
             //   panic("[CraqVersionRequest] Value should not be empty");
             // }
 
-            CRAQ_INFO("[CraqVersionRequest] Got version request for key {} with latest version {}", key, latest_version);
+            CRAQ_INFO("[CraqVersionRequest] [{}] -> [{}] Got version request for key {} with latest version {}", remote_index, remote_port, key, latest_version);
             server.craq_version_response(remote_index, remote_port, key, value, latest_version, client_index, client_port);
           }
           else if (data.isCraqVersionResponse())
@@ -1999,7 +2001,7 @@ void server_worker(
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
-            CRAQ_INFO("[CraqVersionResponse] Got version response for key {} with latest version {}", key, tail_latest_version);
+            CRAQ_INFO("[CraqVersionResponse] [{}] -> [{}] Got version response for key {} with latest version {}", remote_index, remote_port, key, tail_latest_version);
             server.get_response(client_index, client_port, ResponseType::OK, value);
             // server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
           }
