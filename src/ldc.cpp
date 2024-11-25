@@ -1999,6 +1999,7 @@ void server_worker(
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
+            CRAQ_INFO("[CraqVersionResponse] Got version response for key {} with latest version {}", key, tail_latest_version);
             server.get_response(client_index, client_port, ResponseType::OK, value);
           }
 
