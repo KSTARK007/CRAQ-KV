@@ -750,6 +750,8 @@ int find_server_port(int machine_index, int thread_index, const std::vector<Remo
 
 // TONY CRAQ
 // <key, <version, clean, value>>, if value is nothing, then it's clean
+// #define USE_CRAQ_PARALLEL_HASHMAP
+
 #ifdef USE_CRAQ_PARALLEL_HASHMAP
 struct CraqVersionCleanValue
 {
