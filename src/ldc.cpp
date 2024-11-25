@@ -134,8 +134,8 @@ void signalHandler(int signal) {
     }
 }
 
-// #define CRAQ_INFO(...) info(__VA_ARGS__)
-#define CRAQ_INFO(...)
+#define CRAQ_INFO(...) info(__VA_ARGS__)
+// #define CRAQ_INFO(...)
 
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
@@ -1439,7 +1439,7 @@ void server_worker(
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                           if (machine_index != tail_machine_index) {
                             auto key = std::to_string(key_index);
-                            // int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                            int port = find_server_port(tail_machine_index, thread_index, server_configs);
                             
                             CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
                             server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
