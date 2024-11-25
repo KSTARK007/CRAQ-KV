@@ -1424,9 +1424,12 @@ void server_worker(
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
-                        auto& versions = craq_key_to_versions[key_index];
-                        std::lock_guard<std::mutex> l(versions.m);
-                        const auto& latest_version = versions.latest_version;
+                        uint64_t latest_version = 0;
+                        {
+                          auto& versions = craq_key_to_versions[key_index];
+                          std::lock_guard<std::mutex> l(versions.m);
+                          latest_version = versions.latest_version;
+                        }
                         // [CRAQ] If our key is lagging behind their version
                         if (latest_version < kv.craq_version)
                         {
