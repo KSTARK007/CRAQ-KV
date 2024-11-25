@@ -199,7 +199,7 @@ std::string Connection::get(int index, int thread_index, std::string_view key)
       LOG_STATE("[{}-{}:{}] Get response [key = {}, value = {}]", machine_index,
             index, remote_port, key, value);
     } else {
-      info("Unexpected response");
+      info("Unexpected response: [{}-{}] Get request [{}]", machine_index, index, kj::str(message.getRoot<Packets>()).cStr());
     }
   });
   return value;
