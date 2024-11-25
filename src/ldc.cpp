@@ -1438,8 +1438,8 @@ void server_worker(
                           if (machine_index != tail_machine_index) {
                             auto key = std::to_string(key_index);
                             int port = find_server_port(tail_machine_index, thread_index, server_configs);
-                            // server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                            server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                            server.craq_version_request(tail_machine_index, remote_port, key, remote_index, remote_port);
+                            // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
                           else
                           {
