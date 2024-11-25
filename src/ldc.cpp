@@ -2001,7 +2001,7 @@ void server_worker(
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
-            CRAQ_INFO("[CraqVersionResponse] [{}] -> [{}] Got version response for key {} with latest version {}", remote_index, remote_port, key, tail_latest_version);
+            CRAQ_INFO("[CraqVersionResponse] [{}] -> [{}] Got version response for key {} with latest version {}", client_index, client_port, key, tail_latest_version);
             server.get_response(client_index, client_port, ResponseType::OK, value);
             // server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
           }
