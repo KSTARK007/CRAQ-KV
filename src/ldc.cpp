@@ -752,6 +752,10 @@ int find_server_port(int machine_index, int thread_index, const std::vector<Remo
 // <key, <version, clean, value>>, if value is nothing, then it's clean
 // #define USE_CRAQ_PARALLEL_HASHMAP
 
+constexpr auto CRAQ_START_VERSION_INDEX = 0;
+const auto CRAQ_DIRTY_KEY = false;
+const auto CRAQ_CLEAN_KEY = true;
+
 #ifdef USE_CRAQ_PARALLEL_HASHMAP
 struct CraqVersionCleanValue
 {
@@ -777,17 +781,34 @@ struct CraqVersionCleanValue
 struct CraqVersions
 {
   std::mutex m;
-  uint64_t latest_version;
+  uint64_t latest_version = CRAQ_START_VERSION_INDEX;
   std::vector<CraqVersionCleanValue> values;
+
+  CraqVersions() = default;
+  ~CraqVersions() = default;
+
+  CraqVersions(CraqVersions&& other) noexcept
+    : m()  // mutex must be default constructed
+    , latest_version(std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX))
+    , values(std::move(other.values))
+  {}
+
+  CraqVersions& operator=(CraqVersions&& other) noexcept {
+    if (this != &other) {
+      latest_version = std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX);
+      values = std::move(other.values);
+    }
+    return *this;
+  }
+
+  CraqVersions(const CraqVersions&) = delete;
+  CraqVersions& operator=(const CraqVersions&) = delete;
+
 };
 
 std::vector<CraqVersions> craq_key_to_versions;
 
 #endif
-
-const auto CRAQ_START_VERSION_INDEX = 0;
-const auto CRAQ_DIRTY_KEY = false;
-const auto CRAQ_CLEAN_KEY = true;
 
 void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
@@ -816,20 +837,6 @@ void server_worker(
       num_client_nodes++;
     }
   }
-
-  // for (auto key_index = 0; key_index < 10 * 1000 * 1000; key_index++) {
-  //   auto value_cstr = default_value;  
-  //   craq_key_to_versions.lazy_emplace_l(key_index,
-  //     [&](auto& kv) {
-  //     },
-  //     [&](const auto& ctor) {
-  //       // else, construct the new key
-  //       auto versions = CraqVersions{CRAQ_START_VERSION_INDEX, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{CRAQ_START_VERSION_INDEX, CRAQ_CLEAN_KEY, value_cstr}}};
-  //       ctor(key_index, std::move(versions));
-  //     }
-  //   );
-  // }
-
 
   void *read_buffer = malloc(BLKSZ);
   int num_servers = 0;
@@ -2132,6 +2139,27 @@ int main(int argc, char *argv[])
       }
       default_value = std::string(ops_config.VALUE_SIZE, 'A');
       auto value = default_value;
+
+
+      if (config.craq_enabled) {
+        for (const auto &k : keys) {
+          auto key_index = convert_string<uint64_t>(k);
+          auto value_cstr = default_value;
+#ifdef USE_CRAQ_PARALLEL_HASHMAP
+          craq_key_to_versions.lazy_emplace_l(key_index,
+            [&](auto& kv) {
+            },
+            [&](const auto& ctor) {
+              // else, construct the new key
+              auto versions = CraqVersions{CRAQ_START_VERSION_INDEX, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{CRAQ_START_VERSION_INDEX, CRAQ_CLEAN_KEY, value_cstr}}};
+              ctor(key_index, std::move(versions));
+            }
+          );
+#else
+          craq_key_to_versions.emplace_back();
+#endif
+        }
+      }
 
       // Connect to one sided RDMA
       if (config.baseline.one_sided_rdma_enabled)
