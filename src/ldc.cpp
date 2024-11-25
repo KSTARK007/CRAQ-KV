@@ -765,7 +765,7 @@ ParallelFlatHashMap<uint64_t, CraqVersions> craq_key_to_versions;
 
 const auto CRAQ_START_VERSION_INDEX = 0;
 const auto CRAQ_DIRTY_KEY = false;
-const auto CRAQ_CLEAN_KEY = true;
+const auto CRAQ_CLEAN_KEY = false;
 
 void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
