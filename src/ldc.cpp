@@ -673,7 +673,7 @@ void shared_log_communication_worker(BlockCacheConfig config, Configuration ops_
             std::string_view value = default_value;
 #endif
 
-            LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
+            // LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
             // Add to unprocessed list of key value pairs
             LogEntry entry;
             entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
@@ -1686,7 +1686,7 @@ void server_worker(
               std::string_view value = default_value;
 #endif
 
-              LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
+              // LOG_STATE("Putting entry [{}] {} {} {}", shared_log_index, key, value, entries.size());
               // Add to unprocessed list of key value pairs
               LogEntry entry;
               entry.kvp = KeyValueEntry{std::string(key), std::string(value)};
