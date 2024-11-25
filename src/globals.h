@@ -7,10 +7,10 @@
 #include <condition_variable>
 
 // Defines
-// #define LOG_STATE(...)
+#define LOG_STATE(...)
 // #define LOG_STATE info
 // #define LOG_STATE(...) debug(__VA_ARGS__)
-#define LOG_STATE(...) info(__VA_ARGS__)
+// #define LOG_STATE(...) info(__VA_ARGS__)
 #define LOG_RDMA_DATA
 // #define LOG_RDMA_DATA info
 
