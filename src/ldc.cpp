@@ -747,6 +747,26 @@ int find_server_port(int machine_index, int thread_index, const std::vector<Remo
   return port;
 }
 
+
+// TONY CRAQ
+// <key, <version, clean, value>>, if value is nothing, then it's clean
+struct CraqVersionCleanValue
+{
+  uint64_t version;
+  bool clean;
+  std::string value;
+};
+struct CraqVersions
+{
+  uint64_t latest_version;
+  std::vector<CraqVersionCleanValue> values;
+};
+ParallelFlatHashMap<uint64_t, CraqVersions> craq_key_to_versions;
+
+const auto CRAQ_START_VERSION_INDEX = 0;
+const auto CRAQ_DIRTY_KEY = false;
+const auto CRAQ_CLEAN_KEY = true;
+
 void server_worker(
     std::shared_ptr<Server> server_, BlockCacheConfig config, Configuration ops_config, int machine_index,
     int thread_index,
@@ -775,37 +795,18 @@ void server_worker(
     }
   }
 
-  // TONY CRAQ
-  // <key, <version, clean, value>>, if value is nothing, then it's clean
-  struct CraqVersionCleanValue
-  {
-    uint64_t version;
-    bool clean;
-    std::string value;
-  };
-  struct CraqVersions
-  {
-    uint64_t latest_version;
-    std::vector<CraqVersionCleanValue> values;
-  };
-  ParallelFlatHashMap<uint64_t, CraqVersions> craq_key_to_versions;
-
-  const auto CRAQ_START_VERSION_INDEX = 0;
-  const auto CRAQ_DIRTY_KEY = false;
-  const auto CRAQ_CLEAN_KEY = true;
-
-  for (auto key_index = 0; key_index < 10 * 1000 * 1000; key_index++) {
-    auto value_cstr = default_value;  
-    craq_key_to_versions.lazy_emplace_l(key_index,
-      [&](auto& kv) {
-      },
-      [&](const auto& ctor) {
-        // else, construct the new key
-        auto versions = CraqVersions{CRAQ_START_VERSION_INDEX, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{CRAQ_START_VERSION_INDEX, CRAQ_CLEAN_KEY, value_cstr}}};
-        ctor(key_index, std::move(versions));
-      }
-    );
-  }
+  // for (auto key_index = 0; key_index < 10 * 1000 * 1000; key_index++) {
+  //   auto value_cstr = default_value;  
+  //   craq_key_to_versions.lazy_emplace_l(key_index,
+  //     [&](auto& kv) {
+  //     },
+  //     [&](const auto& ctor) {
+  //       // else, construct the new key
+  //       auto versions = CraqVersions{CRAQ_START_VERSION_INDEX, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{CRAQ_START_VERSION_INDEX, CRAQ_CLEAN_KEY, value_cstr}}};
+  //       ctor(key_index, std::move(versions));
+  //     }
+  //   );
+  // }
 
 
   void *read_buffer = malloc(BLKSZ);
