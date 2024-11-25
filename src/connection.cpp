@@ -184,7 +184,7 @@ std::string Connection::get(int index, int thread_index, std::string_view key)
   auto m = capnp::messageToFlatArray(message);
   auto p = m.asChars();
 
-  LOG_STATE("[{}-{}] Get request [{}]", machine_index, index,
+  info("[{}-{}] Get request [{}]", machine_index, index,
             kj::str(message.getRoot<Packets>()).cStr());
 
   auto port = config.remote_machine_configs[index].port + thread_index;
@@ -199,7 +199,7 @@ std::string Connection::get(int index, int thread_index, std::string_view key)
       LOG_STATE("[{}-{}:{}] Get response [key = {}, value = {}]", machine_index,
             index, remote_port, key, value);
     } else {
-      info("Unexpected response: [{}-{}] Get request [{}]", machine_index, index, kj::str(message.getRoot<Packets>()).cStr());
+      info("Unexpected response");
     }
   });
   return value;
