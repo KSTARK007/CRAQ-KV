@@ -1196,7 +1196,7 @@ void server_worker(
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
               {
-                rdma_kv_storage->set_craq_version(key_index, current_version);
+                // rdma_kv_storage->set_craq_version(key_index, current_version);
               }
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
@@ -1420,7 +1420,7 @@ void server_worker(
                         }
                       }
 
-                      if (config.craq_enabled)
+                      if (0)
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
