@@ -200,7 +200,7 @@ std::string Connection::get(int index, int thread_index, std::string_view key)
             index, remote_port, key, value);
     } else {
       panic("Unexpected response: [{}-{}] -> [{}-{}] Get request", machine_index, index, remote_index, remote_port);
-      info("Unexpected response: [{}-{}] -> [{}-{}] Get request [{}]", machine_index, index, remote_index, remote_port, kj::str(data).cStr());
+      info("Unexpected response: [{}-{}] -> [{}-{}] Get request [{}]", machine_index, index, remote_index, remote_port, data.toString().cStr());
     }
   });
   return value;
