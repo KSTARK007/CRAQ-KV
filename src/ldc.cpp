@@ -1437,7 +1437,7 @@ void server_worker(
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                           if (machine_index != tail_machine_index) {
                             auto key = std::to_string(key_index);
-                            int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                            // int port = find_server_port(tail_machine_index, thread_index, server_configs);
                             server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
                             // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
@@ -2000,8 +2000,8 @@ void server_worker(
             uint64_t client_port = p.getClientPort();
 
             CRAQ_INFO("[CraqVersionResponse] Got version response for key {} with latest version {}", key, tail_latest_version);
-            // server.get_response(client_index, client_port, ResponseType::OK, value);
-            server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
+            server.get_response(client_index, client_port, ResponseType::OK, value);
+            // server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
