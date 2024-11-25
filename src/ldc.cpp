@@ -1962,30 +1962,30 @@ void server_worker(
               value = block_cache->get(key_cstr);
             }
 #else
-            {
-              auto& versions = craq_key_to_versions[key_index];
-              std::lock_guard<std::mutex> l(versions.m);
-              latest_version = versions.latest_version;
-              auto& values = versions.values;
+            // {
+            //   auto& versions = craq_key_to_versions[key_index];
+            //   std::lock_guard<std::mutex> l(versions.m);
+            //   latest_version = versions.latest_version;
+            //   auto& values = versions.values;
 
-              for (auto& v : values) {
-                if (v.version == latest_version) {
-                  value = v.value;
-                }
-              }
-            }
-            if (value.empty())
-            {
-              value = block_cache->get(key_cstr);
-            }
+            //   for (auto& v : values) {
+            //     if (v.version == latest_version) {
+            //       value = v.value;
+            //     }
+            //   }
+            // }
+            // if (value.empty())
+            // {
+            //   value = block_cache->get(key_cstr);
+            // }
 #endif
             // craq_mutex.lock();
             // auto key_string = std::string(key);
             // uint64_t latest_version = craq_latest_key_version[key_string];
             // craq_mutex.unlock();
-            if (value.empty()) {
-              panic("[CraqVersionRequest] Value should not be empty");
-            }
+            // if (value.empty()) {
+            //   panic("[CraqVersionRequest] Value should not be empty");
+            // }
 
             CRAQ_INFO("[CraqVersionRequest] Got version request for key {} with latest version {}", key, latest_version);
             server.craq_version_response(remote_index, remote_port, key, value, latest_version, client_index, client_port);
