@@ -1989,7 +1989,7 @@ void server_worker(
             //   panic("[CraqVersionRequest] Value should not be empty");
             // }
 
-            CRAQ_INFO("[CraqVersionRequest] [{}] -> [{}] Got version request for key {} with latest version {}", remote_index, remote_port, key, latest_version);
+            CRAQ_INFO("[CraqVersionRequest] [{}:{}] -> [{}:{}] Got version request for key {} with latest version {}", remote_index, remote_port, machine_index, port, key, latest_version);
             server.craq_version_response(remote_index, remote_port, key, value, latest_version, client_index, client_port);
           }
           else if (data.isCraqVersionResponse())
@@ -2001,7 +2001,7 @@ void server_worker(
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
-            CRAQ_INFO("[CraqVersionResponse] [{}] -> [{}] Got version response for key {} with latest version {}", client_index, client_port, key, tail_latest_version);
+            CRAQ_INFO("[CraqVersionResponse] [[{}:{}] -> [{}:{}] Got version response for key {} with latest version {}", machine_index, port, client_index, client_port, key, tail_latest_version);
             server.get_response(client_index, client_port, ResponseType::OK, value);
             // server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
           }
