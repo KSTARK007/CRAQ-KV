@@ -789,12 +789,23 @@ void server_worker(
     std::vector<CraqVersionCleanValue> values;
   };
   ParallelFlatHashMap<uint64_t, CraqVersions> craq_key_to_versions;
-  // <key, clean version>
-  ParallelFlatHashMap<uint64_t, uint64_t> craq_latest_key_version;
 
   const auto CRAQ_START_VERSION_INDEX = 0;
   const auto CRAQ_DIRTY_KEY = false;
-  const auto CRAQ_CLEAN_KEY = false;
+  const auto CRAQ_CLEAN_KEY = true;
+
+  for (auto key_index = 0; key_index < 10 * 1000 * 1000; key_index++) {
+    auto value_cstr = default_value;  
+    craq_key_to_versions.lazy_emplace_l(key_index,
+      [&](auto& kv) {
+      },
+      [&](const auto& ctor) {
+        // else, construct the new key
+        auto versions = CraqVersions{CRAQ_START_VERSION_INDEX, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{CRAQ_START_VERSION_INDEX, CRAQ_CLEAN_KEY, value_cstr}}};
+        ctor(key_index, std::move(versions));
+      }
+    );
+  }
 
 
   void *read_buffer = malloc(BLKSZ);
