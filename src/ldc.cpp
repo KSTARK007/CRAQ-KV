@@ -1192,6 +1192,13 @@ void server_worker(
               }
 #endif
 
+
+              auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
+              if (rdma_kv_storage)
+              {
+                rdma_kv_storage->set_craq_version(key_index, current_version);
+              }
+
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               CRAQ_INFO("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
@@ -1412,7 +1419,41 @@ void server_worker(
                           snapshot->update_access_rate(key_index);
                         }
                       }
-                      server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+
+                      if (config.craq_enabled)
+                      {
+#ifdef RDMA_USE_CRAQ
+#ifndef USE_CRAQ_PARALLEL_HASHMAP
+                        auto& versions = craq_key_to_versions[key_index];
+                        std::lock_guard<std::mutex> l(versions.m);
+                        const auto& latest_version = versions.latest_version;
+                        // [CRAQ] If our key is lagging behind their version
+                        if (latest_version < kv.craq_version)
+                        {
+                          // Ask the tail node
+                          int tail_machine_index = num_client_nodes + server_configs.size() - 1;
+                          if (machine_index != tail_machine_index) {
+                            auto key = std::to_string(key_index);
+                            int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                            server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                          }
+                          else
+                          {
+                            // If we are tail node, fetch from disk
+                            fetch_from_disk(false);
+                          }
+                        }
+                        else
+                        {
+                          server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                        }
+#endif
+#endif
+                      }
+                      else
+                      {
+                        server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                      }
                     }
                     else
                     {
