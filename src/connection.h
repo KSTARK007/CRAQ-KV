@@ -262,6 +262,7 @@ struct Server : public Connection
   void append_delete_request(int index, int port, std::string_view key);
   void append_shared_log_get_request(int index, int port, uint64_t shared_log_index);
   void append_put_response(int index, int port, ResponseType response_type);
+  void append_craq_version_request(int index, int port, std::string_view key, uint64_t client_index, uint64_t client_port);
 
   void increment_async_disk_requests() { async_disk_requests++; }
 
@@ -324,6 +325,15 @@ public:
     ResponseType response_type;
   };
 
+  struct AppendCraqVersionRequest
+  {
+    int index;
+    int port;
+    std::string key;
+    uint64_t client_index;
+    uint64_t client_port;
+  };
+
 private:
   MPMCQueue<RDMAGetResponse> rdma_get_response_queue;
   uint64_t remote_rdma_cache_hits{};
@@ -337,4 +347,5 @@ private:
   MPMCQueue<AppendDeleteRequest> delete_request_queue;
   MPMCQueue<SharedLogGetRequest> shared_log_get_request_queue;
   MPMCQueue<AppendPutResponse> append_put_response_queue;
+  MPMCQueue<AppendCraqVersionRequest> append_craq_version_request_queue;
 };

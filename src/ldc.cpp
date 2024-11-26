@@ -1442,7 +1442,7 @@ void server_worker(
                             int port = find_server_port(tail_machine_index, thread_index, server_configs);
                             
                             CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
-                            server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                            server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
                             // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
                           else

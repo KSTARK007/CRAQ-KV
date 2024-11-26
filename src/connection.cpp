@@ -855,6 +855,16 @@ void Server::execute_pending_operations()
       put_response(index, port, response_type);
     }
   }
+
+  {
+    AppendCraqVersionRequest request;
+    while (append_craq_version_request_queue.try_dequeue(request))
+    {
+      auto [index, port, key, client_index, client_port] = request;
+      craq_version_request(index, port, key, client_index, client_port);
+    }
+  }
+
 }
 
 void Server::append_to_rdma_get_response_queue(int index, int port, ResponseType response_type,
@@ -911,4 +921,10 @@ void Server::append_put_response(int index, int port, ResponseType response_type
 {
   auto request = Server::AppendPutResponse{index, port, response_type};
   append_put_response_queue.enqueue(request);
+}
+
+void Server::append_craq_version_request(int index, int port, std::string_view key, uint64_t client_index, uint64_t client_port)
+{
+  auto request = Server::AppendCraqVersionRequest{index, port, std::string(key), client_index, client_port};
+  append_craq_version_request_queue.enqueue(request);
 }
