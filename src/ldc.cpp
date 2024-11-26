@@ -1982,6 +1982,7 @@ void server_worker(
             // {
             //   value = block_cache->get(key_cstr);
             // }
+            value = block_cache->get(key_cstr);
 #endif
             // craq_mutex.lock();
             // auto key_string = std::string(key);
