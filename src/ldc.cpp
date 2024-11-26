@@ -1431,7 +1431,7 @@ void server_worker(
                         }
                       }
 
-                      if (config.craq_enabled)
+                      if (config.craq_enabled && 0)
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
