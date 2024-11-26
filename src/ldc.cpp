@@ -783,7 +783,7 @@ struct CraqVersionCleanValue
 struct CraqVersions
 {
   std::mutex m;
-  uint64_t latest_version = CRAQ_START_VERSION_INDEX;
+  std::atomic<uint64_t> latest_version = CRAQ_START_VERSION_INDEX;
   std::vector<CraqVersionCleanValue> values;
   std::atomic<bool> last_value_clean = true;
 
@@ -792,14 +792,14 @@ struct CraqVersions
 
   CraqVersions(CraqVersions&& other) noexcept
     : m()  // mutex must be default constructed
-    , latest_version(std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX))
+    , latest_version(other.latest_version.load())
     , values(std::move(other.values))
     , last_value_clean(other.last_value_clean.load())
   {}
 
   CraqVersions& operator=(CraqVersions&& other) noexcept {
     if (this != &other) {
-      latest_version = std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX);
+      latest_version = other.latest_version.load();
       values = std::move(other.values);
       last_value_clean = other.last_value_clean.load();
     }
@@ -1203,7 +1203,7 @@ void server_worker(
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
               {
-                // rdma_kv_storage->set_craq_version(key_index, current_version);
+                rdma_kv_storage->set_craq_version(key_index, current_version);
               }
 
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
@@ -1438,11 +1438,11 @@ void server_worker(
                         uint64_t latest_version = 0;
                         {
                           auto& versions = craq_key_to_versions[key_index];
-                          std::lock_guard<std::mutex> l(versions.m);
-                          latest_version = versions.latest_version;
+                          // std::lock_guard<std::mutex> l(versions.m);
+                          latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (latest_version < kv.craq_version)
+                        if (kv.craq_version != KEY_VALUE_PTR_INVALID && latest_version < kv.craq_version)
                         {
                           // Ask the tail node
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
@@ -1767,7 +1767,7 @@ void server_worker(
 
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
-                latest_version = std::max(latest_version, version);
+                latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
               }
 
 #endif
