@@ -1255,7 +1255,7 @@ void server_worker(
                   if (!values.empty()) {
                     // If last item dirty, we should ping the tail for the latest version
                     if (!values.back().clean) {
-                      // ping_last_server = true;
+                      ping_last_server = true;
                     }
                   }
                 }
