@@ -1769,6 +1769,7 @@ void server_worker(
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
                 latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
       
+                auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
                 if (rdma_kv_storage)
                 {
                   rdma_kv_storage->set_craq_version(key_index, latest_version);
