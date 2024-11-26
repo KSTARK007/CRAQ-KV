@@ -1433,7 +1433,8 @@ void server_worker(
                           latest_version = versions.latest_version;
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (latest_version < kv.craq_version)
+                        // if (latest_version < kv.craq_version)
+                        if (1)
                         {
                           // Ask the tail node
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
