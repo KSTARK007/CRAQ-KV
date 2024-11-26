@@ -1967,26 +1967,32 @@ void server_worker(
               auto& versions = craq_key_to_versions[key_index];
               std::lock_guard<std::mutex> l(versions.m);
               latest_version = versions.latest_version;
-              auto& values = versions.values;
+              // auto& values = versions.values;
 
-              for (auto& v : values) {
-                if (v.version == latest_version) {
-                  value = v.value;
-                }
-              }
+              // for (auto& v : values) {
+              //   if (v.version == latest_version) {
+              //     value = v.value;
+              //   }
+              // }
             }
-            if (value.empty())
-            {
-              value = block_cache->get(key);
-            }
-#endif
-            // craq_mutex.lock();
-            // auto key_string = std::string(key);
-            // uint64_t latest_version = craq_latest_key_version[key_string];
-            // craq_mutex.unlock();
-            // if (value.empty()) {
-            //   panic("[CraqVersionRequest] Value should not be empty");
+
+            // if (cache->exists(key))
+            // {
+            //   value = cache->get(key);
             // }
+            // else
+            // {
+            //   db->get_async_submit(key, [=, &server](auto value) {
+            //     // Add to cache
+            //     // block_cache->get_cache()->put(key, value);
+
+            //     // Send the response
+            //     server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+            //     // server->append_to_rdma_block_cache_request_queue(remote_index, remote_port, ResponseType::OK, skey, value);
+            //   });
+            // }
+#endif
+            value = block_cache->get(key);
 
             CRAQ_INFO("[CraqVersionRequest] [{}:{}] -> [{}:{}] Got version request for key {} with latest version {}", machine_index, thread_index, remote_index, remote_port, key, latest_version);
             server.craq_version_response(remote_index, remote_port, key, value, latest_version, client_index, client_port);
