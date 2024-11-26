@@ -134,8 +134,8 @@ void signalHandler(int signal) {
     }
 }
 
-#define CRAQ_INFO(...) info(__VA_ARGS__)
-// #define CRAQ_INFO(...)
+// #define CRAQ_INFO(...) info(__VA_ARGS__)
+#define CRAQ_INFO(...)
 
 void execute_operations(Client &client, const Operations &operation_set, int client_start_index, BlockCacheConfig config, Configuration &ops_config,
                         int client_index_per_thread, int machine_index, int thread_index)
@@ -1964,22 +1964,22 @@ void server_worker(
               value = block_cache->get(key_cstr);
             }
 #else
-            // {
-            //   auto& versions = craq_key_to_versions[key_index];
-            //   std::lock_guard<std::mutex> l(versions.m);
-            //   latest_version = versions.latest_version;
-            //   auto& values = versions.values;
+            {
+              auto& versions = craq_key_to_versions[key_index];
+              std::lock_guard<std::mutex> l(versions.m);
+              latest_version = versions.latest_version;
+              auto& values = versions.values;
 
-            //   for (auto& v : values) {
-            //     if (v.version == latest_version) {
-            //       value = v.value;
-            //     }
-            //   }
-            // }
-            // if (value.empty())
-            // {
-            //   value = block_cache->get(key_cstr);
-            // }
+              for (auto& v : values) {
+                if (v.version == latest_version) {
+                  value = v.value;
+                }
+              }
+            }
+            if (value.empty())
+            {
+              value = block_cache->get(key_cstr);
+            }
 #endif
             // craq_mutex.lock();
             // auto key_string = std::string(key);
