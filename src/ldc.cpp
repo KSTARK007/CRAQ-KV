@@ -1238,7 +1238,7 @@ void server_worker(
             auto key_index = convert_string<uint64_t>(key);
 
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled && 0) {
+            if (config.craq_enabled) {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
@@ -1431,7 +1431,7 @@ void server_worker(
                         }
                       }
 
-                      if (config.craq_enabled && 0)
+                      if (config.craq_enabled)
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
@@ -1768,6 +1768,11 @@ void server_worker(
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
                 latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
+      
+                if (rdma_kv_storage)
+                {
+                  rdma_kv_storage->set_craq_version(key_index, latest_version);
+                }
               }
 
 #endif
