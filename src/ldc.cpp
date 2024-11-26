@@ -2004,8 +2004,8 @@ void server_worker(
             uint64_t client_port = p.getClientPort();
 
             CRAQ_INFO("[CraqVersionResponse] [[{}:{}] -> [{}:{}] Got version response for key {} with latest version {}", machine_index, thread_index, client_index, client_port, key, tail_latest_version);
-            server.get_response(client_index, client_port, ResponseType::OK, value);
-            // server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
+            // server.get_response(client_index, client_port, ResponseType::OK, value);
+            server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
