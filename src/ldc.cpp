@@ -785,6 +785,7 @@ struct CraqVersions
   std::mutex m;
   uint64_t latest_version = CRAQ_START_VERSION_INDEX;
   std::vector<CraqVersionCleanValue> values;
+  std::atomic<bool> last_value_clean = true;
 
   CraqVersions() = default;
   ~CraqVersions() = default;
@@ -793,12 +794,14 @@ struct CraqVersions
     : m()  // mutex must be default constructed
     , latest_version(std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX))
     , values(std::move(other.values))
+    , last_value_clean(other.last_value_clean.load())
   {}
 
   CraqVersions& operator=(CraqVersions&& other) noexcept {
     if (this != &other) {
       latest_version = std::exchange(other.latest_version, CRAQ_START_VERSION_INDEX);
       values = std::move(other.values);
+      last_value_clean = other.last_value_clean.load();
     }
     return *this;
   }
@@ -1190,6 +1193,8 @@ void server_worker(
                 auto& latest_version = versions.latest_version;
                 latest_version++;
                 current_version = latest_version;
+
+                versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
                 versions.values.emplace_back(CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr });
               }
 #endif
@@ -1250,13 +1255,17 @@ void server_worker(
 #else
                 {
                   auto& versions = craq_key_to_versions[key_index];
-                  std::lock_guard<std::mutex> l(versions.m);
-                  auto& values = versions.values;
-                  if (!values.empty()) {
-                    // If last item dirty, we should ping the tail for the latest version
-                    if (!values.back().clean) {
-                      ping_last_server = true;
-                    }
+                  // std::lock_guard<std::mutex> l(versions.m);
+                  // auto& values = versions.values;
+                  // if (!values.empty()) {
+                  //   // If last item dirty, we should ping the tail for the latest version
+                  //   if (!values.back().clean) {
+                  //     ping_last_server = true;
+                  //   }
+                  // }
+                  auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
+                  if (last_value_clean == CRAQ_DIRTY_KEY) {
+                    ping_last_server = true;
                   }
                 }
 #endif
@@ -1755,6 +1764,8 @@ void server_worker(
                         [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
                     values.end()
                 );
+
+                versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
                 latest_version = std::max(latest_version, version);
               }
@@ -1818,6 +1829,8 @@ void server_worker(
                 auto& versions = craq_key_to_versions[key_index];
                 std::lock_guard<std::mutex> l(versions.m);
                 auto& values = versions.values;
+
+                versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
               }
 
