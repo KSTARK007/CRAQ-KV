@@ -1260,7 +1260,8 @@ void server_worker(
                   }
                 }
 #endif
-                if (ping_last_server) {
+                // if (ping_last_server) {
+                if (true) {
                     int port = find_server_port(tail_machine_index, thread_index, server_configs);
                     CRAQ_INFO("[CraqGet] craq version request: {}", port);
                     server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
@@ -1422,7 +1423,8 @@ void server_worker(
                         }
                       }
 
-                      if (config.craq_enabled)
+                      // if (config.craq_enabled)
+                      if (0)
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
@@ -1433,8 +1435,7 @@ void server_worker(
                           latest_version = versions.latest_version;
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        // if (latest_version < kv.craq_version)
-                        if (1)
+                        if (latest_version < kv.craq_version)
                         {
                           // Ask the tail node
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
