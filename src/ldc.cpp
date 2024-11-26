@@ -1848,12 +1848,11 @@ void server_worker(
           else if (data.isCraqBackwardPropagateRequest())
           {
             auto p = data.getCraqBackwardPropagateRequest();
-            std::string_view key = p.getKey().cStr();
+            auto key = std::string(p.getKey().cStr());
             uint64_t latest_clean_version = p.getLatestCleanVersion();
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
-            auto key_cstr = p.getKey().cStr();
 
             // craq_mutex.lock();
             // auto key_string = std::string(key);
@@ -1874,7 +1873,7 @@ void server_worker(
             //   panic("Key not found in craq map in backward propagate request");
             // }
             // craq_mutex.unlock();
-            auto key_index = convert_string<uint64_t>(key_cstr);
+            auto key_index = convert_string<uint64_t>(key);
 
             CRAQ_INFO("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
 
@@ -1934,7 +1933,7 @@ void server_worker(
           else if (data.isCraqVersionRequest()) 
           {
             auto p = data.getCraqVersionRequest();
-            std::string_view key = p.getKey().cStr();
+            auto key = std::string(p.getKey().cStr());
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
@@ -1942,8 +1941,7 @@ void server_worker(
               panic("[CraqVersionRequest] Only the tail should receive version requests");
             }
 
-            auto key_cstr = p.getKey().cStr();
-            auto key_index = convert_string<uint64_t>(key_cstr);
+            auto key_index = convert_string<uint64_t>(key);
 
             auto latest_version = CRAQ_START_VERSION_INDEX;
             std::string value;
@@ -1982,7 +1980,6 @@ void server_worker(
             // {
             //   value = block_cache->get(key_cstr);
             // }
-            value = block_cache->get(key_cstr);
 #endif
             // craq_mutex.lock();
             // auto key_string = std::string(key);
@@ -1998,7 +1995,7 @@ void server_worker(
           else if (data.isCraqVersionResponse())
           {
             auto p = data.getCraqVersionResponse();
-            std::string_view key = p.getKey().cStr();
+            auto key = p.getKey().cStr();
             std::string_view value = p.getValue().cStr();
             uint64_t tail_latest_version = p.getVersion();
             uint64_t client_index = p.getClientIndex();
