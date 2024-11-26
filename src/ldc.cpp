@@ -1255,13 +1255,12 @@ void server_worker(
                   if (!values.empty()) {
                     // If last item dirty, we should ping the tail for the latest version
                     if (!values.back().clean) {
-                      ping_last_server = true;
+                      // ping_last_server = true;
                     }
                   }
                 }
 #endif
-                // if (ping_last_server) {
-                if (true) {
+                if (ping_last_server) {
                     int port = find_server_port(tail_machine_index, thread_index, server_configs);
                     CRAQ_INFO("[CraqGet] craq version request: {}", port);
                     server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
@@ -1423,8 +1422,7 @@ void server_worker(
                         }
                       }
 
-                      // if (config.craq_enabled)
-                      if (0)
+                      if (config.craq_enabled)
                       {
 #ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
