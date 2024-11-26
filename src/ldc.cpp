@@ -1978,7 +1978,7 @@ void server_worker(
             }
             if (value.empty())
             {
-              value = block_cache->get(key_cstr);
+              value = block_cache->get(key);
             }
 #endif
             // craq_mutex.lock();
