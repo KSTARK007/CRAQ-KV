@@ -1443,13 +1443,12 @@ void server_worker(
                             
                             CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
                             server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                            // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
                           else
                           {
                             // If we are tail node, fetch from disk
-                            // fetch_from_disk(false);
-                            server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                            fetch_from_disk(false);
+                            // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                           }
                         }
                         else
