@@ -1773,6 +1773,7 @@ void server_worker(
                 if (rdma_kv_storage)
                 {
                   rdma_kv_storage->set_craq_version(key_index, latest_version);
+                  rdma_kv_storage->set_clean_craq_version(key_index, latest_version);
                 }
               }
 
