@@ -1456,8 +1456,14 @@ void server_worker(
                           else
                           {
                             // If we are tail node, fetch from disk
-                            fetch_from_disk(false);
-                            // server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                            auto exists_in_cache = block_cache->exists_in_cache(key);
+                            if (exists_in_cache) {
+                              value = block_cache->get(key, owning, exists_in_cache);
+                              server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                            } else {
+                              fetch_from_disk(false);
+                            }
+
                           }
                         }
                         else
