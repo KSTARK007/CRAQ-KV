@@ -2155,7 +2155,7 @@ int main(int argc, char *argv[])
         std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> latencies;
         while (!g_stop)
         {
-          info("block_cache->get_cache()->is_ready() {}", block_cache->get_cache()->is_ready());
+          info("block_cache->get_cache()->is_ready() {} {}", block_cache->get_cache()->is_ready(), block_cache->get_cache()->get_total_accesses());
           if(block_cache->get_cache()->is_ready()){
             // std::this_thread::sleep_for(std::chrono::seconds(60));
             std::this_thread::sleep_for(std::chrono::seconds(120));
