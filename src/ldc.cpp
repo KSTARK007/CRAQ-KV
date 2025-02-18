@@ -1247,7 +1247,7 @@ void server_worker(
             auto exists_in_cache = block_cache->exists_in_cache(key);
 
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled) {
+            if (config.craq_enabled) {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
@@ -1450,7 +1450,6 @@ void server_worker(
                           latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        info("CRAQ IS VERSION??? {} {}", kv.craq_clean_version, latest_version);
                         if (kv.craq_clean_version != KEY_VALUE_PTR_INVALID && latest_version < kv.craq_clean_version)
                         {
                           // Ask the tail node
@@ -1954,7 +1953,6 @@ void server_worker(
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
               {
-                info("CRAQ SETTING KEY CLEAN");
                 rdma_kv_storage->set_clean_craq_version(key_index, latest_clean_version);
               }
             }
