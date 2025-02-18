@@ -1244,10 +1244,8 @@ void server_worker(
             auto key = key_.cStr();
             auto key_index = convert_string<uint64_t>(key);
 
-            auto exists_in_cache = block_cache->exists_in_cache(key);
-
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled) {
+            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled) {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
@@ -1285,6 +1283,7 @@ void server_worker(
                     craq_rpc_tail.fetch_add(1);
 
                     server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                    return;
                 }
               }
 
@@ -1305,7 +1304,9 @@ void server_worker(
               //   }
               // }
             }
-            else if (exists_in_cache)
+
+            auto exists_in_cache = block_cache->exists_in_cache(key);
+            if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
@@ -1442,6 +1443,7 @@ void server_worker(
 
                       if (config.craq_enabled)
                       {
+#ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
                         uint64_t latest_version = 0;
                         {
@@ -1474,12 +1476,14 @@ void server_worker(
                             } else {
                               fetch_from_disk(false);
                             }
+
                           }
                         }
                         else
                         {
                           server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                         }
+#endif
 #endif
                       }
                       else
