@@ -1460,7 +1460,7 @@ void server_worker(
                             int port = find_server_port(tail_machine_index, thread_index, server_configs);
 
                             craq_rpc_timer = LDCTimer{};
-                            craq_rpc_tail.fetch_add(1);
+                            craq_rdma_rpc_tail.fetch_add(1);
 
                             CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
                             server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
@@ -2528,6 +2528,7 @@ int main(int argc, char *argv[])
       uint64_t last_cache_writes = 0;
       uint64_t last_disk_writes = 0;
       uint64_t last_craq_rpc_tail = 0;
+      uint64_t last_craq_rdma_rpc_tail = 0;
       uint64_t last_writes_blocked = 0;
       while (!g_stop)
       {
@@ -2549,6 +2550,8 @@ int main(int argc, char *argv[])
         auto diff_disk_writes = current_disk_writes - last_disk_writes;
         auto current_craq_rpc_tail = craq_rpc_tail.load(std::memory_order::relaxed);
         auto diff_craq_rpc_tail = current_craq_rpc_tail - last_craq_rpc_tail;
+        auto current_craq_rdma_rpc_tail = craq_rdma_rpc_tail.load(std::memory_order::relaxed);
+        auto diff_craq_rdma_rpc_tail = current_craq_rdma_rpc_tail - last_craq_rdma_rpc_tail;
 
         auto cache_info = block_cache->dump_cache_info_as_json();
         uint64_t current_cache_reads{};
@@ -2567,7 +2570,7 @@ int main(int argc, char *argv[])
         auto current_writes_blocked = db->writes_blocked_count;
         auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ [{}] {}ns", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq tail [{}] +[{}] Rdma [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ [{}] {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -2579,7 +2582,7 @@ int main(int argc, char *argv[])
             current_writes_executed, diff_current_writes_executed,
             current_cache_writes, diff_cache_writes,
             current_disk_writes, diff_disk_writes,
-            current_craq_rpc_tail, diff_craq_rpc_tail, craq_rpc_tail_ns,
+            current_craq_rpc_tail, diff_craq_rpc_tail, current_craq_rdma_rpc_tail, diff_craq_rdma_rpc_tail, craq_rpc_tail_ns,
             current_writes_blocked, diff_writes_blocked, writes_blocked_size, writes_blocked_ns
         );
 
@@ -2595,6 +2598,7 @@ int main(int argc, char *argv[])
         last_cache_writes = current_cache_writes;
         last_disk_writes = current_disk_writes;
         last_craq_rpc_tail = current_craq_rpc_tail;
+        last_craq_rdma_rpc_tail = current_craq_rdma_rpc_tail;
         last_writes_blocked = current_writes_blocked;
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
