@@ -1398,7 +1398,7 @@ void server_worker(
                 {
                   LDCTimer rdma_timer;
                   auto port = config.remote_machine_configs[machine_index].port + thread_index;
-                  found_in_rdma = rdma_node.rdma_key_value_cache->read_callback(key_index, [=, expected_key=key_index](int rdma_index, const RDMACacheIndexKeyValue& kv)
+                  found_in_rdma = rdma_node.rdma_key_value_cache->read_callback(key_index, [=, &craq_rpc_timer, expected_key=key_index](int rdma_index, const RDMACacheIndexKeyValue& kv)
                   {
                     auto& server = *server_;
                     total_rdma_executed.fetch_add(1, std::memory_order::relaxed);
@@ -2563,10 +2563,11 @@ int main(int argc, char *argv[])
 
         auto db = block_cache->get_db();
         auto writes_blocked_ns = db->writes_blocked_ns;
+        auto writes_blocked_size = db->writes_blocked_size;
         auto current_writes_blocked = db->writes_blocked_count;
         auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ {}ns", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ [{}] {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -2579,7 +2580,7 @@ int main(int argc, char *argv[])
             current_cache_writes, diff_cache_writes,
             current_disk_writes, diff_disk_writes,
             current_craq_rpc_tail, diff_craq_rpc_tail, craq_rpc_tail_ns,
-            current_writes_blocked, diff_writes_blocked, writes_blocked_ns
+            current_writes_blocked, diff_writes_blocked, writes_blocked_size, writes_blocked_ns
         );
 
         last_rdma_executed = current_rdma_executed;
