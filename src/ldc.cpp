@@ -1443,7 +1443,6 @@ void server_worker(
                       if (config.craq_enabled)
                       {
                         info("CRAQ IS VERSION??? {} {}", kv.craq_clean_version, latest_version);
-#ifdef RDMA_USE_CRAQ
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
                         uint64_t latest_version = 0;
                         {
@@ -1482,7 +1481,6 @@ void server_worker(
                         {
                           server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                         }
-#endif
 #endif
                       }
                       else
