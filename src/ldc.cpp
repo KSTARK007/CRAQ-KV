@@ -2525,6 +2525,7 @@ int main(int argc, char *argv[])
       uint64_t last_cache_writes = 0;
       uint64_t last_disk_writes = 0;
       uint64_t last_craq_rpc_tail = 0;
+      uint64_t last_writes_blocked = 0;
       while (!g_stop)
       {
         auto current_rdma_executed = total_rdma_executed.load(std::memory_order::relaxed);
@@ -2557,7 +2558,12 @@ int main(int argc, char *argv[])
         auto diff_cache_hits = current_cache_hits - last_cache_hits;
         auto diff_cache_misses = current_cache_misses - last_cache_misses;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] |  Writes Disk [{}] +[{}] |  Craq tail [{}] +[{}] ~ {}ns | Writes stalled ~ {}ns", 
+        auto db = block_cache->get_db();
+        auto writes_blocked_ns = db->writes_blocked_ns;
+        auto current_writes_blocked = db->writes_blocked_count;
+        auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
+
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] |  Writes Disk [{}] +[{}] |  Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -2569,8 +2575,8 @@ int main(int argc, char *argv[])
             current_writes_executed, diff_current_writes_executed,
             current_cache_writes, diff_cache_writes,
             current_disk_writes, diff_disk_writes,
-            current_craq_rpc_tail, diff_craq_rpc_tail,
-            craq_rpc_tail_ns, wait_buffer_ns
+            current_craq_rpc_tail, diff_craq_rpc_tail, craq_rpc_tail_ns,
+            current_writes_blocked, diff_writes_blocked, writes_blocked_ns
         );
 
         last_rdma_executed = current_rdma_executed;
@@ -2584,6 +2590,8 @@ int main(int argc, char *argv[])
         last_writes_executed = current_writes_executed;
         last_cache_writes = current_cache_writes;
         last_disk_writes = current_disk_writes;
+        last_craq_rpc_tail = current_craq_rpc_tail;
+        last_writes_blocked = current_writes_blocked;
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
