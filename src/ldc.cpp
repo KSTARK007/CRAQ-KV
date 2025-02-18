@@ -1279,7 +1279,9 @@ void server_worker(
                     int port = find_server_port(tail_machine_index, thread_index, server_configs);
                     CRAQ_INFO("[CraqGet] craq version request: {}", port);
                     craq_rpc_timer = LDCTimer{};
-                    server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                    craq_rpc_tail.fetch_add(1);
+
+                    server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
                     return;
                 }
               }
@@ -1456,7 +1458,10 @@ void server_worker(
                           if (machine_index != tail_machine_index) {
                             auto key = std::to_string(key_index);
                             int port = find_server_port(tail_machine_index, thread_index, server_configs);
-                            
+
+                            craq_rpc_timer = LDCTimer{};
+                            craq_rpc_tail.fetch_add(1);
+
                             CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
                             server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
                           }
@@ -1975,9 +1980,6 @@ void server_worker(
             uint64_t client_index = p.getClientIndex();
             uint64_t client_port = p.getClientPort();
 
-            craq_rpc_tail.fetch_add(1);
-            craq_rpc_tail_ns = craq_rpc_timer.time_elapsed();
-
             if (num_client_nodes + server_configs.size() - 1 != machine_index) {
               panic("[CraqVersionRequest] Only the tail should receive version requests");
             }
@@ -2051,6 +2053,7 @@ void server_worker(
             CRAQ_INFO("[CraqVersionResponse] [[{}:{}] -> [{}:{}] Got version response for key {} with latest version {}", machine_index, thread_index, client_index, client_port, key, tail_latest_version);
             // server.get_response(client_index, client_port, ResponseType::OK, value);
             server.append_to_rdma_get_response_queue(client_index, client_port, ResponseType::OK, value);
+            craq_rpc_tail_ns = craq_rpc_timer.time_elapsed();
           }
 
           for (auto it = hash_to_write_response.begin(); it != hash_to_write_response.end();)
@@ -2563,7 +2566,7 @@ int main(int argc, char *argv[])
         auto current_writes_blocked = db->writes_blocked_count;
         auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] |  Writes Disk [{}] +[{}] |  Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ {}ns", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq tail [{}] +[{}] ~ {}ns | Writes stalled [{}] +[{}] ~ {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
