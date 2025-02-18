@@ -1450,6 +1450,7 @@ void server_worker(
                           latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
+                        info("CRAQ IS VERSION??? {} {}", kv.craq_clean_version, latest_version);
                         if (kv.craq_clean_version != KEY_VALUE_PTR_INVALID && latest_version < kv.craq_clean_version)
                         {
                           // Ask the tail node
