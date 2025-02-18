@@ -1245,7 +1245,7 @@ void server_worker(
             auto key_index = convert_string<uint64_t>(key);
 
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled) {
+            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled) {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
