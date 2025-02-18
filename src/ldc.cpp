@@ -71,6 +71,7 @@ std::atomic<uint64_t> shared_log_entry_queue_index = 0;
 std::vector<std::shared_ptr<Server>> servers;
 
 std::atomic<uint64_t> craq_rpc_tail;
+std::atomic<uint64_t> craq_rdma_rpc_tail;
 uint64_t craq_rpc_tail_ns = 0;
 uint64_t wait_buffer_ns = 0;
 
