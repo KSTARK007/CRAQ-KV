@@ -1442,9 +1442,9 @@ void server_worker(
 
                       if (config.craq_enabled)
                       {
-                        info("CRAQ IS VERSION??? {} {}", kv.craq_clean_version, latest_version);
 #ifndef USE_CRAQ_PARALLEL_HASHMAP
                         uint64_t latest_version = 0;
+                        info("CRAQ IS VERSION??? {} {}", kv.craq_clean_version, latest_version);
                         {
                           auto& versions = craq_key_to_versions[key_index];
                           // std::lock_guard<std::mutex> l(versions.m);
