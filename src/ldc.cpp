@@ -1954,6 +1954,7 @@ void server_worker(
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
               {
+                info("CRAQ SETTING KEY CLEAN");
                 rdma_kv_storage->set_clean_craq_version(key_index, latest_clean_version);
               }
             }
