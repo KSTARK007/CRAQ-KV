@@ -1226,8 +1226,6 @@ void server_worker(
             auto key = key_.cStr();
             auto key_index = convert_string<uint64_t>(key);
 
-
-            auto exists_in_cache = block_cache->exists_in_cache(key);
             if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled)
             {
               auto ping_last_server = false;
@@ -1247,10 +1245,13 @@ void server_worker(
                     craq_rpc_tail.fetch_add(1);
 
                     server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                    return;
                 }
               }
             }
-            else if (exists_in_cache)
+            
+            auto exists_in_cache = block_cache->exists_in_cache(key);
+            if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
@@ -1983,8 +1984,8 @@ int main(int argc, char *argv[])
           info("block_cache->get_cache()->is_ready() {} {}", block_cache->get_cache()->is_ready(), block_cache->get_cache()->get_total_accesses());
           // if(block_cache->get_cache()->is_ready()){
           if(true){
-            // std::this_thread::sleep_for(std::chrono::seconds(60));
-            std::this_thread::sleep_for(std::chrono::seconds(120));
+            std::this_thread::sleep_for(std::chrono::seconds(60));
+            // std::this_thread::sleep_for(std::chrono::seconds(120));
             // std::this_thread::sleep_for(std::chrono::seconds(180));
             // std::this_thread::sleep_for(std::chrono::seconds(240));
             info("Access rate check triggered");
