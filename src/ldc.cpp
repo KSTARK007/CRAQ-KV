@@ -1393,24 +1393,20 @@ void server_worker(
                       int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                       if (config.craq_enabled && machine_index != tail_machine_index)
                       {
-                        uint64_t latest_version = 0;
+                        static uint64_t latest_version = 0
+                        // uint64_t latest_version = 0;
                         {
                           auto& versions = craq_key_to_versions[key_index];
                           // std::lock_guard<std::mutex> l(versions.m);
-                          latest_version = versions.latest_version.load(std::memory_order::relaxed);
+                          // latest_version = versions.latest_version.load(std::memory_order::relaxed);
+                          latest_version++;
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version != 0)
+                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version != 0 && latest_version % 100 == 1)
                         {
                           // Ask the tail node
                           auto key = std::to_string(key_index);
                           int port = find_server_port(tail_machine_index, thread_index, server_configs);
-
-                          auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
-                          if (rdma_kv_storage)
-                          {
-                            rdma_kv_storage->set_clean_craq_version(key_index, kv.craq_clean_version);
-                          }
 
                           craq_rpc_timer = LDCTimer{};
                           craq_rdma_rpc_tail.fetch_add(1, std::memory_order::relaxed);
