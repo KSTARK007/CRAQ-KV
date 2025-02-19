@@ -1390,8 +1390,7 @@ void server_worker(
                         }
                       }
 
-                      int tail_machine_index = num_client_nodes + server_configs.size() - 1;
-                      if (config.craq_enabled && machine_index != tail_machine_index)
+                      if (config.craq_enabled)
                       {
                         uint64_t latest_version = 0;
                         {
@@ -1402,15 +1401,30 @@ void server_worker(
                         // [CRAQ] If our key is lagging behind their version
                         if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version != 0)
                         {
-                          // Ask the tail node
-                          auto key = std::to_string(key_index);
-                          int port = find_server_port(tail_machine_index, thread_index, server_configs);
-
-                          craq_rpc_timer = LDCTimer{};
                           craq_rdma_rpc_tail.fetch_add(1, std::memory_order::relaxed);
+                          // Ask the tail node
+                          int tail_machine_index = num_client_nodes + server_configs.size() - 1;
+                          if (machine_index != tail_machine_index) {
+                            auto key = std::to_string(key_index);
+                            int port = find_server_port(tail_machine_index, thread_index, server_configs);
 
-                          CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
-                          server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                            craq_rpc_timer = LDCTimer{};
+
+                            CRAQ_INFO("[RDMACraqVersion] [{}:{}] -> [{}:{}] Key {} Client [{}:{}]", machine_index, thread_index, tail_machine_index, port, key, remote_index, remote_port);
+                            server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                          }
+                          else
+                          {
+                            // If we are tail node, fetch from disk
+                            auto exists_in_cache = block_cache->exists_in_cache(key);
+                            if (exists_in_cache) {
+                              value = block_cache->get(key, owning, exists_in_cache);
+                              server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
+                            } else {
+                              fetch_from_disk(false);
+                            }
+
+                          }
                         }
                         else
                         {
