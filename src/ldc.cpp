@@ -1180,12 +1180,12 @@ void server_worker(
               auto key_index = convert_string<uint64_t>(key_cstr);
               {
                 auto& versions = craq_key_to_versions[key_index];
-                std::lock_guard<std::mutex> l(versions.m);
+                // std::lock_guard<std::mutex> l(versions.m);
                 auto& latest_version = versions.latest_version;
                 latest_version.fetch_add(1, std::memory_order::relaxed);
                 current_version = latest_version;
 
-                versions.values.emplace_back(CraqVersionCleanValue{current_version, CRAQ_DIRTY_KEY, value_cstr });
+                // versions.values.emplace_back(CraqVersionCleanValue{current_version, CRAQ_DIRTY_KEY, value_cstr });
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
               }
 
@@ -1697,20 +1697,20 @@ void server_worker(
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
               {
                 auto& versions = craq_key_to_versions[key_index];
-                std::lock_guard<std::mutex> l(versions.m);
+                // std::lock_guard<std::mutex> l(versions.m);
                 auto& latest_version = versions.latest_version;
-                auto& values = versions.values;
+                // auto& values = versions.values;
 
                 latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
                 version = latest_version;
 
                 // Remove any values less than our version
-                values.erase(
-                    std::remove_if(values.begin(), values.end(),
-                        [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
-                    values.end()
-                );
-                values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
+                // values.erase(
+                //     std::remove_if(values.begin(), values.end(),
+                //         [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
+                //     values.end()
+                // );
+                // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
       
@@ -1730,9 +1730,9 @@ void server_worker(
             } else {
               {
                 auto& versions = craq_key_to_versions[key_index];
-                std::lock_guard<std::mutex> l(versions.m);
-                auto& values = versions.values;
-                values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
+                // std::lock_guard<std::mutex> l(versions.m);
+                // auto& values = versions.values;
+                // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
               }
@@ -1792,20 +1792,20 @@ void server_worker(
 
             {
               auto& versions = craq_key_to_versions[key_index];
-              std::lock_guard<std::mutex> l(versions.m);
-              auto& values = versions.values;
-              // Remove any values less than our version
-              values.erase(
-                  std::remove_if(values.begin(), values.end(),
-                      [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
-                  values.end()
-              );
+              // std::lock_guard<std::mutex> l(versions.m);
+              // auto& values = versions.values;
+              // // Remove any values less than our version
+              // values.erase(
+              //     std::remove_if(values.begin(), values.end(),
+              //         [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
+              //     values.end()
+              // );
 
-              for (auto& v : values) {
-                if (v.version == latest_clean_version) {
-                  v.clean = true;
-                }
-              }
+              // for (auto& v : values) {
+              //   if (v.version == latest_clean_version) {
+              //     v.clean = true;
+              //   }
+              // }
 
               versions.latest_version.store(latest_clean_version, std::memory_order::relaxed);
 
@@ -1844,7 +1844,7 @@ void server_worker(
             std::string value;
             {
               auto& versions = craq_key_to_versions[key_index];
-              std::lock_guard<std::mutex> l(versions.m);
+              // std::lock_guard<std::mutex> l(versions.m);
               latest_version = versions.latest_version;
             }
             value = block_cache->get(key);
