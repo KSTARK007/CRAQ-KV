@@ -1174,7 +1174,10 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             else if (config.craq_enabled) {
-              write_disk(key_cstr, value_cstr);
+              if (!config.baseline.one_sided_rdma_enabled)
+              {
+                write_disk(key_cstr, value_cstr);
+              }
 
               uint64_t current_version = CRAQ_START_VERSION_INDEX;
               auto key_index = convert_string<uint64_t>(key_cstr);
