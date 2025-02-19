@@ -1226,8 +1226,9 @@ void server_worker(
             auto key = key_.cStr();
             auto key_index = convert_string<uint64_t>(key);
 
-            // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            auto craq_check_tail = [&]() {
+            auto exists_in_cache = block_cache->exists_in_cache(key);
+            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled)
+            {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
@@ -1245,17 +1246,10 @@ void server_worker(
                     craq_rpc_tail.fetch_add(1);
 
                     server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                    return;
                 }
               }
-            };
-
-            auto exists_in_cache = block_cache->exists_in_cache(key);
-            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled)
-            {
-              craq_check_tail();
             }
-            if (exists_in_cache)
+            else if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
               // Return the correct key in local cache
