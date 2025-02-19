@@ -1406,6 +1406,12 @@ void server_worker(
                           auto key = std::to_string(key_index);
                           int port = find_server_port(tail_machine_index, thread_index, server_configs);
 
+                          auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
+                          if (rdma_kv_storage)
+                          {
+                            rdma_kv_storage->set_clean_craq_version(key_index, kv.craq_clean_version);
+                          }
+
                           craq_rpc_timer = LDCTimer{};
                           craq_rdma_rpc_tail.fetch_add(1, std::memory_order::relaxed);
 
