@@ -1393,16 +1393,14 @@ void server_worker(
                       int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                       if (config.craq_enabled && machine_index != tail_machine_index)
                       {
-                        static uint64_t latest_version = 0;
-                        // uint64_t latest_version = 0;
+                        uint64_t latest_version = 0;
                         {
                           auto& versions = craq_key_to_versions[key_index];
                           // std::lock_guard<std::mutex> l(versions.m);
-                          // latest_version = versions.latest_version.load(std::memory_order::relaxed);
-                          latest_version++;
+                          latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version != 0 && latest_version % 100 == 1)
+                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version != 0)
                         {
                           // Ask the tail node
                           auto key = std::to_string(key_index);
@@ -1794,6 +1792,8 @@ void server_worker(
                   v.clean = true;
                 }
               }
+
+              versions.latest_version.store(latest_clean_version, std::memory_order::relaxed);
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
