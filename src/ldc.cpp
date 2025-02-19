@@ -1174,6 +1174,8 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             else if (config.craq_enabled) {
+              write_disk(key_cstr, value_cstr);
+
               uint64_t current_version = CRAQ_START_VERSION_INDEX;
               auto key_index = convert_string<uint64_t>(key_cstr);
               {
@@ -1196,7 +1198,6 @@ void server_worker(
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               CRAQ_INFO("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
-              write_disk(key_cstr, value_cstr);
             }
             else
             {
@@ -1224,6 +1225,7 @@ void server_worker(
             auto key_ = p.getKey();
             auto key = key_.cStr();
             auto key_index = convert_string<uint64_t>(key);
+
 
             auto exists_in_cache = block_cache->exists_in_cache(key);
             if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled)
@@ -1683,6 +1685,8 @@ void server_worker(
 
             auto key_index = convert_string<uint64_t>(key_cstr);
 
+            write_disk(key, value);
+
             CRAQ_INFO("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
             // Check if it's tail
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
@@ -1727,10 +1731,27 @@ void server_worker(
 
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
               }
+
+            //   craq_mutex.lock();
+            //   auto key_string = std::string(key);
+            //   auto value_string = std::string(value);
+            //   if (craq_map.find(key_string) == craq_map.end())
+            //   {
+            //     // If the key doesn't exist, we initially mark it as clean
+            //     craq_map[key_string] = std::map<uint64_t, std::pair<std::string, bool>>();
+            //     craq_map[key_string][0] = std::make_pair(value_string, true);
+            //     craq_latest_key_version[key_string] = 0;
+            //   } else {
+            //     // If key exists, we mark it as dirty and wait for commit
+            //     auto latest_version = craq_latest_key_version[key_string];
+            //     craq_map[key_string][latest_version + 1] = std::make_pair(value_string, false);
+            //     craq_latest_key_version[key_string] = latest_version + 1;
+            //   }
+            //   craq_mutex.unlock();
+
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               server.craq_forward_propagate_request(machine_index + 1, port, key, value, version, client_index, client_port);
             }
-            write_disk(key, value);
           }
           else if (data.isCraqBackwardPropagateRequest())
           {
@@ -1960,7 +1981,8 @@ int main(int argc, char *argv[])
         while (!g_stop)
         {
           info("block_cache->get_cache()->is_ready() {} {}", block_cache->get_cache()->is_ready(), block_cache->get_cache()->get_total_accesses());
-          if(block_cache->get_cache()->is_ready()){
+          // if(block_cache->get_cache()->is_ready()){
+          if(true){
             // std::this_thread::sleep_for(std::chrono::seconds(60));
             std::this_thread::sleep_for(std::chrono::seconds(120));
             // std::this_thread::sleep_for(std::chrono::seconds(180));
