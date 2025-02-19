@@ -1400,7 +1400,7 @@ void server_worker(
                           latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version % 10 == 0)
+                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version && latest_version % 1000 == 0)
                         {
                           // Ask the tail node
                           auto key = std::to_string(key_index);
