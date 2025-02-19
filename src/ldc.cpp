@@ -1248,67 +1248,43 @@ void server_worker(
             auto key_index = convert_string<uint64_t>(key);
 
             // TODO: If craq, server.get_response(remote_index, remote_port, ResponseType::OK, empty value);
-            if (config.craq_enabled) {
+            auto craq_check_tail = [&]() {
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-                craq_key_to_versions.if_contains(key_index,
-                  [&](const auto& kv) {
-                    const auto& versions = kv.second;
-                    // If last item dirty, we should ping the tail for the latest version
-                    if (!versions.values.back().clean) {
+                  {
+                    auto& versions = craq_key_to_versions[key_index];
+                    // std::lock_guard<std::mutex> l(versions.m);
+                    // auto& values = versions.values;
+                    // if (!values.empty()) {
+                    //   // If last item dirty, we should ping the tail for the latest version
+                    //   if (!values.back().clean) {
+                    //     ping_last_server = true;
+                    //   }
+                    // }
+                    auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
+                    if (last_value_clean == CRAQ_DIRTY_KEY) {
                       ping_last_server = true;
                     }
                   }
-                );
-#else
-                {
-                  auto& versions = craq_key_to_versions[key_index];
-                  // std::lock_guard<std::mutex> l(versions.m);
-                  // auto& values = versions.values;
-                  // if (!values.empty()) {
-                  //   // If last item dirty, we should ping the tail for the latest version
-                  //   if (!values.back().clean) {
-                  //     ping_last_server = true;
-                  //   }
-                  // }
-                  auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
-                  if (last_value_clean == CRAQ_DIRTY_KEY) {
-                    ping_last_server = true;
+                  if (ping_last_server) {
+                      int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                      CRAQ_INFO("[CraqGet] craq version request: {}", port);
+                      craq_rpc_timer = LDCTimer{};
+                      craq_rpc_tail.fetch_add(1);
+
+                      server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                      return;
                   }
                 }
-#endif
-                if (ping_last_server) {
-                    int port = find_server_port(tail_machine_index, thread_index, server_configs);
-                    CRAQ_INFO("[CraqGet] craq version request: {}", port);
-                    craq_rpc_timer = LDCTimer{};
-                    craq_rpc_tail.fetch_add(1);
-
-                    server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                    return;
-                }
               }
-
-              // if (craq_map.find(key_string) == craq_map.end())
-              // {
-              //   // TODO: What happens if key doesn't exist in get request
-              //   panic("Key doesn't exist in get request");
-              // } else {
-              //   if (craq_map[key_string][latest_version].second == false)
-              //   {
-              //     // If the key is dirty, we contact the tail to get latest clean version
-              //     int tail_machine_index = num_client_nodes + server_configs.size() - 1;
-              //     int port = find_server_port(tail_machine_index, thread_index, server_configs);
-              //     server.craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-              //   } else {
-              //     // If the key is clean, we return the value
-              //     server.get_response(remote_index, remote_port, ResponseType::OK, craq_map[key_string][latest_version].first);
-              //   }
-              // }
-            }
+            };
 
             auto exists_in_cache = block_cache->exists_in_cache(key);
+            if (craq_enabled && !config.baseline.one_sided_rdma_enabled)
+            {
+              craq_check_tail();
+            }
             if (exists_in_cache)
             {
               snapshot->update_cache_hits(key_index);
@@ -1446,8 +1422,6 @@ void server_worker(
 
                       if (config.craq_enabled)
                       {
-#ifdef RDMA_USE_CRAQ
-#ifndef USE_CRAQ_PARALLEL_HASHMAP
                         uint64_t latest_version = 0;
                         {
                           auto& versions = craq_key_to_versions[key_index];
@@ -1486,8 +1460,6 @@ void server_worker(
                         {
                           server.append_to_rdma_get_response_queue(remote_index, remote_port, ResponseType::OK, value);
                         }
-#endif
-#endif
                       }
                       else
                       {
