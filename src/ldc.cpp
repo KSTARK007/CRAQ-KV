@@ -1280,7 +1280,7 @@ void server_worker(
             };
 
             auto exists_in_cache = block_cache->exists_in_cache(key);
-            if (craq_enabled && !config.baseline.one_sided_rdma_enabled)
+            if (config.craq_enabled && !config.baseline.one_sided_rdma_enabled)
             {
               craq_check_tail();
             }
