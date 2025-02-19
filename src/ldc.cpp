@@ -1692,6 +1692,10 @@ void server_worker(
                 std::lock_guard<std::mutex> l(versions.m);
                 auto& latest_version = versions.latest_version;
                 auto& values = versions.values;
+
+                latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
+                version = latest_version;
+
                 // Remove any values less than our version
                 values.erase(
                     std::remove_if(values.begin(), values.end(),
@@ -1701,8 +1705,6 @@ void server_worker(
                 values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
-                latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
-                version = latest_version;
       
                 auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
                 if (rdma_kv_storage)
