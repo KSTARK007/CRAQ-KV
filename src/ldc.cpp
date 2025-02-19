@@ -1393,7 +1393,7 @@ void server_worker(
                       int tail_machine_index = num_client_nodes + server_configs.size() - 1;
                       if (config.craq_enabled && machine_index != tail_machine_index)
                       {
-                        static uint64_t latest_version = 0
+                        static uint64_t latest_version = 0;
                         // uint64_t latest_version = 0;
                         {
                           auto& versions = craq_key_to_versions[key_index];
