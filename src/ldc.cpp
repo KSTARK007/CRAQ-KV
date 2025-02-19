@@ -1252,30 +1252,29 @@ void server_worker(
               auto ping_last_server = false;
               int tail_machine_index = num_client_nodes + server_configs.size() - 1;
               if (machine_index != tail_machine_index) {
-                  {
-                    auto& versions = craq_key_to_versions[key_index];
-                    // std::lock_guard<std::mutex> l(versions.m);
-                    // auto& values = versions.values;
-                    // if (!values.empty()) {
-                    //   // If last item dirty, we should ping the tail for the latest version
-                    //   if (!values.back().clean) {
-                    //     ping_last_server = true;
-                    //   }
-                    // }
-                    auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
-                    if (last_value_clean == CRAQ_DIRTY_KEY) {
-                      ping_last_server = true;
-                    }
+                {
+                  auto& versions = craq_key_to_versions[key_index];
+                  // std::lock_guard<std::mutex> l(versions.m);
+                  // auto& values = versions.values;
+                  // if (!values.empty()) {
+                  //   // If last item dirty, we should ping the tail for the latest version
+                  //   if (!values.back().clean) {
+                  //     ping_last_server = true;
+                  //   }
+                  // }
+                  auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
+                  if (last_value_clean == CRAQ_DIRTY_KEY) {
+                    ping_last_server = true;
                   }
-                  if (ping_last_server) {
-                      int port = find_server_port(tail_machine_index, thread_index, server_configs);
-                      CRAQ_INFO("[CraqGet] craq version request: {}", port);
-                      craq_rpc_timer = LDCTimer{};
-                      craq_rpc_tail.fetch_add(1);
+                }
+                if (ping_last_server) {
+                    int port = find_server_port(tail_machine_index, thread_index, server_configs);
+                    CRAQ_INFO("[CraqGet] craq version request: {}", port);
+                    craq_rpc_timer = LDCTimer{};
+                    craq_rpc_tail.fetch_add(1);
 
-                      server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-                      return;
-                  }
+                    server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
+                    return;
                 }
               }
             };
