@@ -1686,7 +1686,7 @@ void server_worker(
 
             auto key_index = convert_string<uint64_t>(key_cstr);
 
-            // write_disk(key, value);
+            write_disk(key, value);
 
             CRAQ_INFO("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
             // Check if it's tail
@@ -1804,6 +1804,7 @@ void server_worker(
               // }
 
               versions.latest_version.store(latest_clean_version, std::memory_order::relaxed);
+              versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
