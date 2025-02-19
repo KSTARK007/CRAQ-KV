@@ -790,9 +790,9 @@ struct CraqVersions
 {
   std::mutex m;
   std::atomic<uint64_t> latest_version = CRAQ_START_VERSION_INDEX;
-  // std::vector<CraqVersionCleanValue> values;
+  std::vector<CraqVersionCleanValue> values;
   std::atomic<bool> last_value_clean = true;
-  CraqVersionCleanValue value;
+  // CraqVersionCleanValue value;
 
   CraqVersions() = default;
   ~CraqVersions() = default;
@@ -800,15 +800,14 @@ struct CraqVersions
   CraqVersions(CraqVersions&& other) noexcept
     : m()  // mutex must be default constructed
     , latest_version(other.latest_version.load())
-    // , values(std::move(other.values))
-    , value(std::move(other.value))
+    , values(std::move(other.values))
     , last_value_clean(other.last_value_clean.load())
   {}
 
   CraqVersions& operator=(CraqVersions&& other) noexcept {
     if (this != &other) {
       latest_version = other.latest_version.load();
-      // values = std::move(other.values);
+      values = std::move(other.values);
       last_value_clean = other.last_value_clean.load();
     }
     return *this;
@@ -1179,24 +1178,6 @@ void server_worker(
 
               uint64_t current_version = CRAQ_START_VERSION_INDEX;
               auto key_index = convert_string<uint64_t>(key_cstr);
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-              craq_key_to_versions.lazy_emplace_l(key_index,
-                [&](auto& kv) {
-                  // If present, add key to our set
-                  auto& versions = kv.second;
-                  auto& latest_version = versions.latest_version;
-                  latest_version++;
-                  current_version = latest_version;
-
-                  versions.values.emplace_back(CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr });
-                },
-                [&](const auto& ctor) {
-                  // else, construct the new key
-                  auto versions = CraqVersions{current_version, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{current_version, CRAQ_DIRTY_KEY, value_cstr}}};
-                  ctor(key_index, std::move(versions));
-                }
-              );
-#else
               {
                 auto& versions = craq_key_to_versions[key_index];
                 std::lock_guard<std::mutex> l(versions.m);
@@ -1204,12 +1185,9 @@ void server_worker(
                 latest_version++;
                 current_version = latest_version;
 
+                versions.values.emplace_back(CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr });
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
-                versions.value = CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr};
-                // versions.values.emplace_back(CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr });
               }
-#endif
-
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
@@ -1255,14 +1233,6 @@ void server_worker(
               if (machine_index != tail_machine_index) {
                 {
                   auto& versions = craq_key_to_versions[key_index];
-                  // std::lock_guard<std::mutex> l(versions.m);
-                  // auto& values = versions.values;
-                  // if (!values.empty()) {
-                  //   // If last item dirty, we should ping the tail for the latest version
-                  //   if (!values.back().clean) {
-                  //     ping_last_server = true;
-                  //   }
-                  // }
                   auto last_value_clean = versions.last_value_clean.load(std::memory_order::relaxed);
                   if (last_value_clean == CRAQ_DIRTY_KEY) {
                     ping_last_server = true;
@@ -1429,7 +1399,7 @@ void server_worker(
                           latest_version = versions.latest_version.load(std::memory_order::relaxed);
                         }
                         // [CRAQ] If our key is lagging behind their version
-                        if (kv.craq_clean_version != KEY_VALUE_PTR_INVALID && latest_version < kv.craq_clean_version)
+                        if (kv.craq_clean_version != 0 && latest_version < kv.craq_clean_version)
                         {
                           // Ask the tail node
                           int tail_machine_index = num_client_nodes + server_configs.size() - 1;
@@ -1724,43 +1694,19 @@ void server_worker(
             CRAQ_INFO("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
             // Check if it's tail
             if (machine_index - num_client_nodes == server_configs.size() - 1) {
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-              craq_key_to_versions.lazy_emplace_l(key_index,
-                [&](auto& kv) {
-                  // If present, add key to our set
-                  auto& versions = kv.second;
-                  auto& latest_version = versions.latest_version;
-                  auto& values = versions.values;
-                  // Remove any values less than our version
-                  values.erase(
-                      std::remove_if(values.begin(), values.end(),
-                          [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
-                      values.end()
-                  );
-                  values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
-                  latest_version = std::max(latest_version, version);
-                },
-                [&](const auto& ctor) {
-                  // else, construct the new key
-                  auto versions = CraqVersions{version, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{version, CRAQ_CLEAN_KEY, value_cstr}}};
-                  ctor(key_index, std::move(versions));
-                }
-              );
-#else
               {
                 auto& versions = craq_key_to_versions[key_index];
                 std::lock_guard<std::mutex> l(versions.m);
                 auto& latest_version = versions.latest_version;
-                // auto& values = versions.values;
-                // // Remove any values less than our version
-                // values.erase(
-                //     std::remove_if(values.begin(), values.end(),
-                //         [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
-                //     values.end()
-                // );
-                // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
+                auto& values = versions.values;
+                // Remove any values less than our version
+                values.erase(
+                    std::remove_if(values.begin(), values.end(),
+                        [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < version && craq_version_clean_value.clean; }),
+                    values.end()
+                );
+                values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
 
-                versions.value = CraqVersionCleanValue{version, CRAQ_DIRTY_KEY, value_cstr};
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
                 latest_version = std::max(latest_version.load(std::memory_order::relaxed), version);
       
@@ -1772,72 +1718,20 @@ void server_worker(
                 }
               }
 
-#endif
-
               CRAQ_INFO("[CraqForwardPropagateRequest] Starting back propagation for key {}", key);
               int port = find_server_port(machine_index - 1, thread_index, server_configs);
 
               // Send back latest clean version to previous servers
               server.craq_backward_propagate_request(machine_index - 1, port, key, version, client_index, client_port);
-
-
-              // craq_mutex.lock();
-              // auto key_string = std::string(key);
-              // auto value_string = std::string(value);
-              // uint64_t latest_clean_version;
-              // if (craq_map.find(key_string) == craq_map.end())
-              // {
-              //   // If key doesn't exist yet, simply initialize
-              //   craq_map[key_string] = std::map<uint64_t, std::pair<std::string, bool>>();
-              //   craq_map[key_string][0] = std::make_pair(value_string, true);
-              //   craq_latest_key_version[key_string] = 0;
-              //   latest_clean_version = 0;
-              // } else {
-              //   // If key exists, automatically mark it as clean since it's the tail
-              //   auto latest_version = craq_latest_key_version[key_string];
-              //   craq_map[key_string][latest_version + 1] = std::make_pair(value_string, true);
-
-              //   // delete previous version
-              //   craq_map[key_string].erase(latest_version);
-
-              //   craq_latest_key_version[key_string] = latest_version + 1;
-
-              //   latest_clean_version = latest_version + 1;
-              // }
-              // craq_mutex.unlock();
-            
-              // info("Starting back propagation for key {}", key);
-              // int port = find_server_port(machine_index - 1, thread_index, server_configs);
-
-              // // Send back latest clean version to previous servers
-              // server.craq_backward_propagate_request(machine_index - 1, port, key, latest_clean_version, client_index, client_port);
             } else {
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-              craq_key_to_versions.lazy_emplace_l(key_index,
-                [&](auto& kv) {
-                  // If present, add key to our set
-                  auto& versions = kv.second;
-                  auto& values = versions.values;
-                  values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
-                },
-                [&](const auto& ctor) {
-                  // else, construct the new key
-                  auto versions = CraqVersions{version, std::vector<CraqVersionCleanValue>{CraqVersionCleanValue{version, CRAQ_DIRTY_KEY, value_cstr}}};
-                  ctor(key_index, std::move(versions));
-                }
-              );
-#else
               {
                 auto& versions = craq_key_to_versions[key_index];
                 std::lock_guard<std::mutex> l(versions.m);
-                // auto& values = versions.values;
-                // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
-                versions.value = CraqVersionCleanValue{version, CRAQ_DIRTY_KEY, value_cstr};
+                auto& values = versions.values;
+                values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
               }
-
-#endif
 
             //   craq_mutex.lock();
             //   auto key_string = std::string(key);
@@ -1892,45 +1786,22 @@ void server_worker(
 
             CRAQ_INFO("[CraqBackwardPropagateRequest] Got backward propagate request for {}", key);
 
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-            craq_key_to_versions.modify_if(key_index,
-                [&](auto& kv) {
-                  // If present, add key to our set
-                  auto& versions = kv.second;
-                  auto& values = versions.values;
-                  // Remove any values less than our version
-                  values.erase(
-                      std::remove_if(values.begin(), values.end(),
-                          [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
-                      values.end()
-                  );
-
-                  for (auto& v : values) {
-                    if (v.version == latest_clean_version) {
-                      v.clean = true;
-                    }
-                  }
-                }
-              );
-
-#else
             {
               auto& versions = craq_key_to_versions[key_index];
               std::lock_guard<std::mutex> l(versions.m);
-              // auto& values = versions.values;
-              // // Remove any values less than our version
-              // values.erase(
-              //     std::remove_if(values.begin(), values.end(),
-              //         [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
-              //     values.end()
-              // );
+              auto& values = versions.values;
+              // Remove any values less than our version
+              values.erase(
+                  std::remove_if(values.begin(), values.end(),
+                      [&](const auto& craq_version_clean_value) { return craq_version_clean_value.version < latest_clean_version && craq_version_clean_value.clean; }),
+                  values.end()
+              );
 
-              // for (auto& v : values) {
-              //   if (v.version == latest_clean_version) {
-              //     v.clean = true;
-              //   }
-              // }
-              versions.value.clean = CRAQ_CLEAN_KEY;
+              for (auto& v : values) {
+                if (v.version == latest_clean_version) {
+                  v.clean = true;
+                }
+              }
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
@@ -1938,8 +1809,6 @@ void server_worker(
                 rdma_kv_storage->set_clean_craq_version(key_index, latest_clean_version);
               }
             }
-
-#endif
 
             if (machine_index != server_start_index) {
               CRAQ_INFO("[CraqBackwardPropagateRequest] Continuing back propagation for key {}", key);
@@ -1967,54 +1836,11 @@ void server_worker(
 
             auto latest_version = CRAQ_START_VERSION_INDEX;
             std::string value;
-#ifdef USE_CRAQ_PARALLEL_HASHMAP
-            if(!craq_key_to_versions.if_contains(key_index,
-                [&](auto& kv) {
-                  // If present, add key to our set
-                  auto& versions = kv.second;
-                  latest_version = versions.latest_version;
-                  auto& values = versions.values;
-
-                  for (auto& v : values) {
-                    if (v.version == latest_version) {
-                      value = v.value;
-                    }
-                  }
-                }
-              ))
-            {
-              // value = block_cache->get(key_cstr);
-            }
-#else
             {
               auto& versions = craq_key_to_versions[key_index];
               std::lock_guard<std::mutex> l(versions.m);
               latest_version = versions.latest_version;
-              // auto& values = versions.values;
-
-              // for (auto& v : values) {
-              //   if (v.version == latest_version) {
-              //     value = v.value;
-              //   }
-              // }
             }
-
-            // if (cache->exists(key))
-            // {
-            //   value = cache->get(key);
-            // }
-            // else
-            // {
-            //   db->get_async_submit(key, [=, &server](auto value) {
-            //     // Add to cache
-            //     // block_cache->get_cache()->put(key, value);
-
-            //     // Send the response
-            //     server.append_craq_version_request(tail_machine_index, port, key, remote_index, remote_port);
-            //     // server->append_to_rdma_block_cache_request_queue(remote_index, remote_port, ResponseType::OK, skey, value);
-            //   });
-            // }
-#endif
             value = block_cache->get(key);
 
             CRAQ_INFO("[CraqVersionRequest] [{}:{}] -> [{}:{}] Got version request for key {} with latest version {}", machine_index, thread_index, remote_index, remote_port, key, latest_version);
