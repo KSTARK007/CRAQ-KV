@@ -1174,7 +1174,7 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             else if (config.craq_enabled) {
-              if (!config.baseline.one_sided_rdma_enabled)
+              // if (!config.baseline.one_sided_rdma_enabled)
               {
                 write_disk(key_cstr, value_cstr);
               }
@@ -1689,7 +1689,7 @@ void server_worker(
 
             auto key_index = convert_string<uint64_t>(key_cstr);
 
-            if (!config.baseline.one_sided_rdma_enabled)
+            // if (!config.baseline.one_sided_rdma_enabled)
             {
               write_disk(key, value);
             }
