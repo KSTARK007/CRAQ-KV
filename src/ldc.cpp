@@ -2005,7 +2005,7 @@ void server_worker(
                 }
               ))
             {
-              value = block_cache->get(key_cstr);
+              // value = block_cache->get(key_cstr);
             }
 #else
             {
