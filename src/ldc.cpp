@@ -1182,10 +1182,10 @@ void server_worker(
                 auto& versions = craq_key_to_versions[key_index];
                 std::lock_guard<std::mutex> l(versions.m);
                 auto& latest_version = versions.latest_version;
-                latest_version++;
+                latest_version.fetch_add(1, std::memory_order::relaxed);
                 current_version = latest_version;
 
-                versions.values.emplace_back(CraqVersionCleanValue{latest_version, CRAQ_DIRTY_KEY, value_cstr });
+                versions.values.emplace_back(CraqVersionCleanValue{current_version, CRAQ_DIRTY_KEY, value_cstr });
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
               }
 
