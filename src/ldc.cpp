@@ -1687,8 +1687,6 @@ void server_worker(
 
             auto key_index = convert_string<uint64_t>(key_cstr);
 
-            // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key, value); }
-            { write_disk(key, value); }
 
             CRAQ_INFO("[CraqForwardPropagateRequest] Got forward propagate request for {}", key);
             // Check if it's tail
@@ -1755,6 +1753,9 @@ void server_worker(
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               server.craq_forward_propagate_request(machine_index + 1, port, key, value, version, client_index, client_port);
             }
+
+            // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key, value); }
+            if (i % 2 == 0) { write_disk(key, value); }
           }
           else if (data.isCraqBackwardPropagateRequest())
           {
