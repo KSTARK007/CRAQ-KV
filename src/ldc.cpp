@@ -1174,10 +1174,6 @@ void server_worker(
             }
             // TODO: Add check here for craq and forward propagate if we're not at the tail
             else if (config.craq_enabled) {
-              // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key_cstr, value_cstr); }
-              if (key_index % 2 == 0) { write_disk(key_cstr, value_cstr); }
-              // { write_disk(key_cstr, value_cstr); }
-
               uint64_t current_version = CRAQ_START_VERSION_INDEX;
               auto key_index = convert_string<uint64_t>(key_cstr);
               {
@@ -1200,6 +1196,10 @@ void server_worker(
               int port = find_server_port(machine_index + 1, thread_index, server_configs);
               CRAQ_INFO("[CraqPut] Forwarding put request to next server from head on port: {} {}", remote_index, remote_port);
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
+
+              // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key_cstr, value_cstr); }
+              if (key_index % 2 == 0) { write_disk(key_cstr, value_cstr); }
+              // { write_disk(key_cstr, value_cstr); }
             }
             else
             {
