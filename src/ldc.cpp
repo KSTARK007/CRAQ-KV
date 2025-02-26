@@ -75,6 +75,8 @@ std::atomic<uint64_t> craq_rdma_rpc_tail;
 uint64_t craq_rpc_tail_ns = 0;
 uint64_t wait_buffer_ns = 0;
 std::atomic<uint64_t> craq_rdma_success;
+std::atomic<uint64_t> craq_num_dirty;
+std::atomic<uint64_t> craq_num_clean;
 
 void exec(std::string command, bool print_output = true)
 {
@@ -1185,6 +1187,7 @@ void server_worker(
 
                 // versions.values.emplace_back(CraqVersionCleanValue{current_version, CRAQ_DIRTY_KEY, value_cstr });
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
+                craq_num_dirty.fetch_add(1, std::memory_order::relaxed);
               }
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
@@ -1710,7 +1713,8 @@ void server_worker(
                 // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
-      
+                craq_num_clean.fetch_sub(1, std::memory_order::relaxed);
+
                 auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
                 if (rdma_kv_storage)
                 {
@@ -1732,6 +1736,7 @@ void server_worker(
                 // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_DIRTY_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_DIRTY_KEY, std::memory_order::relaxed);
+                craq_num_dirty.fetch_add(1, std::memory_order::relaxed);
               }
 
             //   craq_mutex.lock();
@@ -1809,6 +1814,7 @@ void server_worker(
 
               versions.latest_version.store(latest_clean_version, std::memory_order::relaxed);
               versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
+              craq_num_clean.fetch_sub(1, std::memory_order::relaxed);
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
@@ -2344,6 +2350,8 @@ int main(int argc, char *argv[])
       uint64_t last_craq_rdma_rpc_tail = 0;
       uint64_t last_craq_rdma_success = 0;
       uint64_t last_writes_blocked = 0;
+      uint64_t last_craq_num_dirty = 0;
+      uint64_t last_craq_num_clean = 0;
       while (!g_stop)
       {
         auto current_rdma_executed = total_rdma_executed.load(std::memory_order::relaxed);
@@ -2368,6 +2376,10 @@ int main(int argc, char *argv[])
         auto diff_craq_rdma_rpc_tail = current_craq_rdma_rpc_tail - last_craq_rdma_rpc_tail;
         auto current_craq_rdma_success = craq_rdma_success.load(std::memory_order::relaxed);
         auto diff_craq_rdma_success = current_craq_rdma_success - last_craq_rdma_success;
+        auto current_craq_num_dirty = craq_num_dirty.load(std::memory_order::relaxed);
+        auto diff_craq_num_dirty = current_craq_num_dirty - last_craq_num_dirty;
+        auto current_craq_num_clean = craq_num_clean.load(std::memory_order::relaxed);
+        auto diff_craq_num_clean = current_craq_num_clean - last_craq_num_clean;
 
         auto cache_info = block_cache->dump_cache_info_as_json();
         uint64_t current_cache_reads{};
@@ -2386,7 +2398,7 @@ int main(int argc, char *argv[])
         auto current_writes_blocked = db->writes_blocked_count;
         auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq RPC tail [{}] +[{}] RPC Rdma [{}] +[{}] ~ {}ns Rdma Success [{}] +[{}] | Writes stalled [{}] +[{}] ~ [{}] {}ns", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq RPC tail [{}] +[{}] RPC Rdma [{}] +[{}] ~ {}ns Rdma Success [{}] +[{}] RPC dirty [{}] +[{}] RPC clean [{}] +[{}]| Writes stalled [{}] +[{}] ~ [{}] {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -2398,7 +2410,7 @@ int main(int argc, char *argv[])
             current_writes_executed, diff_current_writes_executed,
             current_cache_writes, diff_cache_writes,
             current_disk_writes, diff_disk_writes,
-            current_craq_rpc_tail, diff_craq_rpc_tail, current_craq_rdma_rpc_tail, diff_craq_rdma_rpc_tail, craq_rpc_tail_ns, current_craq_rdma_success, diff_craq_rdma_success,
+            current_craq_rpc_tail, diff_craq_rpc_tail, current_craq_rdma_rpc_tail, diff_craq_rdma_rpc_tail, craq_rpc_tail_ns, current_craq_rdma_success, diff_craq_rdma_success, current_craq_num_dirty, diff_craq_num_dirty, current_craq_num_clean, diff_craq_num_clean,
             current_writes_blocked, diff_writes_blocked, writes_blocked_size, writes_blocked_ns
         );
 
@@ -2417,6 +2429,8 @@ int main(int argc, char *argv[])
         last_craq_rdma_rpc_tail = current_craq_rdma_rpc_tail;
         last_craq_rdma_success = current_craq_rdma_success;
         last_writes_blocked = current_writes_blocked;
+        last_craq_num_dirty = current_craq_num_dirty;
+        last_craq_num_clean = current_craq_num_clean;
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
