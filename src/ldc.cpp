@@ -2398,7 +2398,7 @@ int main(int argc, char *argv[])
         auto current_writes_blocked = db->writes_blocked_count;
         auto diff_writes_blocked = current_writes_blocked - last_writes_blocked;
 
-        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq RPC tail [{}] +[{}] RPC Rdma [{}] +[{}] ~ {}ns Rdma Success [{}] +[{}] RPC dirty [{}] +[{}] RPC clean [{}] +[{}] Diff [{}| Writes stalled [{}] +[{}] ~ [{}] {}ns", 
+        info("Ops [{}] +[{}] | RDMA [{}] +[{}] | Disk [{}] +[{}] | C Read [{}] +[{}] | C Hit [{}] +[{}] | C Miss [{}] +[{}] | R Disk [{}] +[{}] | L Disk [{}] +[{}] | Writes [{}] +[{}] | Writes Cache [{}] +[{}] | Writes Disk [{}] +[{}] | Craq RPC tail [{}] +[{}] RPC Rdma [{}] +[{}] ~ {}ns Rdma Success [{}] +[{}] RPC dirty [{}] +[{}] RPC clean [{}] +[{}] Diff [{}] | Writes stalled [{}] +[{}] ~ [{}] {}ns", 
             current_ops_executed, diff_ops_executed,
             current_rdma_executed, diff_rdma_executed,
             current_disk_executed, diff_disk_executed,
@@ -2410,7 +2410,7 @@ int main(int argc, char *argv[])
             current_writes_executed, diff_current_writes_executed,
             current_cache_writes, diff_cache_writes,
             current_disk_writes, diff_disk_writes,
-            current_craq_rpc_tail, diff_craq_rpc_tail, current_craq_rdma_rpc_tail, diff_craq_rdma_rpc_tail, craq_rpc_tail_ns, current_craq_rdma_success, diff_craq_rdma_success, current_craq_num_dirty, diff_craq_num_dirty, current_craq_num_clean, diff_craq_num_clean, current_craq_num_dirty - current_craq_num_clean
+            current_craq_rpc_tail, diff_craq_rpc_tail, current_craq_rdma_rpc_tail, diff_craq_rdma_rpc_tail, craq_rpc_tail_ns, current_craq_rdma_success, diff_craq_rdma_success, current_craq_num_dirty, diff_craq_num_dirty, current_craq_num_clean, diff_craq_num_clean, current_craq_num_dirty - current_craq_num_clean,
             current_writes_blocked, diff_writes_blocked, writes_blocked_size, writes_blocked_ns
         );
 
