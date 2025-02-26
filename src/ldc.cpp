@@ -1713,7 +1713,7 @@ void server_worker(
                 // values.emplace_back(CraqVersionCleanValue{ version, CRAQ_CLEAN_KEY, value_cstr });
 
                 versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
-                craq_num_clean.fetch_sub(1, std::memory_order::relaxed);
+                craq_num_clean.fetch_add(1, std::memory_order::relaxed);
 
                 auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
                 if (rdma_kv_storage)
@@ -1814,7 +1814,7 @@ void server_worker(
 
               versions.latest_version.store(latest_clean_version, std::memory_order::relaxed);
               versions.last_value_clean.store(CRAQ_CLEAN_KEY, std::memory_order::relaxed);
-              craq_num_clean.fetch_sub(1, std::memory_order::relaxed);
+              craq_num_clean.fetch_add(1, std::memory_order::relaxed);
 
               auto* rdma_kv_storage = block_cache->get_rdma_key_value_storage();
               if (rdma_kv_storage)
