@@ -1761,7 +1761,7 @@ void server_worker(
             }
 
             // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key, value); }
-            if (key_index % 5 == 0) { write_disk(key, value); }
+            if (key_index % 3 == 0) { write_disk(key, value); }
             // { write_disk(key, value); }
           }
           else if (data.isCraqBackwardPropagateRequest())
