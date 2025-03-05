@@ -1201,8 +1201,8 @@ void server_worker(
               server.craq_forward_propagate_request(machine_index + 1, port, key_cstr, value_cstr, current_version, remote_index, remote_port);
 
               // if (!config.baseline.one_sided_rdma_enabled) { write_disk(key_cstr, value_cstr); }
-              // if (key_index % 3 == 0) { write_disk(key_cstr, value_cstr); }
-              { write_disk(key_cstr, value_cstr); }
+              if (key_index % 3 == 0) { write_disk(key_cstr, value_cstr); }
+              // { write_disk(key_cstr, value_cstr); }
             }
             else
             {
