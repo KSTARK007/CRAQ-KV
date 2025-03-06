@@ -114,7 +114,7 @@ std::vector<std::pair<uint64_t, std::string> > sort_keys_by_frequency(const std:
     for (auto &bucket : cdf_buckets) {
         auto &bucket_keys = bucket.second;
         std::sort(bucket_keys.begin(), bucket_keys.end(),
-                  [](const auto &a, const auto &b) { return std::stoull(a.second) > std::stoull(b.second); });
+                  [](const auto &a, const auto &b) { return convert_string<uint64_t>(a.second) > convert_string<uint64_t>(b.second); });
 
         for (const auto &it : bucket_keys) {
             sorted_key_freq.push_back(it);
@@ -581,7 +581,7 @@ int main() {
         // std::string freq = line.substr(line.find(":") + 1);
         std::string key = line.substr(0, line.find(" "));
         std::string freq = line.substr(line.find(" ") + 1);
-        cdf.push_back(std::make_pair(std::stoull(freq), key));
+        cdf.push_back(std::make_pair(convert_string<uint64_t>(freq), key));
     }
 
     std::cout << "Zipfian" << std::endl << std::endl;

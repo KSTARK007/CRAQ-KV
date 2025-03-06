@@ -155,7 +155,7 @@ void get_and_sort_freq(std::shared_ptr<BlockCache<std::string, std::string>> cac
         uint64_t bucket_freq_sum = 0;
         auto& bucket_keys = bucket.second;
         std::sort(bucket_keys.begin(), bucket_keys.end(),
-                  [](const auto& a, const auto& b) { return std::stoull(a.second) > std::stoull(b.second); });
+                  [](const auto& a, const auto& b) { return convert_string<uint64_t>(a.second) > convert_string<uint64_t>(b.second); });
 
         for (const auto& it : bucket_keys) {
             sorted_key_freq_with_buckets.push_back(it);
