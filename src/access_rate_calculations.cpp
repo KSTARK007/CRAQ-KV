@@ -120,7 +120,7 @@ void get_and_sort_freq(std::shared_ptr<BlockCache<std::string, std::string>> cac
         key_map[i] = false;
     }
     for (auto &e: sorted_key_freq) {
-        key_map[std::stoi(e.second)] = true;
+        key_map[convert_string<uint64_t>(e.second)] = true;
     }
     for (uint64_t i = 1; i <= total_keys; i++) {
         if (!key_map[i]) {
@@ -397,7 +397,7 @@ void itr_through_all_the_perf_values_to_find_optimal(std::shared_ptr<BlockCache<
     if (best_water_mark_local != 0) {
         best_access_rate = std::get<0>(std::get<0>(cdf)[best_water_mark_local]);
         best_bucket = std::get<2>(std::get<0>(cdf)[best_water_mark_local]);
-        cutoff_key_id = std::stoi(std::get<1>(std::get<0>(cdf)[best_water_mark_local]));
+        cutoff_key_id = convert_string<uint64_t>(std::get<1>(std::get<0>(cdf)[best_water_mark_local]));
     }
     cache->get_cache()->check_and_set_total_cache_duplication();
     cache->get_cache()->set_access_rate(best_access_rate);
@@ -616,7 +616,7 @@ void get_best_access_rates(std::shared_ptr<BlockCache<std::string, std::string>>
     if (best_local != 0) {
         best_access_rate = std::get<0>(std::get<0>(cdf)[best_local]);
         best_bucket = std::get<2>(std::get<0>(cdf)[best_local]);
-        cutoff_key_id = std::stoi(std::get<1>(std::get<0>(cdf)[best_local]));
+        cutoff_key_id = convert_string<uint64_t>(std::get<1>(std::get<0>(cdf)[best_local]));
     }
     cache->get_cache()->check_and_set_total_cache_duplication();
     cache->get_cache()->set_access_rate(best_access_rate);
